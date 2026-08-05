@@ -1,0 +1,4416 @@
+<h2 class="sr-only">Arbeitszeitrechner für Arbeitsbeginn, Pausen und Feierabend</h2>
+
+<style>
+  body {
+    margin: 0;
+  }
+  /* Arbeitszeitrechner, Ocean v6
+     Volle Bildschirmfläche, kein Rahmen, kein Radius. Der Himmel läuft von
+     oben bis zur Wasserlinie durch, die Eingabekacheln liegen als Glas
+     darauf. Optik in Richtung Frutiger Aero: kräftiges Aqua, harte
+     Glanzkante auf jeder Fläche, Blasen, Lichtschleier.
+     Die Sonne sitzt oben rechts in der Ecke, ihre Leuchtkraft wächst mit
+     dem Füllstand des Regenbogens. */
+
+  .az-wrap {
+    --az-text: #0e4a68;
+    --az-headline: #0a5a86;
+    --az-muted: #4e87a6;
+    --az-line: rgba(255, 255, 255, 0.55);
+    --az-cyan: #12a5dd;
+    --az-cyan-deep: #0a7cb0;
+    --az-tint: rgba(255, 255, 255, 0.28);
+    --az-ring: rgba(23, 190, 240, 0.45);
+    --az-bright: #c8f7ff;
+    --az-radius: 10px;
+    --az-rainbow: linear-gradient(90deg, #ff5a4d, #ff9a3c, #ffe04a, #4fdd7e, #45d0ff, #6e8bff, #b77bff);
+
+    /* Seitlicher Innenabstand der Kacheln. Auf Desktop 200px. */
+    --az-gutter: clamp(1rem, 13vw, 200px);
+
+    /* Volle Breite, auch wenn der Rechner in einer zentrierten
+       Inhaltsspalte steckt. In einem Full-Width-Container ergibt das 0. */
+    width: auto;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--az-text);
+  }
+
+  .az-wrap *,
+  .az-wrap *::before,
+  .az-wrap *::after { box-sizing: border-box; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Bühne über die ganze Bildschirmhöhe */
+
+  .az-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(180deg, #a9e2fa 0%, #dff4ff 62%, #f0fbff 100%);
+  }
+
+  .az-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+  }
+
+  /* Die Sonne ist der einzige Teil der Szene, der Klicks annimmt */
+  #az-sun-hit {
+    pointer-events: all;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .az-stage.is-grabbing #az-sun-hit { cursor: grabbing; }
+
+  .az-topline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    z-index: 3;
+    background: var(--az-rainbow);
+    box-shadow: 0 1px 8px rgba(255, 255, 255, 0.8);
+  }
+
+  .az-form {
+    position: relative;
+    z-index: 2;
+    flex: none;
+    padding: clamp(4.5rem, 12vh, 7rem) var(--az-gutter) 0;
+    /* Die Box reicht bis zur Oberkante der Bühne und läge damit über der
+       Sonnenecke. Nur die Kacheln selbst nehmen Klicks an, der leere
+       Himmel drumherum lässt sie zur Sonne durch. */
+    pointer-events: none;
+  }
+
+  .az-block { pointer-events: auto; }
+
+  .az-readout {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 auto;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .az-footer {
+    position: relative;
+    z-index: 2;
+    flex: none;
+    padding-bottom: 1.5rem;
+    /* Auch hier durchlassen, damit man die Sonne wieder greifen kann,
+       wenn man sie unten abgelegt hat. */
+    pointer-events: none;
+  }
+
+  /* Glaskacheln mit harter Glanzkante */
+
+  .az-block {
+    position: relative;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    background:
+      linear-gradient(180deg,
+        rgba(255, 255, 255, 0.66) 0%,
+        rgba(255, 255, 255, 0.42) 48%,
+        rgba(230, 250, 255, 0.2) 48.5%,
+        rgba(214, 245, 255, 0.34) 100%);
+    backdrop-filter: blur(4px) saturate(165%) brightness(1.05);
+    -webkit-backdrop-filter: blur(4px) saturate(165%) brightness(1.05);
+    box-shadow:
+      0 12px 30px rgba(9, 76, 118, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -14px 24px -16px rgba(8, 80, 124, 0.3);
+    padding: 0.875rem 1rem 1rem;
+  }
+
+  /* Glanz auf der oberen Hälfte */
+  .az-block::after {
+    content: "";
+    position: absolute;
+    inset: 1px 1px auto 1px;
+    height: 46%;
+    border-radius: 17px 17px 50% 50% / 17px 17px 22px 22px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0));
+    pointer-events: none;
+  }
+
+  .az-block > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .az-block + .az-block { margin-top: 12px; }
+
+  .az-block-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--az-headline);
+    margin-bottom: 10px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .az-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 27px;
+    height: 27px;
+    flex: none;
+    border-radius: 9px;
+    color: #ffffff;
+    font-size: 15px;
+    background: linear-gradient(180deg, #6fe0ff 0%, #17a9e2 52%, #0d86c0 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 2px 5px rgba(10, 100, 150, 0.35);
+  }
+
+  .az-hint {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--az-muted);
+  }
+
+  /* Eingabefelder */
+
+  .az-wrap input[type="time"],
+  .az-wrap input[type="number"],
+  .az-wrap select {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    color: var(--az-text);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 252, 255, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: var(--az-radius);
+    box-shadow:
+      inset 0 2px 4px rgba(10, 90, 140, 0.12),
+      0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: box-shadow 140ms ease, border-color 140ms ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .az-wrap input[type="time"]:hover,
+  .az-wrap input[type="number"]:hover,
+  .az-wrap select:hover {
+    border-color: #7fdcff;
+  }
+
+  .az-wrap input[type="time"]:focus-visible,
+  .az-wrap input[type="number"]:focus-visible,
+  .az-wrap select:focus-visible {
+    outline: none;
+    border-color: #35c6f0;
+    box-shadow:
+      inset 0 2px 4px rgba(10, 90, 140, 0.1),
+      0 0 0 4px var(--az-ring);
+  }
+
+  .az-wrap input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0.5;
+    cursor: pointer;
+  }
+
+  .az-wrap select {
+    padding-right: 32px;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--az-muted) 50%),
+      linear-gradient(135deg, var(--az-muted) 50%, transparent 50%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 252, 255, 0.9));
+    background-position: calc(100% - 17px) 52%, calc(100% - 12px) 52%, 0 0;
+    background-size: 5px 5px, 5px 5px, 100% 100%;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+  .az-row input[type="time"] { max-width: 170px; }
+
+  /* Pausen */
+
+  .az-pause-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .az-pause-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 170px) auto minmax(0, 170px) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px 7px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 13px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(206, 242, 255, 0.28));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .az-pause-entry .az-sep {
+    font-size: 12px;
+    color: var(--az-muted);
+    padding: 0 2px;
+  }
+
+  .btn-add,
+  .btn-remove,
+  .az-chip {
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    background: linear-gradient(180deg, #74e2ff 0%, #1cabe4 48%, #0f92cb 52%, #0a76ac 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 3px 10px rgba(10, 118, 172, 0.4);
+    text-shadow: 0 1px 1px rgba(6, 70, 105, 0.35);
+    transition: filter 140ms ease, transform 140ms ease;
+  }
+
+  .btn-add:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
+
+  .btn-add:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 0 0 4px var(--az-ring);
+  }
+
+  .btn-remove {
+    width: 27px;
+    height: 27px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    line-height: 1;
+    color: var(--az-cyan-deep);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 9px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(222, 246, 255, 0.6));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    transition: color 140ms ease, filter 140ms ease;
+  }
+
+  .btn-remove:hover {
+    color: #c9503f;
+    filter: brightness(1.06);
+  }
+
+  .btn-remove:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--az-ring);
+  }
+
+  /* Sollarbeitszeit */
+
+  .az-target-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .az-target-row input[type="number"] {
+    width: 78px;
+    text-align: center;
+  }
+
+  .az-unit {
+    font-size: 14px;
+    color: var(--az-muted);
+  }
+
+  .az-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .az-chip {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--az-cyan-deep);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(219, 246, 255, 0.55));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    transition: filter 140ms ease, color 140ms ease;
+  }
+
+  .az-chip:hover { filter: brightness(1.06); }
+
+  .az-chip.is-active {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.6);
+    background: linear-gradient(180deg, #74e2ff 0%, #1cabe4 48%, #0f92cb 52%, #0a76ac 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 2px 8px rgba(10, 118, 172, 0.35);
+    text-shadow: 0 1px 1px rgba(6, 70, 105, 0.3);
+  }
+
+  .az-chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--az-ring);
+  }
+
+  /* Auswertung */
+
+  .az-eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #2f7ba1;
+    margin-bottom: 3px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .az-time {
+    font-size: clamp(30px, 5vw, 46px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--az-headline);
+    text-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9),
+      0 0 22px rgba(255, 255, 255, 0.7);
+  }
+
+  .az-time small {
+    font-size: 0.42em;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--az-muted);
+    margin-left: 0.3em;
+  }
+
+  .az-time.is-done {
+    font-size: clamp(20px, 3.4vw, 30px);
+    color: #0c8163;
+  }
+
+  /* Kennzahlen auf dem Wasser */
+
+  .az-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 0 var(--az-gutter);
+    color: #ffffff;
+  }
+
+  .az-metric {
+    position: relative;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.16) 48%,
+      rgba(255, 255, 255, 0.06) 48.5%,
+      rgba(255, 255, 255, 0.14) 100%);
+    backdrop-filter: blur(4px) saturate(150%);
+    -webkit-backdrop-filter: blur(4px) saturate(150%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      0 6px 18px rgba(4, 52, 82, 0.22);
+    padding: 0.8rem 0.9rem;
+  }
+
+  .az-metric-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 3px;
+  }
+
+  .az-metric-value {
+    font-size: 19px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(4, 52, 82, 0.4);
+  }
+
+  .az-metric-value.highlight { color: var(--az-bright); }
+
+  .az-progress {
+    position: relative;
+    margin: 14px var(--az-gutter) 0;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(4, 52, 82, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: inset 0 1px 3px rgba(4, 52, 82, 0.4);
+    overflow: hidden;
+  }
+
+  .az-progress-fill {
+    position: relative;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--az-rainbow);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.85);
+    transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Glanz auf dem Balken */
+  .az-progress-fill::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 50%;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+  }
+
+  /* Luftblasen */
+
+  .az-bubbles {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 160px;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .az-bubble {
+    position: absolute;
+    bottom: -18px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: radial-gradient(circle at 32% 27%,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.22) 38%,
+      rgba(255, 255, 255, 0.03) 72%);
+    opacity: 0;
+    animation: az-rise 12s linear infinite;
+  }
+
+  .az-bubble:nth-child(1) { left: 6%;  width: 8px;  height: 8px;  animation-duration: 14s; }
+  .az-bubble:nth-child(2) { left: 19%; animation-duration: 11s; animation-delay: 3s; }
+  .az-bubble:nth-child(3) { left: 33%; width: 6px;  height: 6px;  animation-duration: 16s; animation-delay: 6s; }
+  .az-bubble:nth-child(4) { left: 45%; width: 14px; height: 14px; animation-duration: 13s; animation-delay: 1.5s; }
+  .az-bubble:nth-child(5) { left: 58%; width: 9px;  height: 9px;  animation-duration: 15s; animation-delay: 8s; }
+  .az-bubble:nth-child(6) { left: 71%; width: 7px;  height: 7px;  animation-duration: 12s; animation-delay: 4.5s; }
+  .az-bubble:nth-child(7) { left: 84%; width: 12px; height: 12px; animation-duration: 17s; animation-delay: 10s; }
+  .az-bubble:nth-child(8) { left: 94%; width: 8px;  height: 8px;  animation-duration: 13s; animation-delay: 6.5s; }
+
+  @keyframes az-rise {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    12%  { opacity: 0.6; }
+    80%  { opacity: 0.45; }
+    100% { transform: translateY(-145px) translateX(12px); opacity: 0; }
+  }
+
+  /* Leuchten an der Spitze des Regenbogens */
+
+  .az-head-glow,
+  .az-spark {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .az-head-glow { animation: az-breathe 2.4s ease-in-out infinite; }
+
+  .az-spark { animation: az-twinkle 1.9s ease-in-out infinite; }
+  .az-spark.delay-1 { animation-delay: 0.55s; }
+  .az-spark.delay-2 { animation-delay: 1.15s; }
+
+  @keyframes az-breathe {
+    0%, 100% { opacity: 0.45; transform: scale(0.82); }
+    50%      { opacity: 0.9;  transform: scale(1.12); }
+  }
+
+  @keyframes az-twinkle {
+    0%, 100% { opacity: 0;    transform: scale(0.3) rotate(0deg); }
+    50%      { opacity: 0.95; transform: scale(1) rotate(45deg); }
+  }
+
+  .az-sun-rays { animation: az-spin 60s linear infinite; }
+  .az-sun-shafts { animation: az-spin 150s linear infinite reverse; }
+
+  @keyframes az-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* Wellen driften seitlich. Die Dauer steht pro Ebene inline und kommt
+     aus WAVE_SPEED im Skript, die Strecke aus --az-shift. */
+
+  .az-wave {
+    animation-name: az-drift;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+  }
+
+  @keyframes az-drift {
+    from { transform: translateX(0); }
+    to   { transform: translateX(var(--az-shift)); }
+  }
+
+  /* ============================================================
+     Spielstand, Abzeichen, Meldungen, Glücksrad
+     ============================================================ */
+
+  .az-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Kopfkachel: Stufe, Erfahrung, Muscheln, Glücksrad */
+
+  .az-hud {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .az-level {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  /* Der Ring zeigt den Weg zur nächsten Stufe. Der Winkel steht in
+     --az-xp und kommt aus dem Skript. */
+  .az-level-ring {
+    position: relative;
+    display: block;
+    width: 42px;
+    height: 42px;
+    flex: none;
+    border-radius: 50%;
+    background:
+      conic-gradient(from -90deg,
+        #ffe04a 0deg,
+        #4fdd7e var(--az-xp, 0deg),
+        rgba(255, 255, 255, 0.6) var(--az-xp, 0deg),
+        rgba(255, 255, 255, 0.6) 360deg);
+    box-shadow:
+      0 2px 7px rgba(10, 100, 150, 0.3),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  }
+
+  .az-level-ring::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #6fe0ff 0%, #17a9e2 52%, #0d86c0 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .az-level-num {
+    position: absolute;
+    inset: 4px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 1px 1px rgba(6, 70, 105, 0.4);
+  }
+
+  .az-level-text {
+    display: block;
+    min-width: 0;
+  }
+
+  .az-level-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--az-headline);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .az-level-xp {
+    display: block;
+    font-size: 12px;
+    color: var(--az-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .az-shells {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    padding: 5px 12px 5px 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 246, 255, 0.6));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--az-cyan-deep);
+  }
+
+  .az-shells svg {
+    width: 19px;
+    height: 19px;
+    flex: none;
+  }
+
+  .az-shells.is-fresh { animation: az-pop 520ms ease-out; }
+
+  @keyframes az-pop {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.16); }
+    100% { transform: scale(1); }
+  }
+
+  .btn-wheel {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 15px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffd977 0%, #ffb02e 48%, #f79c13 52%, #dd7f05 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 3px 10px rgba(190, 110, 10, 0.35);
+    text-shadow: 0 1px 1px rgba(120, 68, 5, 0.35);
+    transition: filter 140ms ease, transform 140ms ease;
+  }
+
+  .btn-wheel:hover {
+    filter: brightness(1.07);
+    transform: translateY(-1px);
+  }
+
+  .btn-wheel:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 0 0 4px rgba(255, 190, 70, 0.55);
+  }
+
+  .btn-wheel svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* Hinweis zur Pflichtpause */
+
+  .az-law {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(222, 246, 255, 0.55));
+    color: var(--az-muted);
+  }
+
+  .az-law.is-ok { color: #0c8163; }
+  .az-law.is-open { color: #b35c12; }
+
+  /* Abzeichen auf dem Wasser */
+
+  .az-awards-wrap {
+    position: relative;
+    pointer-events: auto;
+  }
+
+  .az-awards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 7px;
+    margin: 0 var(--az-gutter) 12px;
+  }
+
+  .az-award {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    font-family: inherit;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 11px;
+    color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: transform 160ms ease;
+  }
+
+  .az-award svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .az-award.is-open {
+    color: #7a4a06;
+    border-color: #ffffff;
+    background: linear-gradient(180deg, #fff2c6 0%, #ffd166 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 0 14px rgba(255, 212, 100, 0.75);
+  }
+
+  .az-award:hover { transform: translateY(-2px); }
+  .az-award:active { transform: translateY(0); }
+
+  .az-award:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 0 0 4px rgba(255, 255, 255, 0.7);
+  }
+
+  .az-award.is-new { animation: az-pop 620ms ease-out; }
+
+  /* Sprechblase über der Abzeichenreihe */
+
+  .az-award-tip {
+    position: absolute;
+    z-index: 4;
+    width: max-content;
+    max-width: min(280px, 82vw);
+    padding: 8px 12px 9px;
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(224, 245, 255, 0.94));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 12px 28px rgba(6, 66, 102, 0.3), inset 0 1px 0 #ffffff;
+    color: var(--az-text);
+    font-size: 12.5px;
+    line-height: 1.4;
+    text-align: left;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .az-award-tip[hidden] { display: none; }
+
+  .az-award-tip strong {
+    display: block;
+    font-size: 13.5px;
+    color: var(--az-headline);
+  }
+
+  .az-award-tip .az-tip-state {
+    display: block;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .az-award-tip.is-open .az-tip-state { color: #0c8163; }
+  .az-award-tip.is-locked .az-tip-state { color: #b35c12; }
+
+  /* Meldungen */
+
+  .az-toasts {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 70;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .az-toast {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    padding: 9px 14px;
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(223, 245, 255, 0.92));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 10px 26px rgba(6, 66, 102, 0.28), inset 0 1px 0 #ffffff;
+    font-size: 13px;
+    color: var(--az-text);
+    animation: az-toast-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .az-toast strong {
+    font-weight: 700;
+    color: var(--az-headline);
+  }
+
+  .az-toast span { color: #b35c12; font-weight: 600; }
+
+  .az-toast.is-out {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 400ms ease, transform 400ms ease;
+  }
+
+  @keyframes az-toast-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Delfin lässt sich fangen */
+
+  #az-dolphin { pointer-events: all; cursor: pointer; }
+  #az-dolphin[opacity="0"] { pointer-events: none; }
+
+  /* Glücksrad */
+
+  .az-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(6, 60, 92, 0.5);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+
+  .az-modal[hidden] { display: none; }
+
+  .az-modal-card {
+    width: min(430px, 100%);
+    max-height: 92dvh;
+    overflow: auto;
+    padding: 16px 18px 18px;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: linear-gradient(180deg, #f4fcff 0%, #e2f5ff 100%);
+    box-shadow: 0 26px 64px rgba(4, 54, 86, 0.45), inset 0 1px 0 #ffffff;
+    animation: az-card-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes az-card-in {
+    from { opacity: 0; transform: translateY(18px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .az-modal-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 4px;
+  }
+
+  .az-modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--az-headline);
+  }
+
+  .btn-close {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--az-cyan-deep);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(222, 246, 255, 0.6));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  .btn-close:hover { color: #c9503f; }
+
+  .btn-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--az-ring);
+  }
+
+  .az-modal-sub {
+    font-size: 12px;
+    color: var(--az-muted);
+    margin-bottom: 10px;
+  }
+
+  .az-wheel {
+    display: block;
+    width: 100%;
+    max-width: 296px;
+    margin: 0 auto;
+    overflow: visible;
+  }
+
+  .az-wheel-rim {
+    fill: none;
+    stroke: url(#az-rim-grad);
+    stroke-width: 13;
+  }
+
+  .az-wheel-edge {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.9);
+    stroke-width: 1.4;
+  }
+
+  .az-wheel-label {
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 600;
+    fill: #0b3c58;
+    stroke: rgba(255, 255, 255, 0.9);
+    stroke-width: 2.4;
+    paint-order: stroke fill;
+  }
+
+  .az-wheel-needle {
+    fill: #ffffff;
+    stroke: #0d86c0;
+    stroke-width: 1.6;
+  }
+
+  .az-wheel-result {
+    min-height: 3.4em;
+    margin: 12px 0 2px;
+    text-align: center;
+  }
+
+  .az-wheel-result-label {
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #2f7ba1;
+  }
+
+  .az-wheel-result-text {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--az-headline);
+    line-height: 1.25;
+  }
+
+  .az-wheel-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+
+  .btn-spin {
+    flex: 1 1 auto;
+    justify-content: center;
+    margin-top: 0;
+    padding: 11px 18px;
+    font-size: 14px;
+  }
+
+  .btn-spin:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.55) brightness(1.02);
+    opacity: 0.75;
+    transform: none;
+  }
+
+  .btn-ghost {
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--az-cyan-deep);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 246, 255, 0.6));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    transition: filter 140ms ease;
+  }
+
+  .btn-ghost:hover { filter: brightness(1.06); }
+
+  .btn-ghost:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--az-ring);
+  }
+
+  .az-wheel-edit {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(10, 90, 134, 0.14);
+  }
+
+  .az-wheel-edit[hidden] { display: none; }
+
+  .az-seg-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .az-seg {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr) 27px;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .az-seg-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .az-seg-tools {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .az-seg-note {
+    margin-top: 9px;
+    font-size: 12px;
+    color: var(--az-muted);
+  }
+
+  @media (max-width: 640px) {
+    .az-hud { gap: 10px; }
+    .az-shells { margin-left: 0; }
+    .btn-wheel { flex: 1 1 100%; justify-content: center; }
+    .az-awards { gap: 6px; margin-bottom: 9px; }
+    .az-award { width: 29px; height: 29px; border-radius: 10px; }
+    .az-award svg { width: 17px; height: 17px; }
+
+    .az-toasts {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      align-items: stretch;
+    }
+  }
+
+  /* Kleinteile: Jetzt-Knopf, Textfelder im Rad, Zeit über Soll */
+
+  .btn-now {
+    flex: none;
+    padding: 7px 13px;
+    font-size: 12px;
+  }
+
+  .az-law-row { display: block; }
+
+  .az-time.is-over { color: #0c8163; }
+
+  .az-seg input[type="text"] {
+    width: 100%;
+    min-width: 0;
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--az-text);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 252, 255, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: var(--az-radius);
+    box-shadow:
+      inset 0 2px 4px rgba(10, 90, 140, 0.12),
+      0 1px 0 rgba(255, 255, 255, 0.9);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .az-seg input[type="text"]:hover { border-color: #7fdcff; }
+
+  .az-seg input[type="text"]:focus-visible {
+    outline: none;
+    border-color: #35c6f0;
+    box-shadow:
+      inset 0 2px 4px rgba(10, 90, 140, 0.1),
+      0 0 0 4px var(--az-ring);
+  }
+
+  /* ---------- Countdown zur Mittagspause ---------- */
+
+  .az-lunch {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* Warnring, sobald es knapp wird. Liegt hinter dem Inhalt und lässt
+     den Glanz der Kachel unangetastet. */
+  .az-lunch.is-soon::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 21px;
+    border: 2px solid #ffb63c;
+    box-shadow: 0 0 16px rgba(255, 170, 40, 0.55);
+    animation: az-urge 1.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes az-urge {
+    0%, 100% { opacity: 0.2; }
+    50%      { opacity: 1; }
+  }
+
+  .az-lunch-ring {
+    width: 68px;
+    height: 68px;
+    flex: none;
+  }
+
+  .az-lunch-body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .az-lunch-top {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .az-lunch-eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #2f7ba1;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .az-lunch-meta {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--az-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .az-lunch-clock {
+    font-size: clamp(27px, 4.6vw, 40px);
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--az-headline);
+    text-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9),
+      0 0 18px rgba(255, 255, 255, 0.6);
+  }
+
+  .az-lunch-line {
+    font-size: 13px;
+    color: var(--az-text);
+  }
+
+  .az-lunch.is-soon .az-lunch-clock { color: #b4600a; }
+  .az-lunch.is-now .az-lunch-clock  { color: #0c8163; }
+  .az-lunch.is-done .az-lunch-clock,
+  .az-lunch.is-none .az-lunch-clock {
+    font-size: clamp(21px, 3vw, 27px);
+    color: var(--az-muted);
+  }
+
+  .az-lunch-plan {
+    margin-top: 9px;
+    padding: 7px 14px;
+    font-size: 12px;
+  }
+
+  .az-lunch-plan[hidden] { display: none; }
+
+  @media (max-width: 640px) {
+    .az-lunch { gap: 11px; }
+    .az-lunch-ring { width: 58px; height: 58px; }
+    .az-lunch-meta { margin-left: 0; width: 100%; }
+  }
+
+  /* ---------- Wunschfeierabend, gedeckte Nebenzeile ----------
+     Bewusst ohne Glanz, ohne Farbe und ohne eigene Kachel. Die
+     Sollarbeitszeit darüber bleibt die Hauptsache. */
+
+  .az-wish {
+    margin-top: 11px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(10, 90, 134, 0.13);
+  }
+
+  .az-wish-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+
+  .az-wish-label {
+    font-size: 12px;
+    color: var(--az-muted);
+  }
+
+  .az-wish-row input[type="time"] {
+    width: 118px;
+    flex: none;
+    padding: 5px 8px;
+    font-size: 13px;
+    color: var(--az-muted);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: inset 0 1px 3px rgba(10, 90, 140, 0.09);
+  }
+
+  .az-wish-row input[type="time"]:focus-visible {
+    color: var(--az-text);
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .btn-wish-clear {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--az-muted);
+    border: 0;
+    border-radius: 7px;
+    background: none;
+  }
+
+  .btn-wish-clear:hover { color: #c9503f; }
+
+  .btn-wish-clear:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--az-ring);
+  }
+
+  .btn-wish-clear[hidden] { display: none; }
+
+  .az-wish-note {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--az-muted);
+  }
+
+  .az-wish-note .az-wish-flag { color: #b35c12; }
+
+  /* Zweite Zeile unter der Feierabenduhr */
+
+  .az-wish-line {
+    margin-top: 7px;
+    font-size: 12.5px;
+    color: #4e87a6;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .az-wish-line[hidden] { display: none; }
+
+  @media (max-width: 640px) {
+    .az-wish-label { width: 100%; }
+  }
+
+  /* ---------- Teilen ---------- */
+
+  .az-share-preview {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 4px 0 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 22px rgba(6, 66, 102, 0.24);
+    background: #cdefff;
+  }
+
+  .az-share-link {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .az-share-link input[type="text"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--az-muted);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: var(--az-radius);
+    box-shadow: inset 0 2px 4px rgba(10, 90, 140, 0.12);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .az-share-tools {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .az-share-note {
+    margin-top: 11px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--az-muted);
+  }
+
+  .btn-share-main {
+    flex: 1 1 auto;
+    justify-content: center;
+    margin-top: 0;
+  }
+
+  /* ---------- Muschel-Orakel ---------- */
+
+  #az-oracle-shell {
+    pointer-events: all;
+    cursor: pointer;
+  }
+
+  #az-oracle-shell:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
+    border-radius: 12px;
+  }
+
+  .az-oracle-bob { animation: az-bob 5.5s ease-in-out infinite; }
+
+  @keyframes az-bob {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50%      { transform: translateY(-4px) rotate(2deg); }
+  }
+
+  #az-oracle-shell .az-oracle-glow {
+    animation: az-shine 4s ease-in-out infinite;
+  }
+
+  @keyframes az-shine {
+    0%, 100% { opacity: 0.25; }
+    50%      { opacity: 0.75; }
+  }
+
+  .az-oracle-stage {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    margin: 2px auto 4px;
+    overflow: visible;
+  }
+
+  .az-oracle-answer {
+    min-height: 4.1em;
+    margin: 10px 0 12px;
+    text-align: center;
+  }
+
+  .az-oracle-eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #2f7ba1;
+  }
+
+  .az-oracle-text {
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--az-headline);
+  }
+
+  .az-oracle-ask {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .az-oracle-ask input[type="text"] {
+    flex: 1 1 190px;
+    min-width: 0;
+    padding: 9px 11px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--az-text);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 252, 255, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: var(--az-radius);
+    box-shadow: inset 0 2px 4px rgba(10, 90, 140, 0.12);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .az-oracle-ask input[type="text"]:focus-visible {
+    outline: none;
+    border-color: #35c6f0;
+    box-shadow:
+      inset 0 2px 4px rgba(10, 90, 140, 0.1),
+      0 0 0 4px var(--az-ring);
+  }
+
+  .btn-oracle {
+    flex: 0 0 auto;
+    margin-top: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .btn-oracle:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.55);
+    opacity: 0.75;
+    transform: none;
+  }
+
+  .az-oracle-hints {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .az-oracle-hint {
+    padding: 5px 11px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--az-cyan-deep);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(219, 246, 255, 0.6));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  .az-oracle-hint:hover { filter: brightness(1.06); }
+
+  .az-oracle-hint:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--az-ring);
+  }
+
+  /* Kleine Viewports */
+
+  @media (max-width: 640px) {
+    .az-wrap { --az-gutter: 0.875rem; }
+
+    .az-form { padding-top: clamp(5rem, 14vh, 7rem); }
+    .az-block { padding: 0.875rem; }
+    .az-readout { min-height: 150px; }
+
+    .az-pause-entry { grid-template-columns: 1fr auto 1fr auto; }
+
+    .az-target-row { flex-wrap: wrap; }
+    .az-presets { margin-left: 0; width: 100%; }
+
+    .az-metrics {
+      grid-template-columns: 1fr;
+      gap: 7px;
+    }
+
+    .az-metric {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0.6rem 0.9rem;
+    }
+
+    .az-metric-label { margin-bottom: 0; }
+    .az-metric-value { font-size: 18px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .az-wrap * { transition: none !important; animation: none !important; }
+    .az-bubble { opacity: 0.35; }
+    .az-head-glow { opacity: 0.7; }
+    .az-spark { opacity: 0.8; }
+  }
+</style>
+
+<div class="az-wrap">
+  <div class="az-stage" id="az-stage">
+    <span class="az-topline" aria-hidden="true"></span>
+
+    <svg class="az-canvas" id="az-svg" viewBox="0 0 1200 700" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <radialGradient id="az-sun-bloom" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#fff3c4" stop-opacity="0.55"/>
+          <stop offset="0.42" stop-color="#ffe08a" stop-opacity="0.18"/>
+          <stop offset="1" stop-color="#ffdd7d" stop-opacity="0"/>
+        </radialGradient>
+
+        <radialGradient id="az-sun-halo" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0.24" stop-color="#fff6d2" stop-opacity="0.85"/>
+          <stop offset="0.52" stop-color="#ffe49a" stop-opacity="0.28"/>
+          <stop offset="1" stop-color="#ffe49a" stop-opacity="0"/>
+        </radialGradient>
+
+        <radialGradient id="az-sun-face" cx="0.36" cy="0.28" r="0.82">
+          <stop offset="0" stop-color="#fffdf0"/>
+          <stop offset="0.5" stop-color="#ffdc63"/>
+          <stop offset="1" stop-color="#ffae22"/>
+        </radialGradient>
+
+        <linearGradient id="az-shaft" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff5cd" stop-opacity="0.55"/>
+          <stop offset="1" stop-color="#fff5cd" stop-opacity="0"/>
+        </linearGradient>
+
+        <radialGradient id="az-horizon-glow" cx="0.5" cy="1" r="0.5">
+          <stop offset="0" stop-color="#7ff0d0" stop-opacity="0.42"/>
+          <stop offset="1" stop-color="#7ff0d0" stop-opacity="0"/>
+        </radialGradient>
+
+        <linearGradient id="az-balloon" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#ff5a4d"/><stop offset="0.34" stop-color="#ff5a4d"/>
+          <stop offset="0.34" stop-color="#ffe04a"/><stop offset="0.67" stop-color="#ffe04a"/>
+          <stop offset="0.67" stop-color="#45d0ff"/><stop offset="1" stop-color="#45d0ff"/>
+        </linearGradient>
+
+        <linearGradient id="az-dolphin-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#5aa2d6"/>
+          <stop offset="0.55" stop-color="#31749f"/>
+          <stop offset="1" stop-color="#215878"/>
+        </linearGradient>
+
+        <linearGradient id="az-oracle-grad" x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0" stop-color="#ffd9f0"/>
+          <stop offset="0.45" stop-color="#f0a8d8"/>
+          <stop offset="1" stop-color="#b978c4"/>
+        </linearGradient>
+
+        <linearGradient id="az-deep" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2ab6e0"/>
+          <stop offset="0.3" stop-color="#0f8ec6"/>
+          <stop offset="1" stop-color="#065580"/>
+        </linearGradient>
+
+        <radialGradient id="az-head" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+          <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.32"/>
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+
+        <!-- weiche Kante am Kopf der Füllung -->
+        <linearGradient id="az-fade" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient>
+
+        <filter id="az-blur-soft" x="-8%" y="-8%" width="116%" height="116%">
+          <feGaussianBlur stdDeviation="1"/>
+        </filter>
+
+        <filter id="az-bloom" x="-18%" y="-18%" width="136%" height="136%">
+          <feGaussianBlur stdDeviation="7"/>
+        </filter>
+
+        <filter id="az-cloud" x="-12%" y="-25%" width="124%" height="150%">
+          <feGaussianBlur stdDeviation="2.6"/>
+        </filter>
+
+        <mask id="az-reveal">
+          <rect id="az-reveal-solid" x="0" y="0" width="0" height="700" fill="#ffffff"/>
+          <rect id="az-reveal-fade" x="0" y="0" width="36" height="700" fill="url(#az-fade)"/>
+        </mask>
+
+        <!-- Die sieben Bänder. fill und stroke stehen hier, damit die
+             use-Kopien unten nichts erben, was sie schwarz füllt. -->
+        <g id="az-bands" fill="none" stroke-width="5.4" stroke-linecap="round">
+          <path data-band stroke="#ff5a4d"/>
+          <path data-band stroke="#ff9a3c"/>
+          <path data-band stroke="#ffe04a"/>
+          <path data-band stroke="#4fdd7e"/>
+          <path data-band stroke="#45d0ff"/>
+          <path data-band stroke="#6e8bff"/>
+          <path data-band stroke="#b77bff"/>
+        </g>
+      </defs>
+
+      <g id="az-horizon"></g>
+      <g id="az-clouds" fill="#ffffff" filter="url(#az-cloud)"></g>
+
+      <!-- blasse Spur: der noch offene Teil -->
+      <use href="#az-bands" opacity="0.16" filter="url(#az-blur-soft)"/>
+
+      <!-- erreichter Teil: unten Bloom, darüber die klare Linie -->
+      <g mask="url(#az-reveal)">
+        <use href="#az-bands" opacity="0.82" filter="url(#az-bloom)"/>
+        <use href="#az-bands"/>
+      </g>
+
+      <!-- Wunschmarke, liegt unter den Meilensteinen -->
+      <g id="az-wish-mark" opacity="0" aria-hidden="true">
+        <line x1="0" y1="-11" x2="0" y2="11" stroke="#ffffff" stroke-width="1.6" opacity="0.75"/>
+        <circle cx="0" cy="0" r="2.6" fill="#ffffff" opacity="0.9"/>
+      </g>
+
+      <!-- Meilensteine auf dem Bogen -->
+      <g id="az-checks" aria-hidden="true"></g>
+
+      <!-- Delfin liegt hinter dem Wasser, dadurch verschwindet er beim
+           Eintauchen ohne extra Maske -->
+      <g id="az-dolphin" opacity="0"></g>
+
+      <g id="az-water"></g>
+      <g id="az-splash" opacity="0"></g>
+      <g id="az-shine" fill="#ffffff" opacity="0.55"></g>
+
+      <g id="az-sun"></g>
+
+      <g id="az-marker" transform="translate(-200,-200)">
+        <circle class="az-head-glow" cx="0" cy="-4" r="36" fill="url(#az-head)"/>
+
+        <!-- Die Funken liegen in eigenen Gruppen, weil die CSS-Animation
+             sonst das transform-Attribut am Pfad überschreibt. -->
+        <g transform="translate(19,-27) scale(0.55)">
+          <path class="az-spark" d="M0,-11 L2,-2 L11,0 L2,2 L0,11 L-2,2 L-11,0 L-2,-2 Z" fill="#ffffff"/>
+        </g>
+        <g transform="translate(-21,-17) scale(0.4)">
+          <path class="az-spark delay-1" d="M0,-11 L2,-2 L11,0 L2,2 L0,11 L-2,2 L-11,0 L-2,-2 Z" fill="#ffffff"/>
+        </g>
+        <g transform="translate(12,9) scale(0.45)">
+          <path class="az-spark delay-2" d="M0,-11 L2,-2 L11,0 L2,2 L0,11 L-2,2 L-11,0 L-2,-2 Z" fill="#ffffff"/>
+        </g>
+
+        <ellipse cx="0" cy="20" rx="13" ry="3.5" fill="#0a5580" opacity="0.16"/>
+        <path d="M0,-17.5 C8.2,-17.5 12.5,-10.5 12.5,-5 C12.5,2 5.4,7.4 0,11 C-5.4,7.4 -12.5,2 -12.5,-5 C-12.5,-10.5 -8.2,-17.5 0,-17.5 Z" fill="url(#az-balloon)"/>
+        <path d="M0,-17.5 C3.4,-13 4.6,-6 0,11" fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.5"/>
+        <path d="M0,-17.5 C-3.4,-13 -4.6,-6 0,11" fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.5"/>
+        <path d="M-4,10 L-2.6,14 M4,10 L2.6,14" stroke="#a3743f" stroke-width="0.9"/>
+        <rect x="-3.4" y="13.6" width="6.8" height="5" rx="1.4" fill="#b98449"/>
+
+        <g transform="translate(0,-32)">
+          <rect x="-20" y="-11" width="40" height="18" rx="9" fill="#ffffff" opacity="0.94"/>
+          <rect x="-20" y="-11" width="40" height="9" rx="4.5" fill="#ffffff" opacity="0.6"/>
+          <text id="az-percent" x="0" y="2.5" text-anchor="middle"
+                font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0a5a86">0 %</text>
+        </g>
+      </g>
+
+      <!-- Muschel-Orakel, liegt im flachen Wasser -->
+      <g id="az-oracle-shell" transform="translate(-200,-200)" role="button" tabindex="0"
+         aria-label="Muschel-Orakel öffnen">
+        <g class="az-oracle-bob">
+          <ellipse class="az-oracle-glow" cx="0" cy="2" rx="30" ry="13" fill="#ffffff" opacity="0.4"/>
+          <path d="M0 13 C-19 8 -25 -6 -18 -14 C-12 -21 -4 -18 0 -12 C4 -18 12 -21 18 -14 C25 -6 19 8 0 13 Z"
+                fill="url(#az-oracle-grad)" stroke="#ffffff" stroke-width="1.4"/>
+          <path d="M0 12 V-11 M-2 12 L-13 -9 M2 12 L13 -9 M-4 12 L-17 -3 M4 12 L17 -3"
+                fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.55"/>
+          <circle cx="-7" cy="-6" r="2.2" fill="#ffffff" opacity="0.75"/>
+        </g>
+      </g>
+
+      <g id="az-burst" aria-hidden="true"></g>
+
+      <!-- Greiffläche der Sonne, liegt zuoberst in der Szene -->
+      <circle id="az-sun-hit" r="68" fill="none" transform="translate(-300,-300)">
+        <title>Sonne verschieben</title>
+      </circle>
+    </svg>
+
+    <div class="az-bubbles" aria-hidden="true">
+      <span class="az-bubble"></span>
+      <span class="az-bubble"></span>
+      <span class="az-bubble"></span>
+      <span class="az-bubble"></span>
+      <span class="az-bubble"></span>
+      <span class="az-bubble"></span>
+      <span class="az-bubble"></span>
+      <span class="az-bubble"></span>
+    </div>
+
+    <div class="az-form" id="az-form">
+      <div class="az-block az-hud">
+        <div class="az-level">
+          <span class="az-level-ring" id="az-level-ring" style="--az-xp: 0deg">
+            <span class="az-level-num" id="az-level-num">1</span>
+          </span>
+          <span class="az-level-text">
+            <span class="az-level-name" id="az-level-name">Strandläufer</span>
+            <span class="az-level-xp" id="az-level-xp">0 von 120 XP</span>
+          </span>
+        </div>
+
+        <span class="az-shells" id="az-shells">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 21 C4 16.5 2.5 9.5 5 6 C7 3.2 10 4 12 6 C14 4 17 3.2 19 6 C21.5 9.5 20 16.5 12 21 Z"
+                  fill="#ffd98a" stroke="#d98f2b" stroke-width="1.1"/>
+            <path d="M12 20.4 L12 6 M11.4 20.6 L6.6 8.4 M12.6 20.6 L17.4 8.4"
+                  fill="none" stroke="#d98f2b" stroke-width="0.8" opacity="0.6"/>
+          </svg>
+          <span id="az-shell-count">1</span>
+          <span class="sr-only">Muscheln</span>
+        </span>
+
+        <button type="button" class="btn-wheel" id="az-wheel-open">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5"/>
+            <circle cx="12" cy="12" r="2.2"/>
+            <path d="M12 3.5v5.4M12 15.1v5.4M3.5 12h5.4M15.1 12h5.4M6.4 6.4l3.4 3.4M14.2 14.2l3.4 3.4M17.6 6.4l-3.4 3.4M9.8 14.2l-3.4 3.4"/>
+          </svg>
+          Glücksrad
+        </button>
+
+        <button type="button" class="btn-ghost" id="az-share-open">Teilen</button>
+      </div>
+
+      <div class="az-block az-lunch" id="az-lunch">
+        <svg class="az-lunch-ring" viewBox="0 0 40 40" aria-hidden="true">
+          <defs>
+            <linearGradient id="az-lunch-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ffd45c"/>
+              <stop offset="1" stop-color="#17a9e2"/>
+            </linearGradient>
+          </defs>
+          <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(10, 90, 134, 0.16)" stroke-width="4"/>
+          <circle id="az-lunch-arc" cx="20" cy="20" r="16" fill="none" stroke="url(#az-lunch-grad)"
+                  stroke-width="4" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5"
+                  transform="rotate(-90 20 20)"/>
+          <text id="az-lunch-pct" x="20" y="20" text-anchor="middle" dominant-baseline="central"
+                font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#0a5a86">0 %</text>
+        </svg>
+
+        <div class="az-lunch-body">
+          <div class="az-lunch-top">
+            <span class="az-lunch-eyebrow" id="az-lunch-eyebrow">Mittagspause in</span>
+            <span class="az-lunch-meta" id="az-lunch-meta"></span>
+          </div>
+          <div class="az-lunch-clock" id="az-lunch-clock">--:--</div>
+          <div class="az-lunch-line" id="az-lunch-line" aria-live="polite"></div>
+          <button type="button" class="btn-ghost az-lunch-plan" id="az-lunch-plan" hidden>Mittagspause planen</button>
+        </div>
+      </div>
+
+      <div class="az-block">
+        <div class="az-block-head">
+          <span class="az-badge"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.2V12l3.5 2.1"/></svg></span>
+          Arbeitsbeginn
+        </div>
+        <div class="az-row">
+          <label class="sr-only" for="start">Arbeitsbeginn</label>
+          <input type="time" id="start" value="09:00">
+          <button type="button" class="btn-ghost btn-now" id="start-now">Jetzt</button>
+        </div>
+      </div>
+
+      <div class="az-block">
+        <div class="az-block-head">
+          <span class="az-badge"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.6 8.2h10.8v5.4a5 5 0 0 1-5 5H9.6a5 5 0 0 1-5-5V8.2Z"/><path d="M15.4 9.8h1.9a2.2 2.2 0 0 1 0 4.4h-1.9"/><path d="M8 4.2c.9.8.9 1.7 0 2.5M11.6 4.2c.9.8.9 1.7 0 2.5"/></svg></span>
+          Pausen
+          <span class="az-hint" id="pause-hint"></span>
+        </div>
+        <div class="az-pause-list" id="pauses">
+          <div class="az-pause-entry">
+            <input type="time" value="12:00" aria-label="Pause von">
+            <span class="az-sep">bis</span>
+            <input type="time" value="12:30" aria-label="Pause bis">
+            <button type="button" class="btn-remove" data-remove-pause title="Pause entfernen" aria-label="Pause entfernen">×</button>
+          </div>
+        </div>
+        <button type="button" class="btn-add" data-add-pause>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5.6v12.8M5.6 12h12.8"/></svg> Pause hinzufügen
+        </button>
+        <div class="az-law-row"><span class="az-law" id="law-hint"></span></div>
+      </div>
+
+      <div class="az-block">
+        <div class="az-block-head">
+          <span class="az-badge"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></span>
+          Sollarbeitszeit
+        </div>
+        <div class="az-target-row">
+          <label class="sr-only" for="target-hours">Sollarbeitszeit in Stunden</label>
+          <input type="number" id="target-hours" value="8" min="0.5" max="24" step="0.5">
+          <span class="az-unit">Stunden</span>
+          <div class="az-presets" id="presets">
+            <button type="button" class="az-chip" data-hours="4">4 h</button>
+            <button type="button" class="az-chip" data-hours="6">6 h</button>
+            <button type="button" class="az-chip" data-hours="7">7 h</button>
+            <button type="button" class="az-chip" data-hours="8">8 h</button>
+            <button type="button" class="az-chip" data-hours="8.5">8,5 h</button>
+            <button type="button" class="az-chip" data-hours="10">10 h</button>
+          </div>
+        </div>
+
+        <div class="az-wish">
+          <div class="az-wish-row">
+            <label class="az-wish-label" for="wish">Wunschfeierabend</label>
+            <input type="time" id="wish">
+            <button type="button" class="btn-wish-clear" id="wish-clear" title="Wunsch löschen" aria-label="Wunsch löschen" hidden>×</button>
+          </div>
+          <div class="az-wish-note" id="wish-note"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="az-readout">
+      <div class="az-eyebrow" id="eyebrow">Feierabend um</div>
+      <div class="az-time" id="time">--:--<small>Uhr</small></div>
+      <div class="az-wish-line" id="wish-line" hidden></div>
+    </div>
+
+    <div class="az-footer" id="az-footer">
+      <div class="az-awards-wrap">
+        <div class="az-awards" id="az-awards" role="group" aria-label="Abzeichen"></div>
+        <div class="az-award-tip" id="az-award-tip" hidden></div>
+      </div>
+      <div class="az-metrics" id="metrics"></div>
+      <div class="az-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+           aria-label="Fortschritt zur Sollarbeitszeit">
+        <div class="az-progress-fill" id="progress-fill"></div>
+      </div>
+      <span class="sr-only" id="status" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <div class="az-toasts" id="az-toasts" aria-live="polite"></div>
+
+  <div class="az-modal" id="az-oracle-modal" role="dialog" aria-modal="true" aria-labelledby="az-oracle-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20.5C5.5 17 3 10.5 5.5 6.8 7.6 3.7 10.4 4.6 12 6.6c1.6-2 4.4-2.9 6.5.2 2.5 3.7 0 10.2-6.5 13.7Z"/>
+            <path d="M12 19.8V7.2"/>
+          </svg>
+        </span>
+        <span class="az-modal-title" id="az-oracle-title">Muschel-Orakel</span>
+        <button type="button" class="btn-close" id="az-oracle-close" aria-label="Orakel schließen">×</button>
+      </div>
+
+      <p class="az-modal-sub">Eine Frage, eine Muschel, eine knappe Antwort.</p>
+
+      <svg class="az-oracle-stage" viewBox="-60 -52 120 104" aria-hidden="true">
+        <ellipse cx="0" cy="44" rx="42" ry="7" fill="#0a5a86" opacity="0.12"/>
+
+        <g id="az-oracle-bubbles"></g>
+
+        <!-- Untere Schale liegt fest, die obere klappt auf -->
+        <g id="az-oracle-lower">
+          <path d="M0 40 C-30 32 -40 6 -28 -8 C-18 -20 -6 -16 0 -6 C6 -16 18 -20 28 -8 C40 6 30 32 0 40 Z"
+                fill="url(#az-oracle-deep)" stroke="#ffffff" stroke-width="1.6"/>
+          <path d="M0 38 V-5 M-3 38 L-20 -11 M3 38 L20 -11 M-6 38 L-27 -3 M6 38 L27 -3"
+                fill="none" stroke="#ffffff" stroke-width="1" opacity="0.5"/>
+        </g>
+
+        <g id="az-oracle-upper">
+          <path d="M0 40 C-30 32 -40 6 -28 -8 C-18 -20 -6 -16 0 -6 C6 -16 18 -20 28 -8 C40 6 30 32 0 40 Z"
+                fill="url(#az-oracle-light)" stroke="#ffffff" stroke-width="1.6"/>
+          <path d="M0 38 V-5 M-3 38 L-20 -11 M3 38 L20 -11 M-6 38 L-27 -3 M6 38 L27 -3"
+                fill="none" stroke="#ffffff" stroke-width="1" opacity="0.5"/>
+          <circle cx="-11" cy="6" r="3.4" fill="#ffffff" opacity="0.7"/>
+        </g>
+
+        <defs>
+          <linearGradient id="az-oracle-light" x1="0" y1="0" x2="0.4" y2="1">
+            <stop offset="0" stop-color="#ffe4f5"/>
+            <stop offset="0.45" stop-color="#f2b0dd"/>
+            <stop offset="1" stop-color="#c07fca"/>
+          </linearGradient>
+          <linearGradient id="az-oracle-deep" x1="0" y1="0" x2="0.4" y2="1">
+            <stop offset="0" stop-color="#f6c9e8"/>
+            <stop offset="0.5" stop-color="#d68fc8"/>
+            <stop offset="1" stop-color="#8f5aa0"/>
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <div class="az-oracle-answer" aria-live="polite">
+        <div class="az-oracle-eyebrow" id="az-oracle-eyebrow">Bereit</div>
+        <div class="az-oracle-text" id="az-oracle-text">Frage stellen und Muschel öffnen</div>
+      </div>
+
+      <div class="az-oracle-ask">
+        <label class="sr-only" for="az-oracle-input">Frage an die Muschel</label>
+        <input type="text" id="az-oracle-input" maxlength="90" placeholder="Soll ich jetzt Pause machen?">
+        <button type="button" class="btn-add btn-oracle" id="az-oracle-ask">Fragen, 1 Muschel</button>
+      </div>
+
+      <div class="az-oracle-hints" id="az-oracle-hints">
+        <button type="button" class="az-oracle-hint">Soll ich jetzt Pause machen?</button>
+        <button type="button" class="az-oracle-hint">Reicht das für heute?</button>
+        <button type="button" class="az-oracle-hint">Noch einen Kaffee?</button>
+      </div>
+
+      <p class="az-share-note">Die Muschel entscheidet zufällig. Bei Fragen zu Pause, Feierabend und Überstunden schaut sie vorher auf die Uhr.</p>
+    </div>
+  </div>
+
+  <div class="az-modal" id="az-share-modal" role="dialog" aria-modal="true" aria-labelledby="az-share-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="18" cy="5.6" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="18.4" r="2.6"/>
+            <path d="M15.7 6.9 8.3 10.7M8.3 13.3l7.4 3.8"/>
+          </svg>
+        </span>
+        <span class="az-modal-title" id="az-share-title">Teilen</span>
+        <button type="button" class="btn-close" id="az-share-close" aria-label="Teilen schließen">×</button>
+      </div>
+
+      <p class="az-modal-sub">Das Bild passt in Chat und Slide, der Link öffnet denselben Stand.</p>
+
+      <canvas class="az-share-preview" id="az-share-canvas" width="1200" height="630"
+              role="img" aria-label="Bildkarte mit dem aktuellen Stand"></canvas>
+
+      <div class="az-share-link">
+        <label class="sr-only" for="az-share-url">Link zum Stand</label>
+        <input type="text" id="az-share-url" readonly value="">
+        <button type="button" class="btn-ghost" id="az-share-copy-url">Link kopieren</button>
+      </div>
+
+      <div class="az-share-tools">
+        <button type="button" class="btn-add btn-share-main" id="az-share-copy-img">Bild kopieren</button>
+        <button type="button" class="btn-ghost" id="az-share-download">Bild speichern</button>
+        <button type="button" class="btn-ghost" id="az-share-native" hidden>Weitergeben</button>
+      </div>
+
+      <p class="az-share-note">Der Link trägt Arbeitsbeginn, Pausen, Sollzeit, Wunschzeit und die Felder des Glücksrads. So arbeitet ein Team mit einem Rad statt mit acht. Stufe, Muscheln und Abzeichen bleiben lokal, jeder sammelt für sich.</p>
+    </div>
+  </div>
+
+  <div class="az-modal" id="az-wheel-modal" role="dialog" aria-modal="true" aria-labelledby="az-wheel-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5"/>
+            <circle cx="12" cy="12" r="2.2"/>
+            <path d="M12 3.5v5.4M12 15.1v5.4M3.5 12h5.4M15.1 12h5.4"/>
+          </svg>
+        </span>
+        <span class="az-modal-title" id="az-wheel-title">Glücksrad</span>
+        <button type="button" class="btn-close" id="az-wheel-close" aria-label="Glücksrad schließen">×</button>
+      </div>
+
+      <p class="az-modal-sub">Ein Dreh kostet eine Muschel. Muscheln gibt es für Meilensteine, Abzeichen und gefangene Delfine.</p>
+
+      <svg class="az-wheel" id="az-wheel" viewBox="-124 -124 248 248" aria-hidden="true">
+        <defs>
+          <linearGradient id="az-rim-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#a6ecff"/>
+            <stop offset="0.5" stop-color="#2ab0e4"/>
+            <stop offset="1" stop-color="#0b6f9f"/>
+          </linearGradient>
+          <radialGradient id="az-hub-grad" cx="0.34" cy="0.28" r="0.82">
+            <stop offset="0" stop-color="#ffffff"/>
+            <stop offset="0.55" stop-color="#8fe4ff"/>
+            <stop offset="1" stop-color="#128fc6"/>
+          </radialGradient>
+        </defs>
+
+        <g id="az-wheel-grips"></g>
+        <circle class="az-wheel-rim" r="107"/>
+
+        <g id="az-wheel-spin">
+          <g id="az-wheel-segs"></g>
+        </g>
+
+        <circle class="az-wheel-edge" r="100"/>
+        <circle r="19" fill="url(#az-hub-grad)" stroke="#ffffff" stroke-width="2"/>
+        <circle r="6" fill="#ffffff" opacity="0.6"/>
+        <path class="az-wheel-needle" d="M0,-117 L9.5,-98 L-9.5,-98 Z"/>
+      </svg>
+
+      <div class="az-wheel-result" aria-live="polite">
+        <div class="az-wheel-result-label" id="az-wheel-eyebrow">Bereit</div>
+        <div class="az-wheel-result-text" id="az-wheel-out">Rad drehen und Belohnung ziehen</div>
+      </div>
+
+      <div class="az-wheel-actions">
+        <button type="button" class="btn-add btn-spin" id="az-wheel-spin-btn">Drehen, 1 Muschel</button>
+        <button type="button" class="btn-ghost" id="az-wheel-edit-btn" aria-expanded="false" aria-controls="az-wheel-edit">Felder bearbeiten</button>
+      </div>
+
+      <div class="az-wheel-edit" id="az-wheel-edit" hidden>
+        <div class="az-seg-list" id="az-wheel-fields"></div>
+        <div class="az-seg-tools">
+          <button type="button" class="btn-ghost" id="az-wheel-add">Feld hinzufügen</button>
+          <button type="button" class="btn-ghost" id="az-wheel-reset">Standard laden</button>
+        </div>
+        <p class="az-seg-note">Zwei bis zwölf Felder. Das Rad übernimmt die Beschriftung direkt.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var ARC_MAX_WIDTH = 1500;  // Spannweite des Regenbogens, mehr wird nicht
+
+  /* WELLENGESCHWINDIGKEIT
+     Sekunden für einen kompletten Durchlauf. Größere Zahl heißt langsamer.
+     front ist die vordere Welle mit der weißen Kante, back die dünne
+     Linie darunter. Beide laufen in gegenläufige Richtung. */
+  var WAVE_SPEED = { front: 14, back: 22 };
+
+  // Länge eines Wellenbogens in Pixel. Größer heißt breitere Wellen.
+  var WAVE_SEGMENT = { front: 150, back: 185 };
+
+  /* RUHEPLATZ DER SONNE, oben rechts in der Ecke.
+     nudgeX  schiebt sie waagerecht, positive Werte nach rechts
+     top     Abstand zur Oberkante in Pixel
+     drift   Strecke, die die Tageszeit sie aus der Ecke schiebt.
+             Mittags null, morgens und abends der volle Wert.
+     driftNarrow gilt für Screens unter 700px Breite. */
+  var SUN_CORNER = { nudgeX: 20, top: 78, drift: 58, driftNarrow: 20 };
+
+  /* Rückweg der Sonne, nachdem man sie losgelassen hat.
+     wait = Pause an der Ablagestelle, glide = Dauer der Rückfahrt. */
+  var SUN_RETURN = { wait: 3200, glide: 6500 };
+
+  var wrap        = document.querySelector('.az-wrap');
+  var stage       = document.getElementById('az-stage');
+  var form        = document.getElementById('az-form');
+  var footer      = document.getElementById('az-footer');
+  var svg         = document.getElementById('az-svg');
+  var horizonEl   = document.getElementById('az-horizon');
+  var cloudsEl    = document.getElementById('az-clouds');
+  var waterEl     = document.getElementById('az-water');
+  var shineEl     = document.getElementById('az-shine');
+  var sunEl       = document.getElementById('az-sun');
+  var sunHit      = document.getElementById('az-sun-hit');
+  var dolphinEl   = document.getElementById('az-dolphin');
+  var splashEl    = document.getElementById('az-splash');
+  var markerEl    = document.getElementById('az-marker');
+  var checksEl    = document.getElementById('az-checks');
+  var wishMark    = document.getElementById('az-wish-mark');
+  var percentEl   = document.getElementById('az-percent');
+  var progressBar = document.querySelector('.az-progress');
+  var revealSolid = document.getElementById('az-reveal-solid');
+  var revealFade  = document.getElementById('az-reveal-fade');
+  var bands       = svg.querySelectorAll('[data-band]');
+  var midBand     = bands[3];
+
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  var view = null;   // Maße der Szene, wird bei jedem Resize neu gerechnet
+
+  // ---- Zeit rechnen ----
+
+  function toMinutes(value) {
+    if (!value) return null;
+    var parts = value.split(':');
+    return Number(parts[0]) * 60 + Number(parts[1]);
+  }
+
+  function toClock(minutes) {
+    if (minutes === null || isNaN(minutes)) return '--:--';
+    var h = Math.floor(minutes / 60) % 24;
+    var m = minutes % 60;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+
+  function toDuration(minutes) {
+    if (minutes === null || isNaN(minutes) || minutes < 0) return '--';
+    var h = Math.floor(minutes / 60);
+    var m = minutes % 60;
+    if (h === 0) return m + ' min';
+    if (m === 0) return h + ' h';
+    return h + ' h ' + m + ' min';
+  }
+
+  function minutesNow() {
+    var now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  // ---- Szene vermessen ----
+
+  function measure() {
+    var width = Math.max(320, Math.round(stage.clientWidth || 1200));
+    var height = Math.max(420, Math.round(stage.clientHeight || 700));
+
+    var formBottom = form.offsetTop + form.offsetHeight;
+    var waterY = Math.round(footer.offsetTop - 16);
+
+    // Luft zwischen Kacheln und Regenbogen, bei knapper Höhe weniger
+    var room = waterY - formBottom;
+    /* Der Scheitel bleibt mindestens 70 Pixel über dem Wasser, sonst
+       kippt der Bogen auf flachen Fenstern nach unten. */
+    var arcTop = Math.max(6, Math.min(formBottom + (room > 210 ? 48 : 18), waterY - 70));
+
+    var half = Math.min(ARC_MAX_WIDTH / 2, (width - 72) / 2);
+
+    return {
+      width: width,
+      height: height,
+      formTop: form.offsetTop,
+      formBottom: formBottom,
+      waterY: waterY,
+      arcLeft: Math.round(width / 2 - half),
+      arcRight: Math.round(width / 2 + half),
+      arcTop: arcTop,
+      bandGap: clamp(Math.round((waterY - arcTop) * 0.05), 6, 9),
+      // Ecke oben rechts. Der Grundabstand wächst mit der Breite, damit
+      // die Sonne auf Desktop im seitlichen Gutter neben den Kacheln
+      // bleibt. nudgeX aus SUN_CORNER kommt oben drauf.
+      sunX: Math.min(width - 66, width - clamp(width * 0.075, 92, 165) + SUN_CORNER.nudgeX),
+      sunY: SUN_CORNER.top,
+      sunDrift: width < 700 ? SUN_CORNER.driftNarrow : SUN_CORNER.drift
+    };
+  }
+
+  // ---- Regenbogen ----
+
+  // Kubische Bezier von Fuß zu Fuß. Der Scheitel liegt bei t = 0.5 auf
+  // 0.25 * Fuß + 0.75 * Kontrollpunkt, deshalb wird der Kontrollpunkt aus
+  // dem gewünschten Scheitel zurückgerechnet.
+  function arc(x0, x1, footY, apexY) {
+    var ctrlY = footY + (apexY - footY) / 0.75;
+    var pull = (x1 - x0) * 0.16;
+    return 'M' + x0 + ',' + footY +
+           ' C' + (x0 + pull) + ',' + ctrlY +
+           ' '  + (x1 - pull) + ',' + ctrlY +
+           ' '  + x1 + ',' + footY;
+  }
+
+  function drawBands() {
+    bands.forEach(function (band, i) {
+      var inset = i * 3.5;
+      band.setAttribute('d', arc(
+        view.arcLeft + inset,
+        view.arcRight - inset,
+        view.waterY,
+        view.arcTop + i * view.bandGap
+      ));
+    });
+  }
+
+  // ---- Wasser, Wolken, Glanz ----
+
+  /* Eine Welle aus einem q-Bogen und lauter t-Bögen. t spiegelt den
+     vorherigen Kontrollpunkt, dadurch wechseln Berg und Tal von allein.
+     Eine volle Periode sind zwei Segmente, genau um diese Strecke
+     verschiebt die CSS-Animation später, sonst springt die Naht. */
+  function wave(y, amplitude, segment, fromX, toX) {
+    var d = 'M' + fromX + ',' + y + ' q' + (segment / 2) + ',' + amplitude + ' ' + segment + ',0';
+    for (var x = fromX + segment; x < toX; x += segment) {
+      d += ' t' + segment + ',0';
+    }
+    return d;
+  }
+
+  function drawWater() {
+    // Beide Wellen reichen weit über den Rand hinaus. Dadurch bleibt beim
+    // Driften links und rechts nie eine Lücke.
+    var front = WAVE_SEGMENT.front * 2;
+    var back = WAVE_SEGMENT.back * 2;
+
+    var frontFrom = -front * 2;
+    var frontTo = view.width + front * 2;
+    var surface = wave(view.waterY, 9, WAVE_SEGMENT.front, frontFrom, frontTo);
+    var body = surface +
+      ' L' + (frontTo + front) + ',' + view.height +
+      ' L' + frontFrom + ',' + view.height + ' Z';
+
+    var undertow = wave(view.waterY + 13, -7, WAVE_SEGMENT.back, -back * 2, view.width + back * 2);
+
+    waterEl.innerHTML =
+      '<g class="az-wave" style="--az-shift:' + (-front) + 'px; animation-duration:' + WAVE_SPEED.front + 's">' +
+        '<path d="' + body + '" fill="url(#az-deep)"/>' +
+        '<path d="' + surface + '" fill="none" stroke="#bdf3ff" stroke-width="6" opacity="0.4"/>' +
+        '<path d="' + surface + '" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.95"/>' +
+      '</g>' +
+      '<g class="az-wave" style="--az-shift:' + back + 'px; animation-duration:' + WAVE_SPEED.back + 's">' +
+        '<path d="' + undertow + '" fill="none" stroke="#ffffff" stroke-width="1.4" opacity="0.34"/>' +
+      '</g>';
+  }
+
+  // Türkiser Schimmer direkt über der Wasserlinie
+  function drawHorizon() {
+    var h = 190;
+    horizonEl.innerHTML =
+      '<rect x="0" y="' + (view.waterY - h) + '" width="' + view.width + '" height="' + h + '" ' +
+      'fill="url(#az-horizon-glow)"/>';
+  }
+
+  function star(x, y, size) {
+    var a = size, b = size * 0.16;
+    return '<path d="M' + x + ' ' + (y - a) +
+           ' L' + (x + b) + ' ' + (y - b) +
+           ' L' + (x + a) + ' ' + y +
+           ' L' + (x + b) + ' ' + (y + b) +
+           ' L' + x + ' ' + (y + a) +
+           ' L' + (x - b) + ' ' + (y + b) +
+           ' L' + (x - a) + ' ' + y +
+           ' L' + (x - b) + ' ' + (y - b) + ' Z"/>';
+  }
+
+  function drawShine() {
+    var y = view.waterY + (view.height - view.waterY) * 0.55;
+    shineEl.innerHTML =
+      star(view.width * 0.04, y + 8, 11) +
+      star(view.width * 0.3, y + 22, 6) +
+      star(view.width * 0.53, y - 6, 8) +
+      star(view.width * 0.78, y + 18, 7) +
+      star(view.width * 0.95, y + 14, 9);
+  }
+
+  function drawClouds() {
+    // Wolken sitzen prozentual, damit sie auf jeder Breite verteilt bleiben
+    var spots = [
+      { x: 0.10, y: 0.09, s: 1.1,  o: 0.95 },
+      { x: 0.38, y: 0.05, s: 0.75, o: 0.7 },
+      { x: 0.62, y: 0.11, s: 0.6,  o: 0.5 },
+      { x: 0.2,  y: 0.28, s: 0.65, o: 0.45 },
+      { x: 0.74, y: 0.24, s: 0.55, o: 0.4 }
+    ];
+
+    cloudsEl.innerHTML = spots.map(function (spot) {
+      var cx = view.width * spot.x;
+      var cy = view.height * spot.y;
+      var s = spot.s;
+      return '<g opacity="' + spot.o + '">' +
+             '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + 38 * s + '" ry="' + 16 * s + '"/>' +
+             '<ellipse cx="' + (cx + 26 * s) + '" cy="' + (cy - 11 * s) + '" rx="' + 24 * s + '" ry="' + 19 * s + '"/>' +
+             '<ellipse cx="' + (cx - 26 * s) + '" cy="' + (cy - 3 * s) + '" rx="' + 21 * s + '" ry="' + 12 * s + '"/>' +
+             '</g>';
+    }).join('');
+  }
+
+  // ---- Sonne ----
+
+  var sunParts = {};
+
+  function buildSun() {
+    var rays = '';
+    for (var i = 0; i < 12; i++) {
+      rays += '<rect x="-2.6" y="-62" width="5.2" height="17" rx="2.6" fill="#ffd45c" ' +
+              'transform="rotate(' + i * 30 + ')"/>';
+    }
+
+    // Lange, sehr blasse Lichtkeile
+    var shafts = '';
+    for (var k = 0; k < 6; k++) {
+      shafts += '<path d="M-13,0 L13,0 L34,300 L-34,300 Z" fill="url(#az-shaft)" ' +
+                'transform="rotate(' + (k * 60 + 12) + ')"/>';
+    }
+
+    sunEl.innerHTML =
+      '<g id="az-sun-bloom-g"><circle r="215" fill="url(#az-sun-bloom)"/></g>' +
+      '<g id="az-sun-shafts-g" opacity="0.3">' +
+        '<g class="az-sun-shafts" style="transform-box: fill-box; transform-origin: center;">' + shafts + '</g>' +
+      '</g>' +
+      '<g id="az-sun-halo-g"><circle r="112" fill="url(#az-sun-halo)"/></g>' +
+      '<g id="az-sun-rays-g" opacity="0.6">' +
+        '<g class="az-sun-rays" style="transform-box: fill-box; transform-origin: center;">' + rays + '</g>' +
+      '</g>' +
+      '<circle r="37" fill="url(#az-sun-face)"/>' +
+      '<circle id="az-sun-core" r="37" fill="#fffdf2" opacity="0.08"/>' +
+      '<ellipse cx="-22" cy="9" rx="6.8" ry="4.4" fill="#ff9166" opacity="0.42"/>' +
+      '<ellipse cx="22" cy="9" rx="6.8" ry="4.4" fill="#ff9166" opacity="0.42"/>' +
+      '<ellipse cx="-14.5" cy="-10.5" rx="4.2" ry="5" fill="#b4661a"/>' +
+      '<ellipse cx="14.5" cy="-10.5" rx="4.2" ry="5" fill="#b4661a"/>' +
+      '<ellipse cx="-13" cy="-12.5" rx="1.5" ry="1.8" fill="#ffffff" opacity="0.85"/>' +
+      '<ellipse cx="16" cy="-12.5" rx="1.5" ry="1.8" fill="#ffffff" opacity="0.85"/>' +
+      '<path d="M-14.5,7 Q0,22 14.5,7" fill="none" stroke="#b4661a" stroke-width="4.4" stroke-linecap="round"/>' +
+      '<ellipse cx="-13" cy="-24" rx="13" ry="7" fill="#ffffff" opacity="0.3" transform="rotate(-22 -13 -24)"/>';
+
+    sunParts.bloom = document.getElementById('az-sun-bloom-g');
+    sunParts.shafts = document.getElementById('az-sun-shafts-g');
+    sunParts.halo = document.getElementById('az-sun-halo-g');
+    sunParts.rays = document.getElementById('az-sun-rays-g');
+    sunParts.core = document.getElementById('az-sun-core');
+  }
+
+  /* Leuchtkraft nach Füllstand. Bei 0 Prozent eine blasse Morgensonne,
+     bei 100 Prozent voller Hochsommer. */
+  function setSunGlow(percent) {
+    var t = clamp(percent / 100, 0, 1);
+
+    sunParts.bloom.setAttribute('opacity', (0.22 + 0.78 * t).toFixed(2));
+    sunParts.bloom.setAttribute('transform', 'scale(' + (0.62 + 0.5 * t).toFixed(3) + ')');
+    sunParts.shafts.setAttribute('opacity', (0.1 + 0.55 * t).toFixed(2));
+    sunParts.shafts.setAttribute('transform', 'scale(' + (0.7 + 0.4 * t).toFixed(3) + ')');
+    sunParts.halo.setAttribute('opacity', (0.45 + 0.55 * t).toFixed(2));
+    sunParts.halo.setAttribute('transform', 'scale(' + (0.78 + 0.32 * t).toFixed(3) + ')');
+    sunParts.rays.setAttribute('opacity', (0.35 + 0.65 * t).toFixed(2));
+    sunParts.rays.setAttribute('transform', 'scale(' + (0.82 + 0.26 * t).toFixed(3) + ')');
+    sunParts.core.setAttribute('opacity', (0.05 + 0.45 * t).toFixed(2));
+  }
+
+  var sunPos = { x: -300, y: -300 };   // gezeichnete Position
+  var sunHome = { x: -300, y: -300 };  // Ruheposition in der Ecke
+
+  function paintSun() {
+    var t = 'translate(' + sunPos.x.toFixed(1) + ',' + sunPos.y.toFixed(1) + ')';
+    sunEl.setAttribute('transform', t);
+    sunHit.setAttribute('transform', t);
+  }
+
+  /* Ruheposition ist die Ecke oben rechts. Die Tageszeit verschiebt sie
+     nur leicht: mittags sitzt die Sonne ganz oben in der Ecke, morgens
+     und abends etwas tiefer und weiter außen. */
+  function sunAnchor(minutes) {
+    var t = clamp((minutes - 360) / 840, 0, 1);
+    var lift = Math.sin(Math.PI * t);
+    return {
+      x: view.sunX + (1 - lift) * view.sunDrift * 0.42,
+      y: view.sunY + (1 - lift) * view.sunDrift
+    };
+  }
+
+  // ---- Sonne ziehen ----
+
+  var grab = null;
+  var returnTimer = null;
+  var returning = false;
+
+  function stopReturn() {
+    clearTimeout(returnTimer);
+    returning = false;
+  }
+
+  function toSceneX(clientX) {
+    var rect = svg.getBoundingClientRect();
+    return (clientX - rect.left) * view.width / rect.width;
+  }
+
+  function toSceneY(clientY) {
+    var rect = svg.getBoundingClientRect();
+    return (clientY - rect.top) * view.height / rect.height;
+  }
+
+  sunHit.addEventListener('pointerdown', function (event) {
+    event.preventDefault();
+    stopReturn();
+    grab = {
+      id: event.pointerId,
+      dx: sunPos.x - toSceneX(event.clientX),
+      dy: sunPos.y - toSceneY(event.clientY)
+    };
+    sunHit.setPointerCapture(event.pointerId);
+    stage.classList.add('is-grabbing');
+  });
+
+  sunHit.addEventListener('pointermove', function (event) {
+    if (!grab || event.pointerId !== grab.id) return;
+    sunPos.x = clamp(toSceneX(event.clientX) + grab.dx, 24, view.width - 24);
+    sunPos.y = clamp(toSceneY(event.clientY) + grab.dy, 24, view.height - 24);
+    paintSun();
+    unlock('sun');
+  });
+
+  function releaseSun(event) {
+    if (!grab || event.pointerId !== grab.id) return;
+    grab = null;
+    stage.classList.remove('is-grabbing');
+    returnTimer = setTimeout(easeSunHome, SUN_RETURN.wait);
+  }
+
+  sunHit.addEventListener('pointerup', releaseSun);
+  sunHit.addEventListener('pointercancel', releaseSun);
+
+  function easeSunHome() {
+    var from = { x: sunPos.x, y: sunPos.y };
+    var t0 = performance.now();
+    returning = true;
+
+    requestAnimationFrame(function step(now) {
+      if (!returning) return;
+      var p = Math.min(1, (now - t0) / SUN_RETURN.glide);
+      // sehr weiches Ein- und Ausgleiten
+      var e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+      sunPos.x = from.x + (sunHome.x - from.x) * e;
+      sunPos.y = from.y + (sunHome.y - from.y) * e;
+      paintSun();
+      if (p < 1) requestAnimationFrame(step);
+      else returning = false;
+    });
+  }
+
+  function syncSun(minutes) {
+    sunHome = sunAnchor(minutes);
+    if (grab || returning) return;
+    sunPos.x = sunHome.x;
+    sunPos.y = sunHome.y;
+    paintSun();
+  }
+
+  // ---- Fortschritt ----
+
+  var shown = 0;
+  var bandLength = 0;
+  var lastPoint = null;   // Kopf des Regenbogens, Startpunkt für Konfetti
+
+  function paintProgress(percent) {
+    var point = midBand.getPointAtLength(bandLength * (percent / 100));
+
+    revealSolid.setAttribute('width', String(Math.max(0, point.x)));
+    revealSolid.setAttribute('height', String(view.height));
+    revealFade.setAttribute('x', String(Math.max(0, point.x)));
+    revealFade.setAttribute('height', String(view.height));
+
+    markerEl.setAttribute('transform',
+      'translate(' + point.x.toFixed(1) + ',' + point.y.toFixed(1) + ')');
+    percentEl.textContent = Math.round(percent) + ' %';
+    lastPoint = point;
+
+    paintChecks(percent);
+
+    setSunGlow(percent);
+  }
+
+  /* Meilensteine sitzen auf dem mittleren Band. Erreichte Marken
+     leuchten gelb, offene bleiben dunkel. */
+  function drawChecks() {
+    if (!bandLength) return;
+
+    checksEl.innerHTML = MILESTONES.map(function (m) {
+      var p = midBand.getPointAtLength(bandLength * (m / 100));
+      return '<g data-mark="' + m + '" transform="translate(' +
+             p.x.toFixed(1) + ',' + p.y.toFixed(1) + ')">' +
+             '<circle r="7.4" fill="rgba(255,255,255,0.5)" stroke="#ffffff" stroke-width="1.4"/>' +
+             '<circle class="az-check-core" r="3.4" fill="#0a5a86" opacity="0.28"/>' +
+             '</g>';
+    }).join('');
+  }
+
+  function paintChecks(percent) {
+    var nodes = checksEl.children;
+    for (var i = 0; i < nodes.length; i++) {
+      var done = percent >= Number(nodes[i].getAttribute('data-mark'));
+      var core = nodes[i].querySelector('.az-check-core');
+      core.setAttribute('fill', done ? '#ffd045' : '#0a5a86');
+      core.setAttribute('opacity', done ? '1' : '0.28');
+      core.setAttribute('r', done ? '4.4' : '3.4');
+    }
+  }
+
+  function animateTo(target) {
+    var from = shown;
+    var delta = target - from;
+
+    if (Math.abs(delta) < 0.2 || calm.matches) {
+      shown = target;
+      paintProgress(target);
+      return;
+    }
+
+    var t0 = performance.now();
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / 700);
+      shown = from + delta * (1 - Math.pow(1 - p, 3));
+      paintProgress(shown);
+      if (p < 1) requestAnimationFrame(step);
+    });
+  }
+
+  // ---- Delfin ----
+
+  var DOLPHIN_BODY =
+    'M21,3 C16,-1 11,-4 5,-5.5 C2,-6 -1,-6.3 -3,-6.2 ' +
+    'C-3.5,-11 -6,-14.5 -9.5,-16.5 C-8,-12 -7.5,-8.5 -8,-6 ' +
+    'C-11,-5.4 -14,-4.6 -16.5,-3.6 C-19,-2.6 -21,-4.5 -24,-7.5 ' +
+    'C-22.5,-4 -21.8,-1.6 -21.8,0.4 C-21.8,2.6 -22.6,5 -24,8 ' +
+    'C-21,5.2 -19,3.6 -16.5,3 C-13,3.6 -9,5.4 -4,6.6 ' +
+    'C2,8 10,7.4 15,6 C18,5.2 20,4.2 21,3 Z';
+
+  function buildDolphin() {
+    dolphinEl.innerHTML =
+      '<path d="' + DOLPHIN_BODY + '" fill="url(#az-dolphin-grad)"/>' +
+      '<path d="M-14,3 C-6,6.8 4,7.8 14,5.2 C8,8.8 -4,9 -14,3 Z" fill="#eaf6ff" opacity="0.6"/>' +
+      '<path d="M-2,5.4 C-4,9.4 -7,12 -10.5,13 C-8.2,9.2 -6.6,7 -6,5" fill="#215878"/>' +
+      '<circle cx="12.5" cy="-1.2" r="1" fill="#123c55"/>' +
+      '<path d="M4,-5.4 C9,-4.4 14,-2.6 17.5,-0.6" fill="none" stroke="#ffffff" stroke-width="1.1" opacity="0.5"/>';
+
+    splashEl.innerHTML =
+      '<path d="M-16,0 C-11,-9 11,-9 16,0" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" opacity="0.85"/>' +
+      '<circle cx="-13" cy="-11" r="1.9" fill="#ffffff"/>' +
+      '<circle cx="-4" cy="-16" r="1.5" fill="#ffffff"/>' +
+      '<circle cx="6" cy="-14" r="1.7" fill="#ffffff"/>' +
+      '<circle cx="14" cy="-9" r="1.3" fill="#ffffff"/>';
+  }
+
+  var jump = null;
+
+  function launchDolphin() {
+    if (calm.matches || document.hidden || !view) return;
+
+    var span = clamp(view.width * 0.18, 130, 240);
+    jump = {
+      t0: performance.now(),
+      duration: 2600,
+      x0: 40 + Math.random() * Math.max(40, view.width - span - 80),
+      span: span,
+      peak: clamp((view.waterY - view.arcTop) * 0.34, 55, 95),
+      scale: view.width < 640 ? 0.8 : 1.05
+    };
+
+    dolphinEl.setAttribute('opacity', '1');
+    requestAnimationFrame(swim);
+  }
+
+  function swim(now) {
+    if (!jump) return;
+
+    var p = (now - jump.t0) / jump.duration;
+
+    if (p >= 1) {
+      jump = null;
+      dolphinEl.setAttribute('opacity', '0');
+      splashEl.setAttribute('opacity', '0');
+      return;
+    }
+
+    var x = jump.x0 + jump.span * p;
+    var y = view.waterY + 6 - Math.sin(Math.PI * p) * jump.peak;
+
+    // Neigung aus der Ableitung der Sprungkurve
+    var slope = -jump.peak * Math.PI * Math.cos(Math.PI * p) / jump.span;
+    var tilt = clamp(Math.atan(slope) * 180 / Math.PI, -68, 68);
+
+    jump.x = x;
+    jump.y = y;
+
+    dolphinEl.setAttribute('transform',
+      'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') ' +
+      'rotate(' + tilt.toFixed(1) + ') scale(' + jump.scale + ')');
+
+    // Spritzer beim Absprung und beim Eintauchen
+    var splash = p < 0.14 ? p / 0.14 : (p > 0.86 ? (1 - p) / 0.14 : 0);
+    if (splash > 0) {
+      splashEl.setAttribute('opacity', splash.toFixed(2));
+      splashEl.setAttribute('transform',
+        'translate(' + (p < 0.5 ? jump.x0 : jump.x0 + jump.span).toFixed(1) + ',' +
+        (view.waterY + 2) + ') scale(' + (0.6 + (1 - splash) * 0.7).toFixed(2) + ')');
+    } else {
+      splashEl.setAttribute('opacity', '0');
+    }
+
+    requestAnimationFrame(swim);
+  }
+
+  // ---- Rechnen und ausgeben ----
+
+  /* Bleibt das Feld bis leer, läuft die Pause noch. Sie zählt dann
+     bis zur aktuellen Uhrzeit mit. */
+  function readPauses() {
+    var total = 0;
+    var count = 0;
+    var running = false;
+    var now = minutesNow();
+
+    document.querySelectorAll('#pauses .az-pause-entry').forEach(function (entry) {
+      var fields = entry.querySelectorAll('input[type="time"]');
+      var from = toMinutes(fields[0].value);
+      var to = toMinutes(fields[1].value);
+
+      if (from !== null && to !== null && to > from) {
+        total += to - from;
+        count++;
+        return;
+      }
+
+      if (from !== null && to === null && now > from) {
+        total += now - from;
+        count++;
+        running = true;
+      }
+    });
+
+    return { total: total, count: count, running: running };
+  }
+
+  function markActivePreset(hours) {
+    document.querySelectorAll('#presets .az-chip').forEach(function (chip) {
+      chip.classList.toggle('is-active', parseFloat(chip.dataset.hours) === hours);
+    });
+  }
+
+  function calculate() {
+    var startMin = toMinutes(document.getElementById('start').value);
+    if (startMin === null) return;
+
+    var pauses = readPauses();
+    var now = minutesNow();
+    var worked = Math.max(0, (now - startMin) - pauses.total);
+    var targetHours = parseFloat(document.getElementById('target-hours').value) || 8;
+    var targetMin = targetHours * 60;
+    var remaining = targetMin - worked;
+    var endMin = now + Math.max(0, remaining);
+    var percent = targetMin > 0 ? Math.min(100, (worked / targetMin) * 100) : 0;
+
+    document.getElementById('pause-hint').textContent = pauses.count === 0
+      ? 'keine Pause erfasst'
+      : pauses.count + (pauses.count === 1 ? ' Pause, ' : ' Pausen, ') + toDuration(pauses.total) +
+        (pauses.running ? ', eine läuft' : '');
+
+    // Pflichtpause nach Arbeitszeitgesetz, gemessen an der Sollzeit
+    var lawNeed = targetMin > 540 ? 45 : (targetMin > 360 ? 30 : 0);
+
+    if (lawNeed === 0) {
+      lawEl.className = 'az-law';
+      lawEl.textContent = 'Bis 6 Stunden Arbeitszeit ohne Pflichtpause';
+    } else if (pauses.total >= lawNeed) {
+      lawEl.className = 'az-law is-ok';
+      lawEl.textContent = 'Pflichtpause erfüllt, gefordert sind ' + lawNeed + ' min';
+    } else {
+      lawEl.className = 'az-law is-open';
+      lawEl.textContent = 'Pflichtpause offen, es fehlen ' + (lawNeed - pauses.total) + ' min von ' + lawNeed + ' min';
+    }
+
+    markActivePreset(targetHours);
+
+    document.getElementById('metrics').innerHTML =
+      '<div class="az-metric">' +
+        '<div class="az-metric-label">Gearbeitet</div>' +
+        '<div class="az-metric-value highlight">' + toDuration(worked) + '</div>' +
+      '</div>' +
+      '<div class="az-metric">' +
+        '<div class="az-metric-label">Pausen</div>' +
+        '<div class="az-metric-value">' + toDuration(pauses.total) + '</div>' +
+      '</div>' +
+      '<div class="az-metric">' +
+        '<div class="az-metric-label">' + (remaining > 0 ? 'Noch offen' : 'Über Soll') + '</div>' +
+        '<div class="az-metric-value">' + (remaining > 0 ? toDuration(remaining) : toDuration(worked - targetMin)) + '</div>' +
+      '</div>';
+
+    var eyebrow = document.getElementById('eyebrow');
+    var timeOut = document.getElementById('time');
+
+    if (remaining <= 0) {
+      eyebrow.textContent = 'Feierabend seit';
+      timeOut.classList.remove('is-done');
+      timeOut.classList.add('is-over');
+      timeOut.innerHTML = toClock(startMin + pauses.total + targetMin) + '<small>Uhr</small>';
+    } else {
+      eyebrow.textContent = 'Feierabend um';
+      timeOut.classList.remove('is-done', 'is-over');
+      timeOut.innerHTML = toClock(endMin) + '<small>Uhr</small>';
+    }
+
+    document.getElementById('progress-fill').style.width = percent.toFixed(1) + '%';
+    progressBar.setAttribute('aria-valuenow', String(Math.round(percent)));
+    document.getElementById('status').textContent =
+      Math.round(percent) + ' Prozent der Sollzeit erreicht, gearbeitet ' + toDuration(worked);
+
+    syncSun(now);
+    animateTo(percent);
+    paintLunch();
+
+    paintWish({
+      endsAt: startMin + pauses.total + targetMin,
+      startMin: startMin,
+      pauseTotal: pauses.total,
+      targetMin: targetMin
+    });
+
+    updateGame({
+      worked: worked,
+      percent: percent,
+      pauseTotal: pauses.total,
+      pauseCount: pauses.count,
+      startMin: startMin,
+      targetMin: targetMin,
+      lawNeed: lawNeed
+    });
+  }
+
+  // ============================================================
+  //  Spielstand: Erfahrung, Stufen, Muscheln, Abzeichen
+  //  Alles läuft im Speicher der Seite. Ein Neuladen startet neu.
+  // ============================================================
+
+  /* Sieben Stufen. Eine Minute Arbeit gibt einen Punkt, ein Meilenstein
+     25 und ein Abzeichen 40. Ein voller Achtstundentag mit Abzeichen
+     reicht bis zur letzten Stufe. */
+  var LEVELS = [
+    { at: 0,   name: 'Strandläufer' },
+    { at: 110, name: 'Wellenreiter' },
+    { at: 240, name: 'Riffgänger' },
+    { at: 390, name: 'Tieftaucher' },
+    { at: 550, name: 'Delfinfreund' },
+    { at: 720, name: 'Sonnenfänger' },
+    { at: 900, name: 'Ozeanmeister' }
+  ];
+
+  var MILESTONES = [10, 25, 50, 75, 100];
+
+  /* Abzeichen. d enthält den Pfad des Symbols, 24 mal 24, nur Kontur. */
+  var AWARDS = [
+    { id: 'early', label: 'Frühstarter', hint: 'Arbeitsbeginn vor 8 Uhr',
+      note: function (s) { return 'Beginn ' + toClock(s.startMin) + ' Uhr, nötig vor 08:00 Uhr'; },
+      d: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.4 5.4l1.9 1.9M16.7 16.7l1.9 1.9M18.6 5.4l-1.9 1.9M7.3 16.7l-1.9 1.9"/>' },
+    { id: 'coffee', label: 'Pausenheld', hint: '30 Minuten Pause erfasst',
+      note: function (s) { return Math.min(30, s.pauseTotal) + ' von 30 min'; },
+      d: '<path d="M5 8h11v5.4a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V8Z"/><path d="M16 9.6h1.8a2.2 2.2 0 0 1 0 4.4H16"/><path d="M8 4.4c.9.8.9 1.6 0 2.4M11.4 4.4c.9.8.9 1.6 0 2.4"/>' },
+    { id: 'balance', label: 'Ausgeglichen', hint: 'Zwei Pausen erfasst',
+      note: function (s) { return Math.min(2, s.pauseCount) + ' von 2 Pausen'; },
+      d: '<rect x="4" y="5.2" width="16" height="13.6" rx="3"/><path d="M9.6 9v6M14.4 9v6"/>' },
+    { id: 'law', label: 'Regelkonform', hint: 'Pflichtpause nach Arbeitszeitgesetz erfüllt',
+      note: function (s) {
+        if (s.lawNeed === 0) return 'Diese Sollzeit fordert keine Pause';
+        return Math.min(s.lawNeed, s.pauseTotal) + ' von ' + s.lawNeed + ' min';
+      },
+      d: '<path d="M12 3.2l7 2.8v5.6c0 4-2.9 7-7 9-4.1-2-7-5-7-9V6l7-2.8Z"/><path d="M9 12.2l2.2 2.2 4.2-4.4"/>' },
+    { id: 'half', label: 'Halbzeit', hint: '50 Prozent der Sollzeit',
+      note: function (s) { return Math.round(s.percent) + ' von 50 Prozent'; },
+      d: '<circle cx="12" cy="12" r="8.2"/><path d="M12 3.8a8.2 8.2 0 0 0 0 16.4Z" fill="currentColor" stroke="none"/>' },
+    { id: 'target', label: 'Sollzeit', hint: '100 Prozent der Sollzeit',
+      note: function (s) { return Math.round(s.percent) + ' von 100 Prozent'; },
+      d: '<path d="M12 4l2.5 5.1 5.6.8-4.1 4 1 5.6L12 16.8 7 19.5l1-5.6-4.1-4 5.6-.8L12 4Z"/>' },
+    { id: 'exact', label: 'Punktlandung', hint: 'Sollzeit auf fünf Minuten genau getroffen',
+      note: function (s) {
+        var gap = s.targetMin - s.worked;
+        if (gap > 0) return 'noch ' + toDuration(gap) + ' bis zum Fenster';
+        return 'Fenster war vor ' + toDuration(-gap);
+      },
+      d: '<circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>' },
+    { id: 'dolphin', label: 'Delfinfänger', hint: 'Delfin im Sprung angeklickt',
+      note: function () { return 'Der Delfin springt etwa alle zehn Sekunden'; },
+      d: '<path d="M3 14.6c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0"/><path d="M3 9.4c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0" opacity="0.5"/>' },
+    { id: 'sun', label: 'Sonnenschieber', hint: 'Sonne über den Himmel gezogen',
+      note: function () { return 'Sonne oben rechts greifen und ziehen'; },
+      d: '<path d="M12 4v16M4 12h16M12 4l-2.6 2.8M12 4l2.6 2.8M12 20l-2.6-2.8M12 20l2.6-2.8M4 12l2.8-2.6M4 12l2.8 2.6M20 12l-2.8-2.6M20 12l-2.8 2.6"/>' },
+    { id: 'oracle', label: 'Muschelflüsterer', hint: 'Das Muschel-Orakel befragt',
+      note: function () { return 'Die Muschel liegt links im flachen Wasser'; },
+      d: '<path d="M12 20.4C5.6 17 3.1 10.6 5.6 6.9 7.7 3.8 10.4 4.7 12 6.7c1.6-2 4.3-2.9 6.4.2 2.5 3.7 0 10.1-6.4 13.5Z"/><path d="M12 19.6V7.1"/>' },
+    { id: 'wheel', label: 'Glücksritter', hint: 'Glücksrad gedreht',
+      note: function () { return 'Eine Muschel reicht für einen Dreh'; },
+      d: '<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="2.2"/><path d="M12 3.6v5.4M12 15v5.4M3.6 12H9M15 12h5.4"/>' }
+  ];
+
+  var game = {
+    quiet: true,     // beim ersten Rechnen keine Meldungen und kein Konfetti
+    workedXp: 0,
+    xp: 0,
+    level: 0,
+    shells: 1,      // eine Startmuschel, damit das Rad sofort läuft
+    awards: {},
+    marks: {}
+  };
+
+  var hudRing   = document.getElementById('az-level-ring');
+  var hudNum    = document.getElementById('az-level-num');
+  var hudName   = document.getElementById('az-level-name');
+  var hudXp     = document.getElementById('az-level-xp');
+  var shellsEl  = document.getElementById('az-shells');
+  var shellNum  = document.getElementById('az-shell-count');
+  var awardsEl  = document.getElementById('az-awards');
+  var awardsBox = document.querySelector('.az-awards-wrap');
+  var tipEl     = document.getElementById('az-award-tip');
+  var toastsEl  = document.getElementById('az-toasts');
+  var burstEl   = document.getElementById('az-burst');
+  var lawEl     = document.getElementById('law-hint');
+
+  function escapeText(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function findAward(id) {
+    for (var i = 0; i < AWARDS.length; i++) if (AWARDS[i].id === id) return AWARDS[i];
+    return null;
+  }
+
+  // ---- Meldungen ----
+
+  function toast(title, note) {
+    if (game.quiet) return;
+
+    var el = document.createElement('div');
+    el.className = 'az-toast';
+    el.innerHTML = '<strong>' + escapeText(title) + '</strong>' +
+                   (note ? '<span>' + escapeText(note) + '</span>' : '');
+    toastsEl.appendChild(el);
+
+    setTimeout(function () { el.classList.add('is-out'); }, 3400);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 3900);
+  }
+
+  function pulse(el) {
+    if (!el || calm.matches) return;
+    el.classList.remove('is-fresh');
+    void el.offsetWidth;
+    el.classList.add('is-fresh');
+  }
+
+  // ---- Konfetti aus Blasen und Farbtupfern ----
+
+  function burstAt(x, y) {
+    if (game.quiet || calm.matches || !view || !burstEl) return;
+
+    var colors = ['#ff5a4d', '#ff9a3c', '#ffe04a', '#4fdd7e', '#45d0ff', '#b77bff', '#ffffff'];
+    var count = 16;
+    var bits = [];
+    var html = '';
+
+    for (var i = 0; i < count; i++) {
+      bits.push({
+        a: (Math.PI * 2 * i) / count + Math.random() * 0.35,
+        v: 42 + Math.random() * 58,
+        r: 2 + Math.random() * 2.6
+      });
+      html += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' +
+              bits[i].r.toFixed(1) + '" fill="' + colors[i % colors.length] + '"/>';
+    }
+
+    burstEl.innerHTML = html;
+    var dots = burstEl.children;
+    var t0 = performance.now();
+
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / 950);
+      for (var i = 0; i < dots.length; i++) {
+        var b = bits[i];
+        var d = b.v * (1 - Math.pow(1 - p, 2));
+        dots[i].setAttribute('cx', (x + Math.cos(b.a) * d).toFixed(1));
+        dots[i].setAttribute('cy', (y + Math.sin(b.a) * d + p * p * 26).toFixed(1));
+        dots[i].setAttribute('opacity', (1 - p).toFixed(2));
+      }
+      if (p < 1) requestAnimationFrame(step);
+      else burstEl.innerHTML = '';
+    });
+  }
+
+  // ---- Abzeichen ----
+
+  function renderAwards() {
+    awardsEl.innerHTML = AWARDS.map(function (a) {
+      var open = !!game.awards[a.id];
+      return '<button type="button" class="az-award' + (open ? ' is-open' : '') +
+             '" data-award="' + a.id + '" aria-pressed="' + (open ? 'true' : 'false') + '" ' +
+             'aria-label="' + escapeText(a.label + ', ' + (open ? 'freigeschaltet' : 'offen') + ', ' + a.hint) + '">' +
+             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+             'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + a.d + '</svg>' +
+             '</button>';
+    }).join('');
+
+    if (tipFor) showTip(tipFor, tipSticky);
+  }
+
+  /* Ein Tipp pro Abzeichen. Er nennt die Bedingung und den Stand.
+     Maus zeigt ihn beim Überfahren, Finger und Tastatur beim Antippen. */
+  var tipFor = null;
+  var tipSticky = false;
+
+  var lastState = {
+    worked: 0, percent: 0, pauseTotal: 0, pauseCount: 0,
+    startMin: 540, targetMin: 480, lawNeed: 30
+  };
+
+  function hideTip() {
+    tipFor = null;
+    tipSticky = false;
+    tipEl.hidden = true;
+  }
+
+  function showTip(id, sticky) {
+    var a = findAward(id);
+    var badge = awardsEl.querySelector('[data-award="' + id + '"]');
+    if (!a || !badge) return;
+
+    var open = !!game.awards[id];
+    var note = '';
+
+    if (open) {
+      note = 'Freigeschaltet, plus eine Muschel';
+    } else if (a.note) {
+      note = a.note(lastState);
+    } else {
+      note = 'Noch offen';
+    }
+
+    tipEl.className = 'az-award-tip ' + (open ? 'is-open' : 'is-locked');
+    tipEl.innerHTML = '<strong>' + escapeText(a.label) + '</strong>' +
+                      escapeText(a.hint) +
+                      '<span class="az-tip-state">' + escapeText(note) + '</span>';
+    tipEl.hidden = false;
+
+    // Waagerecht auf das Abzeichen zentrieren, am Rand einrücken
+    var half = tipEl.offsetWidth / 2;
+    var room = awardsBox.clientWidth;
+    var mid = badge.offsetLeft + badge.offsetWidth / 2;
+
+    tipEl.style.left = clamp(mid, half + 6, Math.max(half + 6, room - half - 6)).toFixed(0) + 'px';
+    tipEl.style.bottom = (awardsBox.clientHeight - badge.offsetTop + 9).toFixed(0) + 'px';
+
+    tipFor = id;
+    tipSticky = !!sticky;
+  }
+
+  awardsEl.addEventListener('click', function (event) {
+    var badge = event.target.closest('[data-award]');
+    if (!badge) return;
+
+    var id = badge.dataset.award;
+    if (tipFor === id && tipSticky) hideTip();
+    else showTip(id, true);
+  });
+
+  document.addEventListener('click', function (event) {
+    if (tipSticky && !awardsBox.contains(event.target)) hideTip();
+  });
+
+  awardsEl.addEventListener('pointerover', function (event) {
+    if (event.pointerType !== 'mouse' || tipSticky) return;
+    var badge = event.target.closest('[data-award]');
+    if (badge) showTip(badge.dataset.award, false);
+  });
+
+  awardsBox.addEventListener('pointerleave', function (event) {
+    if (event.pointerType === 'mouse' && !tipSticky) hideTip();
+  });
+
+  awardsEl.addEventListener('focusin', function (event) {
+    var badge = event.target.closest('[data-award]');
+    if (badge) showTip(badge.dataset.award, true);
+  });
+
+  awardsEl.addEventListener('focusout', function (event) {
+    if (!awardsEl.contains(event.relatedTarget)) hideTip();
+  });
+
+  function unlock(id) {
+    if (game.awards[id]) return;
+    var a = findAward(id);
+    if (!a) return;
+
+    game.awards[id] = true;
+    game.shells += 1;
+    renderAwards();
+
+    var fresh = awardsEl.querySelector('[data-award="' + id + '"]');
+    if (fresh && !calm.matches) fresh.classList.add('is-new');
+
+    toast('Abzeichen ' + a.label, '+1 Muschel');
+    pulse(shellsEl);
+
+    if (tipFor === id) showTip(id, tipSticky);
+  }
+
+  // ---- Kopfzeile ----
+
+  function renderHud() {
+    var marks = 0;
+    MILESTONES.forEach(function (m) { if (game.marks[m]) marks++; });
+    var awards = Object.keys(game.awards).length;
+
+    game.xp = game.workedXp + marks * 25 + awards * 40;
+
+    var lvl = 0;
+    for (var i = 0; i < LEVELS.length; i++) if (game.xp >= LEVELS[i].at) lvl = i;
+
+    if (lvl > game.level) {
+      game.shells += 1;
+      toast('Stufe ' + (lvl + 1) + ', ' + LEVELS[lvl].name, '+1 Muschel');
+      pulse(shellsEl);
+      if (lastPoint) burstAt(lastPoint.x, lastPoint.y);
+    }
+    game.level = lvl;
+
+    var base = LEVELS[lvl].at;
+    var next = lvl + 1 < LEVELS.length ? LEVELS[lvl + 1].at : null;
+    var deg = next ? clamp((game.xp - base) / (next - base), 0, 1) * 360 : 360;
+
+    hudRing.style.setProperty('--az-xp', deg.toFixed(1) + 'deg');
+    hudNum.textContent = String(lvl + 1);
+    hudName.textContent = LEVELS[lvl].name;
+    hudXp.textContent = next
+      ? game.xp + ' von ' + next + ' XP'
+      : game.xp + ' XP, höchste Stufe';
+
+    shellNum.textContent = String(game.shells);
+    updateSpinButton();
+  }
+
+  /* Wird am Ende jeder Berechnung aufgerufen. */
+  function updateGame(s) {
+    lastState = s;
+    game.workedXp = Math.round(s.worked);
+
+    MILESTONES.forEach(function (m) {
+      if (game.marks[m] || s.percent < m) return;
+      game.marks[m] = true;
+      game.shells += 1;
+      toast(m + ' Prozent der Sollzeit', '+1 Muschel');
+      pulse(shellsEl);
+      if (lastPoint) burstAt(lastPoint.x, lastPoint.y);
+    });
+
+    if (s.startMin < 480) unlock('early');
+    if (s.pauseTotal >= 30) unlock('coffee');
+    if (s.pauseCount >= 2) unlock('balance');
+    if (s.lawNeed > 0 && s.pauseTotal >= s.lawNeed) unlock('law');
+    if (s.percent >= 50) unlock('half');
+    if (s.percent >= 100) unlock('target');
+    if (s.worked >= s.targetMin && s.worked <= s.targetMin + 5) unlock('exact');
+
+    renderHud();
+  }
+
+  // ---- Delfin fangen ----
+
+  dolphinEl.addEventListener('pointerdown', function (event) {
+    if (!jump || jump.caught) return;
+    event.preventDefault();
+
+    jump.caught = true;
+    game.shells += 1;
+    burstAt(jump.x || 0, jump.y || 0);
+    dolphinEl.setAttribute('opacity', '0');
+    splashEl.setAttribute('opacity', '0');
+    jump = null;
+
+    toast('Delfin gefangen', '+1 Muschel');
+    pulse(shellsEl);
+    unlock('dolphin');
+    renderHud();
+  });
+
+  // ============================================================
+  //  Glücksrad, Felder frei belegbar
+  // ============================================================
+
+  var WHEEL_COLORS = ['#ff5a4d', '#ff9a3c', '#ffe04a', '#4fdd7e', '#45d0ff', '#6e8bff', '#b77bff', '#ff8fc4'];
+
+  var WHEEL_DEFAULT = [
+    'Kaffee holen',
+    'Fünf Minuten Sonne',
+    'Lieblingssong hören',
+    'Kurz strecken',
+    'Snack',
+    'Frische Luft',
+    'Tisch aufräumen',
+    'Kollegen loben'
+  ];
+
+  var wheelItems = WHEEL_DEFAULT.slice();
+  var wheelAngle = 0;
+  var spinning = false;
+
+  var modal      = document.getElementById('az-wheel-modal');
+  var openBtn    = document.getElementById('az-wheel-open');
+  var closeBtn   = document.getElementById('az-wheel-close');
+  var spinBtn    = document.getElementById('az-wheel-spin-btn');
+  var editBtn    = document.getElementById('az-wheel-edit-btn');
+  var editBox    = document.getElementById('az-wheel-edit');
+  var fieldsEl   = document.getElementById('az-wheel-fields');
+  var gripsEl    = document.getElementById('az-wheel-grips');
+  var segsEl     = document.getElementById('az-wheel-segs');
+  var spinGroup  = document.getElementById('az-wheel-spin');
+  var wheelBrow  = document.getElementById('az-wheel-eyebrow');
+  var wheelOut   = document.getElementById('az-wheel-out');
+
+  function colorAt(i) {
+    return WHEEL_COLORS[i % WHEEL_COLORS.length];
+  }
+
+  // Winkel im Uhrzeigersinn, null zeigt nach oben zur Nadel
+  function polar(angle, radius) {
+    var rad = angle * Math.PI / 180;
+    return { x: radius * Math.sin(rad), y: -radius * Math.cos(rad) };
+  }
+
+  function shortLabel(text) {
+    var clean = String(text).trim() || 'Freilos';
+    return clean.length > 17 ? clean.slice(0, 16) + '…' : clean;
+  }
+
+  function renderGrips() {
+    var out = '';
+    for (var i = 0; i < 8; i++) {
+      out += '<g transform="rotate(' + (i * 45 + 22.5) + ')">' +
+             '<rect x="-4.6" y="-123" width="9.2" height="20" rx="4.6" ' +
+             'fill="url(#az-rim-grad)" stroke="#ffffff" stroke-width="1.3"/></g>';
+    }
+    gripsEl.innerHTML = out;
+  }
+
+  function renderWheel() {
+    var n = wheelItems.length;
+    var seg = 360 / n;
+    var r = 100;
+    var out = '';
+    var i, a0, a1, mid, p0, p1;
+
+    for (i = 0; i < n; i++) {
+      a0 = i * seg;
+      a1 = a0 + seg;
+      p0 = polar(a0, r);
+      p1 = polar(a1, r);
+      out += '<path d="M0,0 L' + p0.x.toFixed(2) + ',' + p0.y.toFixed(2) +
+             ' A' + r + ',' + r + ' 0 ' + (seg > 180 ? 1 : 0) + ' 1 ' +
+             p1.x.toFixed(2) + ',' + p1.y.toFixed(2) + ' Z" fill="' + colorAt(i) +
+             '" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>';
+    }
+
+    for (i = 0; i < n; i++) {
+      mid = i * seg + seg / 2;
+      var flip = mid > 180;
+      var rot = flip ? mid + 90 : mid - 90;
+      var tx = flip ? -(r - 10) : (r - 10);
+      out += '<text class="az-wheel-label" text-anchor="' + (flip ? 'start' : 'end') + '" ' +
+             'dominant-baseline="middle" transform="rotate(' + rot.toFixed(2) +
+             ') translate(' + tx.toFixed(1) + ',0)">' + escapeText(shortLabel(wheelItems[i])) + '</text>';
+    }
+
+    segsEl.innerHTML = out;
+  }
+
+  function renderFields() {
+    fieldsEl.innerHTML = wheelItems.map(function (text, i) {
+      return '<div class="az-seg">' +
+        '<span class="az-seg-dot" style="background:' + colorAt(i) + '"></span>' +
+        '<input type="text" maxlength="28" data-seg="' + i + '" value="' + escapeText(text) +
+        '" aria-label="Feld ' + (i + 1) + '">' +
+        '<button type="button" class="btn-remove" data-seg-remove="' + i + '" ' +
+        'aria-label="Feld ' + (i + 1) + ' entfernen" title="Feld entfernen">×</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function setWheelOut(brow, text) {
+    wheelBrow.textContent = brow;
+    wheelOut.textContent = text;
+  }
+
+  function updateSpinButton() {
+    if (!spinBtn) return;
+    var ready = game.shells > 0 && !spinning;
+    spinBtn.disabled = !ready;
+    spinBtn.textContent = spinning
+      ? 'Rad dreht'
+      : (game.shells > 0 ? 'Drehen, 1 Muschel' : 'Erst eine Muschel verdienen');
+  }
+
+  function spinWheel() {
+    if (spinning || game.shells < 1 || wheelItems.length < 2) return;
+
+    game.shells -= 1;
+    spinning = true;
+    updateSpinButton();
+    shellNum.textContent = String(game.shells);
+    setWheelOut('Läuft', 'Das Rad dreht');
+
+    var n = wheelItems.length;
+    var seg = 360 / n;
+    var winner = Math.floor(Math.random() * n);
+    var jitter = (Math.random() - 0.5) * seg * 0.6;
+    var aim = ((360 - (winner * seg + seg / 2) + jitter) % 360 + 360) % 360;
+    var cur = ((wheelAngle % 360) + 360) % 360;
+    var delta = ((aim - cur) % 360 + 360) % 360;
+    var from = wheelAngle;
+    var to = wheelAngle + (4 + Math.floor(Math.random() * 3)) * 360 + delta;
+    var span = calm.matches ? 700 : 4300;
+    var t0 = performance.now();
+
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / span);
+      wheelAngle = from + (to - from) * (1 - Math.pow(1 - p, 4));
+      spinGroup.setAttribute('transform', 'rotate(' + wheelAngle.toFixed(2) + ')');
+
+      if (p < 1) {
+        requestAnimationFrame(step);
+        return;
+      }
+
+      wheelAngle = to;
+      spinning = false;
+
+      var prize = String(wheelItems[winner]).trim() || 'Freilos';
+      setWheelOut('Gewonnen', prize);
+      unlock('wheel');
+      toast('Glücksrad, ' + prize, '');
+      renderHud();
+    });
+  }
+
+  function openWheel() {
+    modal.hidden = false;
+    updateSpinButton();
+    spinBtn.focus();
+  }
+
+  function closeWheel() {
+    modal.hidden = true;
+    openBtn.focus();
+  }
+
+  openBtn.addEventListener('click', openWheel);
+  closeBtn.addEventListener('click', closeWheel);
+  spinBtn.addEventListener('click', spinWheel);
+
+  modal.addEventListener('click', function (event) {
+    if (event.target === modal) closeWheel();
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && tipFor) hideTip();
+    if (modal.hidden) return;
+
+    if (event.key === 'Escape') {
+      closeWheel();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    // Fokus bleibt im Dialog
+    var able = [];
+    modal.querySelectorAll('button:not([disabled]), input').forEach(function (el) {
+      if (el.offsetParent !== null) able.push(el);
+    });
+    if (!able.length) return;
+
+    var first = able[0];
+    var last = able[able.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
+  editBtn.addEventListener('click', function () {
+    var open = editBox.hidden;
+    editBox.hidden = !open;
+    editBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    editBtn.textContent = open ? 'Felder ausblenden' : 'Felder bearbeiten';
+    if (open) renderFields();
+  });
+
+  fieldsEl.addEventListener('input', function (event) {
+    var field = event.target.closest('[data-seg]');
+    if (!field) return;
+    wheelItems[Number(field.dataset.seg)] = field.value;
+    renderWheel();
+  });
+
+  fieldsEl.addEventListener('click', function (event) {
+    var kill = event.target.closest('[data-seg-remove]');
+    if (!kill) return;
+    if (wheelItems.length <= 2) {
+      setWheelOut('Nicht möglich', 'Das Rad braucht mindestens zwei Felder');
+      return;
+    }
+    wheelItems.splice(Number(kill.dataset.segRemove), 1);
+    renderFields();
+    renderWheel();
+  });
+
+  document.getElementById('az-wheel-add').addEventListener('click', function () {
+    if (wheelItems.length >= 12) {
+      setWheelOut('Nicht möglich', 'Zwölf Felder sind das Maximum');
+      return;
+    }
+    wheelItems.push('Neues Feld');
+    renderFields();
+    renderWheel();
+    var all = fieldsEl.querySelectorAll('[data-seg]');
+    var last = all[all.length - 1];
+    if (last) { last.focus(); last.select(); }
+  });
+
+  document.getElementById('az-wheel-reset').addEventListener('click', function () {
+    wheelItems = WHEEL_DEFAULT.slice();
+    renderFields();
+    renderWheel();
+    setWheelOut('Zurückgesetzt', 'Standardfelder sind geladen');
+  });
+
+  // ---- Arbeitsbeginn auf jetzt setzen ----
+
+  document.getElementById('start-now').addEventListener('click', function () {
+    var now = new Date();
+    document.getElementById('start').value =
+      String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    calculate();
+  });
+
+  // ============================================================
+  //  Wunschfeierabend
+  //  Rein nachrichtlich. Der Wunsch verschiebt weder die Sollzeit noch
+  //  die Pausen, er nennt nur den Abstand zum berechneten Feierabend.
+  // ============================================================
+
+  var wishEl    = document.getElementById('wish');
+  var wishClear = document.getElementById('wish-clear');
+  var wishNote  = document.getElementById('wish-note');
+  var wishLine  = document.getElementById('wish-line');
+  var lastPlan  = null;
+
+  function paintWish(plan) {
+    if (plan) lastPlan = plan;
+    else if (lastPlan) plan = lastPlan;
+    else return;
+
+    var wish = toMinutes(wishEl.value);
+
+    wishClear.hidden = wish === null;
+
+    if (wish === null) {
+      wishNote.textContent = 'Optional. Der Wunsch ändert die Sollzeit nicht, er zeigt nur den Abstand.';
+      wishLine.hidden = true;
+      wishMark.setAttribute('opacity', '0');
+      return;
+    }
+
+    var gap = wish - plan.endsAt;
+    var note = '';
+
+    if (gap === 0) {
+      note = 'Deckt sich mit dem berechneten Feierabend.';
+      wishLine.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, genau im Plan';
+    } else if (gap < 0) {
+      note = toDuration(-gap) + ' früher als ' + toClock(plan.endsAt) + ' Uhr, das ergibt ' +
+             toDuration(-gap) + ' Minus.';
+      wishLine.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, ' + toDuration(-gap) + ' früher';
+    } else {
+      note = toDuration(gap) + ' später als ' + toClock(plan.endsAt) + ' Uhr, das ergibt ' +
+             toDuration(gap) + ' Plus.';
+      wishLine.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, ' + toDuration(gap) + ' später';
+    }
+
+    // Stille Hinweise, ohne Warnfarbe im Vordergrund
+    var flags = [];
+    var netWork = wish - plan.startMin - plan.pauseTotal;
+
+    if (netWork > 600) flags.push('Über 10 Stunden Arbeitszeit.');
+    if (netWork < 0) flags.push('Der Wunsch liegt vor dem Arbeitsbeginn.');
+    else if (wish < minutesNow()) flags.push('Die Wunschzeit ist vorbei.');
+
+    wishNote.innerHTML = escapeText(note) +
+      (flags.length ? ' <span class="az-wish-flag">' + escapeText(flags.join(' ')) + '</span>' : '');
+
+    wishLine.hidden = false;
+
+    // Dünne Marke auf dem Bogen, an der Stelle der Wunschzeit
+    if (!bandLength || plan.targetMin <= 0) {
+      wishMark.setAttribute('opacity', '0');
+      return;
+    }
+
+    var share = clamp(netWork / plan.targetMin, 0, 1);
+    var at = bandLength * share;
+    var point = midBand.getPointAtLength(at);
+    var back = midBand.getPointAtLength(Math.max(0, at - 3));
+    var fore = midBand.getPointAtLength(Math.min(bandLength, at + 3));
+    var tilt = Math.atan2(fore.y - back.y, fore.x - back.x) * 180 / Math.PI;
+
+    wishMark.setAttribute('transform',
+      'translate(' + point.x.toFixed(1) + ',' + point.y.toFixed(1) + ') rotate(' + tilt.toFixed(1) + ')');
+    wishMark.setAttribute('opacity', '1');
+  }
+
+  wishClear.addEventListener('click', function () {
+    wishEl.value = '';
+    calculate();
+    wishEl.focus();
+  });
+
+  wishEl.addEventListener('input', calculate);
+
+  // ============================================================
+  //  Countdown zur Mittagspause
+  //  Zielzeit ist der Beginn der nächsten erfassten Pause. Läuft die
+  //  Pause, zählt der Rest der Pause herunter.
+  // ============================================================
+
+  var lunchEl    = document.getElementById('az-lunch');
+  var lunchBrow  = document.getElementById('az-lunch-eyebrow');
+  var lunchClock = document.getElementById('az-lunch-clock');
+  var lunchLine  = document.getElementById('az-lunch-line');
+  var lunchMeta  = document.getElementById('az-lunch-meta');
+  var lunchArc   = document.getElementById('az-lunch-arc');
+  var lunchPct   = document.getElementById('az-lunch-pct');
+  var lunchPlan  = document.getElementById('az-lunch-plan');
+
+  var LUNCH_RING = 2 * Math.PI * 16;
+  var lunchWatch = null;   // Zustand aus dem letzten Takt
+
+  function secondsNow() {
+    var d = new Date();
+    return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+  }
+
+  function toCountdown(seconds) {
+    var sec = Math.max(0, Math.round(seconds));
+    var h = Math.floor(sec / 3600);
+    var m = Math.floor((sec % 3600) / 60);
+    var rest = sec % 60;
+    var mm = String(m).padStart(2, '0');
+    var ss = String(rest).padStart(2, '0');
+    return h > 0 ? h + ':' + mm + ':' + ss : mm + ':' + ss;
+  }
+
+  /* Nächste Pause aus den Eingaben. Vier Zustände:
+     wait laufende Vorfreude, now Pause läuft, done alle Pausen vorbei,
+     none keine Pause erfasst. */
+  function nextBreak() {
+    var now = secondsNow();
+    var soon = null;
+    var live = null;
+    var over = 0;
+
+    document.querySelectorAll('#pauses .az-pause-entry').forEach(function (entry) {
+      var f = entry.querySelectorAll('input[type="time"]');
+      var from = toMinutes(f[0].value);
+      var to = toMinutes(f[1].value);
+      if (from === null) return;
+
+      var slot = {
+        from: from,
+        to: to,
+        fromSec: from * 60,
+        toSec: to === null ? null : to * 60
+      };
+
+      if (now < slot.fromSec) {
+        if (!soon || slot.fromSec < soon.fromSec) soon = slot;
+        return;
+      }
+
+      if (slot.toSec === null || now < slot.toSec) {
+        live = slot;
+        return;
+      }
+
+      over++;
+    });
+
+    if (live) return { state: 'now', slot: live };
+    if (soon) return { state: 'wait', slot: soon };
+    if (over) return { state: 'done', slot: null };
+    return { state: 'none', slot: null };
+  }
+
+  /* Die Ansage wird knapper, je näher die Pause rückt. */
+  function lunchWords(minutes) {
+    if (minutes > 120) return 'Langer Block. Ein Thema nach dem anderen abarbeiten.';
+    if (minutes >= 60) return 'Noch ein Arbeitsblock, dann Pause.';
+    if (minutes >= 30) return 'Weniger als eine Stunde. Das reicht für eine Aufgabe.';
+    if (minutes >= 15) return 'Letzte Runde. Aufgabe zu Ende bringen.';
+    if (minutes >= 5)  return 'Fast geschafft. Notizen für später anlegen.';
+    if (minutes >= 1)  return 'Gleich Pause. Speichern und aufstehen.';
+    return 'Pause startet. Bildschirm loslassen.';
+  }
+
+  /* Schreibt nur bei echter Änderung. Der Takt läuft jede Sekunde, und
+     die Ansage steckt in einer Live-Region. */
+  function setText(el, value) {
+    if (el.textContent !== value) el.textContent = value;
+  }
+
+  function setLunchRing(part) {
+    var t = clamp(part, 0, 1);
+    lunchArc.setAttribute('stroke-dashoffset', (LUNCH_RING * (1 - t)).toFixed(1));
+    setText(lunchPct, Math.round(t * 100) + ' %');
+  }
+
+  function paintLunch() {
+    var startMin = toMinutes(document.getElementById('start').value);
+    var info = nextBreak();
+    var now = secondsNow();
+
+    lunchEl.classList.remove('is-soon', 'is-now', 'is-done', 'is-none');
+    lunchPlan.hidden = info.state !== 'none';
+
+    if (info.state === 'none') {
+      lunchEl.classList.add('is-none');
+      setText(lunchBrow, 'Mittagspause');
+      setText(lunchClock, 'nicht geplant');
+      setText(lunchLine, 'Ohne Pause wird der Nachmittag lang. Jetzt eine eintragen.');
+      setText(lunchMeta, '');
+      setLunchRing(0);
+
+    } else if (info.state === 'done') {
+      lunchEl.classList.add('is-done');
+      setText(lunchBrow, 'Mittagspause');
+      setText(lunchClock, 'erledigt');
+      setText(lunchLine, 'Pause sitzt. Jetzt zählt nur noch der Feierabend.');
+      setText(lunchMeta, '');
+      setLunchRing(1);
+
+    } else if (info.state === 'now') {
+      var slot = info.slot;
+      var span = slot.toSec === null ? 0 : slot.toSec - slot.fromSec;
+
+      lunchEl.classList.add('is-now');
+      setText(lunchBrow, slot.toSec === null ? 'Pause läuft' : 'Pause läuft, Rest');
+      setText(lunchClock, slot.toSec === null ? 'offen' : toCountdown(slot.toSec - now));
+      setText(lunchLine, 'Die Zeit gehört der Pause. Aufstehen, Fenster auf, Augen weg vom Schirm.');
+      setText(lunchMeta, toClock(slot.from) + ' bis ' +
+        (slot.to === null ? 'offen' : toClock(slot.to) + ' Uhr'));
+      setLunchRing(span > 0 ? (now - slot.fromSec) / span : 0);
+
+    } else {
+      var next = info.slot;
+      var left = next.fromSec - now;
+      var minutes = left / 60;
+
+      setText(lunchBrow, 'Mittagspause in');
+      setText(lunchClock, toCountdown(left));
+      setText(lunchLine, lunchWords(minutes));
+      setText(lunchMeta, 'geplant ' + toClock(next.from) +
+        (next.to === null ? '' : ' bis ' + toClock(next.to)) + ' Uhr');
+      if (minutes <= 5) lunchEl.classList.add('is-soon');
+
+      // Der Ring füllt sich vom Arbeitsbeginn bis zur Pause
+      var openedAt = startMin === null ? next.fromSec - 3600 : startMin * 60;
+      var stretch = next.fromSec - openedAt;
+      setLunchRing(stretch > 0 ? (now - openedAt) / stretch : 0);
+    }
+
+    // Belohnung, sobald die Pause anfängt
+    if (info.state === 'now' && lunchWatch === 'wait') {
+      game.shells += 1;
+      toast('Mittagspause erreicht', '+1 Muschel');
+      pulse(shellsEl);
+      if (lastPoint) burstAt(lastPoint.x, lastPoint.y);
+      renderHud();
+    }
+
+    if (info.state === 'done' && lunchWatch === 'now') {
+      toast('Pause vorbei', 'weiter geht es');
+    }
+
+    lunchWatch = info.state;
+  }
+
+  /* Trägt eine halbe Stunde Mittagspause ein, ab 12 Uhr oder ab der
+     nächsten Viertelstunde, wenn es dafür schon zu spät ist. */
+  lunchPlan.addEventListener('click', function () {
+    var base = Math.max(12 * 60, Math.ceil((minutesNow() + 5) / 15) * 15);
+    base = Math.min(base, 23 * 60);
+
+    var entry = document.createElement('div');
+    entry.className = 'az-pause-entry';
+    entry.innerHTML =
+      '<input type="time" value="' + toClock(base) + '" aria-label="Pause von">' +
+      '<span class="az-sep">bis</span>' +
+      '<input type="time" value="' + toClock(base + 30) + '" aria-label="Pause bis">' +
+      '<button type="button" class="btn-remove" data-remove-pause title="Pause entfernen" aria-label="Pause entfernen">×</button>';
+
+    document.getElementById('pauses').appendChild(entry);
+    layout();
+    calculate();
+  });
+
+  // ============================================================
+  //  Muschel-Orakel
+  //  Kurze Antworten auf Entscheidungsfragen. Der Zufall entscheidet,
+  //  bei Pause, Feierabend und Überstunden hört die Muschel auf die Uhr.
+  // ============================================================
+
+  var oracleModal  = document.getElementById('az-oracle-modal');
+  var oracleShell  = document.getElementById('az-oracle-shell');
+  var oracleClose  = document.getElementById('az-oracle-close');
+  var oracleAskBtn = document.getElementById('az-oracle-ask');
+  var oracleInput  = document.getElementById('az-oracle-input');
+  var oracleBrow   = document.getElementById('az-oracle-eyebrow');
+  var oracleText   = document.getElementById('az-oracle-text');
+  var oracleUpper  = document.getElementById('az-oracle-upper');
+  var oracleBubble = document.getElementById('az-oracle-bubbles');
+  var oracleHints  = document.getElementById('az-oracle-hints');
+
+  var ORACLE_YES = [
+    'Ja.',
+    'Ganz sicher.',
+    'Die Muschel nickt.',
+    'Sofort.',
+    'Ja, ohne Zögern.',
+    'Das Wasser ist klar. Ja.'
+  ];
+
+  var ORACLE_NO = [
+    'Nein.',
+    'Besser nicht.',
+    'Auf keinen Fall.',
+    'Heute nicht.',
+    'Die Muschel klappt zu.',
+    'Nein, und zwar deutlich.'
+  ];
+
+  var ORACLE_MAYBE = [
+    'Frag nach der Pause noch einmal.',
+    'Vielleicht morgen.',
+    'Die Strömung ist unklar.',
+    'Zwei Sandkörner sagen ja, drei sagen nein.',
+    'Erst die Aufgabe fertig machen, dann fragen.',
+    'Die Muschel schweigt dazu.'
+  ];
+
+  var oracleAsking = false;
+  var oracleLast = '';
+  var oracleKept = '';
+
+  function pick(list) {
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  /* Sonderfälle gehen vor dem Zufall. */
+  function oracleReply(question) {
+    var q = question.toLowerCase();
+    var s = lastState;
+    var open = Math.max(0, s.targetMin - s.worked);
+    var lawOpen = Math.max(0, s.lawNeed - s.pauseTotal);
+
+    if (q.indexOf('muschel') !== -1 || q.indexOf('orakel') !== -1) {
+      return 'Die Muschel spricht nicht über sich.';
+    }
+
+    if (q.indexOf('pause') !== -1) {
+      if (lawOpen > 0) return 'Ja. Es fehlen noch ' + toDuration(lawOpen) + ' Pflichtpause.';
+      if (s.pauseTotal === 0) return 'Ja, und zwar jetzt.';
+      return pick(ORACLE_YES);
+    }
+
+    if (q.indexOf('kaffee') !== -1 || q.indexOf('tee') !== -1) {
+      return 'Immer.';
+    }
+
+    if (q.indexOf('überstunden') !== -1 || q.indexOf('länger') !== -1 || q.indexOf('mehrarbeit') !== -1) {
+      return 'Die Muschel rät ab.';
+    }
+
+    if (q.indexOf('feierabend') !== -1 || q.indexOf('heim') !== -1 ||
+        q.indexOf('nach hause') !== -1 || q.indexOf('reicht') !== -1 || q.indexOf('gehen') !== -1) {
+      if (s.percent >= 100) return 'Ja. Die Sollzeit steht, der Rest ist Kür.';
+      return 'Noch nicht. Es fehlen ' + toDuration(open) + '.';
+    }
+
+    if (q.indexOf('urlaub') !== -1 || q.indexOf('frei') !== -1) {
+      return 'Sobald der Antrag draußen ist.';
+    }
+
+    if (q.indexOf('meeting') !== -1 || q.indexOf('termin') !== -1 || q.indexOf('besprechung') !== -1) {
+      return 'Nur mit Agenda.';
+    }
+
+    if (q.indexOf('montag') !== -1 || q.indexOf('freitag') !== -1) {
+      return 'Der Wochentag ändert nichts an der Antwort.';
+    }
+
+    var roll = Math.random();
+    if (roll < 0.42) return pick(ORACLE_YES);
+    if (roll < 0.78) return pick(ORACLE_NO);
+    return pick(ORACLE_MAYBE);
+  }
+
+  function setOracle(brow, text) {
+    oracleBrow.textContent = brow;
+    oracleText.textContent = text;
+  }
+
+  function oracleLid(angle) {
+    oracleUpper.setAttribute('transform', 'rotate(' + angle.toFixed(1) + ', 0, 40)');
+  }
+
+  function oracleBubbles() {
+    if (calm.matches) return;
+
+    var bits = [];
+    var html = '';
+
+    for (var i = 0; i < 7; i++) {
+      bits.push({
+        x: -16 + Math.random() * 32,
+        r: 1.6 + Math.random() * 2.4,
+        lift: 40 + Math.random() * 34,
+        delay: Math.random() * 0.4
+      });
+      html += '<circle r="' + bits[i].r.toFixed(1) + '" fill="#ffffff" opacity="0"/>';
+    }
+
+    oracleBubble.innerHTML = html;
+    var dots = oracleBubble.children;
+    var t0 = performance.now();
+
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / 1400);
+
+      for (var i = 0; i < dots.length; i++) {
+        var b = bits[i];
+        var local = clamp((p - b.delay) / (1 - b.delay), 0, 1);
+        dots[i].setAttribute('cx', (b.x + Math.sin(local * 6 + i) * 3).toFixed(1));
+        dots[i].setAttribute('cy', (24 - b.lift * local).toFixed(1));
+        dots[i].setAttribute('opacity', (Math.sin(local * Math.PI) * 0.8).toFixed(2));
+      }
+
+      if (p < 1) requestAnimationFrame(step);
+      else oracleBubble.innerHTML = '';
+    });
+  }
+
+  function updateOracleButton() {
+    oracleAskBtn.disabled = oracleAsking || game.shells < 1;
+    oracleAskBtn.textContent = oracleAsking
+      ? 'Die Muschel horcht'
+      : (game.shells > 0 ? 'Fragen, 1 Muschel' : 'Erst eine Muschel verdienen');
+  }
+
+  function askOracle() {
+    if (oracleAsking) return;
+
+    var question = oracleInput.value.trim();
+
+    if (!question) {
+      setOracle('Noch keine Frage', 'Erst eine Frage eintippen.');
+      oracleInput.focus();
+      return;
+    }
+
+    if (game.shells < 1) {
+      setOracle('Keine Muschel', 'Meilenstein erreichen und Muschel verdienen.');
+      return;
+    }
+
+    if (question.toLowerCase() === oracleLast) {
+      setOracle('Schon gefragt, die Antwort bleibt', oracleKept);
+      return;
+    }
+
+    game.shells -= 1;
+    shellNum.textContent = String(game.shells);
+    oracleAsking = true;
+    oracleLast = question.toLowerCase();
+    updateOracleButton();
+    setOracle('Die Muschel horcht', '…');
+
+    var answer = oracleReply(question);
+    var span = calm.matches ? 200 : 1300;
+    var t0 = performance.now();
+
+    oracleBubbles();
+
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / span);
+      // erst zittern, dann aufklappen
+      var wobble = p < 0.6 ? Math.sin(p * 34) * 2.5 : 0;
+      var lid = p < 0.6 ? wobble : -22 * ((p - 0.6) / 0.4);
+      oracleLid(lid);
+
+      if (p < 1) {
+        requestAnimationFrame(step);
+        return;
+      }
+
+      oracleLid(-22);
+      oracleAsking = false;
+      updateOracleButton();
+      oracleKept = answer;
+      setOracle('Die Muschel sagt', answer);
+      unlock('oracle');
+      renderHud();
+    });
+  }
+
+  function openOracle() {
+    oracleModal.hidden = false;
+    updateOracleButton();
+    oracleInput.focus();
+  }
+
+  function closeOracle() {
+    oracleModal.hidden = true;
+    oracleLid(0);
+    oracleShell.focus();
+  }
+
+  oracleShell.addEventListener('click', openOracle);
+
+  oracleShell.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openOracle();
+  });
+
+  oracleClose.addEventListener('click', closeOracle);
+  oracleAskBtn.addEventListener('click', askOracle);
+
+  oracleInput.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') askOracle();
+  });
+
+  oracleHints.addEventListener('click', function (event) {
+    var hint = event.target.closest('.az-oracle-hint');
+    if (!hint) return;
+    oracleInput.value = hint.textContent;
+    askOracle();
+  });
+
+  oracleModal.addEventListener('click', function (event) {
+    if (event.target === oracleModal) closeOracle();
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !oracleModal.hidden) closeOracle();
+  });
+
+  // ============================================================
+  //  Teilen: Zustand im Link und Bildkarte
+  // ============================================================
+
+  var shareModal  = document.getElementById('az-share-modal');
+  var shareOpen   = document.getElementById('az-share-open');
+  var shareClose  = document.getElementById('az-share-close');
+  var shareCanvas = document.getElementById('az-share-canvas');
+  var shareUrlEl  = document.getElementById('az-share-url');
+  var shareBtnUrl = document.getElementById('az-share-copy-url');
+  var shareBtnImg = document.getElementById('az-share-copy-img');
+  var shareBtnDl  = document.getElementById('az-share-download');
+  var shareBtnNat = document.getElementById('az-share-native');
+
+  var TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+  function cleanTime(value) {
+    var text = String(value || '').trim();
+    return TIME_PATTERN.test(text) ? text : null;
+  }
+
+  function makePause(from, to) {
+    var entry = document.createElement('div');
+    entry.className = 'az-pause-entry';
+    entry.innerHTML =
+      '<input type="time" value="' + escapeText(from) + '" aria-label="Pause von">' +
+      '<span class="az-sep">bis</span>' +
+      '<input type="time" value="' + escapeText(to) + '" aria-label="Pause bis">' +
+      '<button type="button" class="btn-remove" data-remove-pause title="Pause entfernen" aria-label="Pause entfernen">×</button>';
+    return entry;
+  }
+
+  /* Liest den Zustand aus der Adresszeile. Alle Werte werden geprüft,
+     unbrauchbare Angaben fallen weg. */
+  function applyLink() {
+    var query = window.location.search;
+    if (!query || query.length < 2) return;
+
+    var params = new URLSearchParams(query);
+    var start = cleanTime(params.get('von'));
+    if (start) document.getElementById('start').value = start;
+
+    var hours = parseFloat(String(params.get('soll')).replace(',', '.'));
+    if (!isNaN(hours) && hours >= 0.5 && hours <= 24) {
+      document.getElementById('target-hours').value = hours;
+    }
+
+    var wish = cleanTime(params.get('wunsch'));
+    if (wish) document.getElementById('wish').value = wish;
+
+    if (params.has('p')) {
+      var box = document.getElementById('pauses');
+      var slots = String(params.get('p')).split(',').slice(0, 8);
+      var kept = [];
+
+      slots.forEach(function (slot) {
+        var parts = slot.split('-');
+        var from = cleanTime(parts[0]);
+        var to = cleanTime(parts[1]);
+        if (from) kept.push(makePause(from, to || ''));
+      });
+
+      box.innerHTML = '';
+      kept.forEach(function (entry) { box.appendChild(entry); });
+    }
+
+    if (params.has('rad')) {
+      var fields = String(params.get('rad')).split('|')
+        .map(function (text) { return text.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 28); })
+        .filter(function (text) { return text.length > 0; })
+        .slice(0, 12);
+
+      if (fields.length >= 2) wheelItems = fields;
+    }
+  }
+
+  function buildShareUrl() {
+    var base = window.location.href.split('#')[0].split('?')[0];
+    var params = new URLSearchParams();
+
+    params.set('von', document.getElementById('start').value || '09:00');
+    params.set('soll', String(document.getElementById('target-hours').value || 8));
+
+    var slots = [];
+    document.querySelectorAll('#pauses .az-pause-entry').forEach(function (entry) {
+      var f = entry.querySelectorAll('input[type="time"]');
+      if (f[0].value) slots.push(f[0].value + '-' + f[1].value);
+    });
+    if (slots.length) params.set('p', slots.join(','));
+
+    if (document.getElementById('wish').value) {
+      params.set('wunsch', document.getElementById('wish').value);
+    }
+
+    params.set('rad', wheelItems.map(function (text) {
+      return String(text).replace(/\|/g, '/');
+    }).join('|'));
+
+    return base + '?' + params.toString();
+  }
+
+  // ---- Bildkarte auf Leinwand, 1200 mal 630 ----
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawShareCard() {
+    var ctx = shareCanvas.getContext('2d');
+    var W = 1200;
+    var H = 630;
+    var s = lastState;
+    var ends = lastPlan ? lastPlan.endsAt : s.startMin + s.pauseTotal + s.targetMin;
+    var share = clamp(s.percent / 100, 0, 1);
+    var waterY = 470;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Himmel
+    var sky = ctx.createLinearGradient(0, 0, 0, waterY);
+    sky.addColorStop(0, '#a9e2fa');
+    sky.addColorStop(0.62, '#dff4ff');
+    sky.addColorStop(1, '#f0fbff');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, waterY);
+
+    // Sonne mit Hof
+    var bloom = ctx.createRadialGradient(1010, 118, 10, 1010, 118, 190);
+    bloom.addColorStop(0, 'rgba(255, 246, 210, 0.85)');
+    bloom.addColorStop(0.45, 'rgba(255, 228, 154, 0.25)');
+    bloom.addColorStop(1, 'rgba(255, 228, 154, 0)');
+    ctx.fillStyle = bloom;
+    ctx.beginPath();
+    ctx.arc(1010, 118, 190, 0, Math.PI * 2);
+    ctx.fill();
+
+    var face = ctx.createRadialGradient(994, 104, 6, 1010, 118, 58);
+    face.addColorStop(0, '#fffdf0');
+    face.addColorStop(0.5, '#ffdc63');
+    face.addColorStop(1, '#ffae22');
+    ctx.fillStyle = face;
+    ctx.beginPath();
+    ctx.arc(1010, 118, 54, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Regenbogen, gefüllt bis zum Stand
+    var colors = ['#ff5a4d', '#ff9a3c', '#ffe04a', '#4fdd7e', '#45d0ff', '#6e8bff', '#b77bff'];
+    var cx = 600;
+    var cy = waterY;
+    ctx.lineCap = 'butt';
+    ctx.lineWidth = 15;
+
+    colors.forEach(function (color, i) {
+      var r = 330 - i * 17;
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.34)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, Math.PI, Math.PI * 2);
+      ctx.stroke();
+
+      if (share <= 0) return;
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, Math.PI, Math.PI + Math.PI * share);
+      ctx.stroke();
+    });
+
+    // Kopf des Bogens
+    if (share > 0) {
+      var headAngle = Math.PI + Math.PI * share;
+      var headR = 330 - 3 * 17;
+      var hx = cx + Math.cos(headAngle) * headR;
+      var hy = cy + Math.sin(headAngle) * headR;
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 27, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#0b4a6b';
+      ctx.font = '700 20px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(Math.round(s.percent) + ' %', hx, hy + 1);
+    }
+
+    // Wasser
+    var deep = ctx.createLinearGradient(0, waterY, 0, H);
+    deep.addColorStop(0, '#2ab6e0');
+    deep.addColorStop(0.3, '#0f8ec6');
+    deep.addColorStop(1, '#065580');
+    ctx.fillStyle = deep;
+    ctx.fillRect(0, waterY, W, H - waterY);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.fillRect(0, waterY, W, 3);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+    ctx.fillRect(0, waterY + 34, W, 10);
+    ctx.fillRect(0, waterY + 74, W, 6);
+
+    // Texte im Himmel
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    ctx.fillStyle = '#2f7ba1';
+    ctx.font = '600 20px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('ARBEITSZEITRECHNER', 64, 84);
+
+    ctx.fillStyle = '#0b4a6b';
+    ctx.font = '700 58px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(s.percent >= 100 ? 'Feierabend seit ' + toClock(ends) + ' Uhr'
+                                  : 'Feierabend um ' + toClock(ends) + ' Uhr', 64, 152);
+
+    ctx.fillStyle = '#22617f';
+    ctx.font = '500 25px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('Beginn ' + toClock(s.startMin) + ' Uhr · Soll ' + toDuration(s.targetMin) +
+                 ' · Pause ' + toDuration(s.pauseTotal), 64, 196);
+
+    ctx.fillText('Gearbeitet ' + toDuration(s.worked) + ' · ' + Math.round(s.percent) + ' Prozent', 64, 232);
+
+    // Stufe und Abzeichen als Pille
+    var open = Object.keys(game.awards).length;
+    var badge = 'Stufe ' + (game.level + 1) + ', ' + LEVELS[game.level].name +
+                '  ·  ' + open + ' von ' + AWARDS.length + ' Abzeichen  ·  ' + game.shells +
+                (game.shells === 1 ? ' Muschel' : ' Muscheln');
+
+    ctx.font = '600 22px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    var textWidth = ctx.measureText(badge).width;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+    roundRect(ctx, 64, 262, textWidth + 44, 50, 25);
+    ctx.fill();
+
+    ctx.fillStyle = '#0b4a6b';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(badge, 86, 288);
+
+    // Fußzeile im Wasser
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.font = '600 24px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('Gleicher Stand über den Link, Pausen und Glücksrad inklusive.', 64, H - 62);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '500 20px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(window.location.host || 'Arbeitszeitrechner', 64, H - 30);
+  }
+
+  // ---- Knöpfe ----
+
+  function flashLabel(button, text) {
+    if (button.dataset.label === undefined) button.dataset.label = button.textContent;
+    button.textContent = text;
+    clearTimeout(button.dataset.timer);
+    button.dataset.timer = setTimeout(function () {
+      button.textContent = button.dataset.label;
+    }, 2200);
+  }
+
+  function shareBlob(callback) {
+    if (shareCanvas.toBlob) shareCanvas.toBlob(callback, 'image/png');
+    else callback(null);
+  }
+
+  function downloadCard(blob) {
+    var objectUrl = window.URL && window.URL.createObjectURL;
+    var url = objectUrl ? window.URL.createObjectURL(blob) : shareCanvas.toDataURL('image/png');
+
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'arbeitszeit-' + toClock(minutesNow()).replace(':', '') + '.png';
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+
+    if (objectUrl) setTimeout(function () { window.URL.revokeObjectURL(url); }, 4000);
+  }
+
+  function openShare() {
+    drawShareCard();
+    shareUrlEl.value = buildShareUrl();
+    shareBtnNat.hidden = !(navigator.share && navigator.canShare);
+    shareModal.hidden = false;
+    shareBtnUrl.focus();
+  }
+
+  function closeShare() {
+    shareModal.hidden = true;
+    shareOpen.focus();
+  }
+
+  shareOpen.addEventListener('click', openShare);
+  shareClose.addEventListener('click', closeShare);
+
+  shareModal.addEventListener('click', function (event) {
+    if (event.target === shareModal) closeShare();
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !shareModal.hidden) closeShare();
+  });
+
+  shareBtnUrl.addEventListener('click', function () {
+    shareUrlEl.select();
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrlEl.value).then(function () {
+        flashLabel(shareBtnUrl, 'Link kopiert');
+      }, function () {
+        flashLabel(shareBtnUrl, 'Bitte selbst kopieren');
+      });
+      return;
+    }
+
+    flashLabel(shareBtnUrl, 'Bitte selbst kopieren');
+  });
+
+  shareBtnImg.addEventListener('click', function () {
+    shareBlob(function (blob) {
+      if (!blob) {
+        flashLabel(shareBtnImg, 'Nicht möglich');
+        return;
+      }
+
+      var ready = navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined';
+
+      if (!ready) {
+        downloadCard(blob);
+        flashLabel(shareBtnImg, 'Als Datei gespeichert');
+        return;
+      }
+
+      var item = {};
+      item['image/png'] = blob;
+
+      navigator.clipboard.write([new ClipboardItem(item)]).then(function () {
+        flashLabel(shareBtnImg, 'Bild kopiert');
+      }, function () {
+        downloadCard(blob);
+        flashLabel(shareBtnImg, 'Als Datei gespeichert');
+      });
+    });
+  });
+
+  shareBtnDl.addEventListener('click', function () {
+    shareBlob(function (blob) {
+      if (blob) downloadCard(blob);
+    });
+  });
+
+  shareBtnNat.addEventListener('click', function () {
+    shareBlob(function (blob) {
+      if (!blob) return;
+
+      var file = new File([blob], 'arbeitszeit.png', { type: 'image/png' });
+      var payload = { title: 'Arbeitszeit', text: shareUrlEl.value };
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) payload.files = [file];
+
+      navigator.share(payload).catch(function () {});
+    });
+  });
+
+  // ---- Layout ----
+
+  function layout() {
+    var next = measure();
+    var same = view &&
+      view.width === next.width &&
+      view.height === next.height &&
+      view.waterY === next.waterY &&
+      view.formBottom === next.formBottom;
+    if (same) return;
+
+    view = next;
+    svg.setAttribute('viewBox', '0 0 ' + view.width + ' ' + view.height);
+
+    drawHorizon();
+    drawClouds();
+    drawBands();
+    drawWater();
+    drawShine();
+
+    bandLength = midBand.getTotalLength();
+    drawChecks();
+
+    paintProgress(shown);
+    paintWish(null);
+
+    // Muschel treibt auf der Wasserlinie, links neben dem Fuß des Bogens
+    oracleShell.setAttribute('transform',
+      'translate(' + Math.round(clamp(view.width * 0.06, 34, 78)) + ',' +
+      Math.round(view.waterY - 15) + ')');
+    syncSun(minutesNow());
+  }
+
+  // ---- Start ----
+
+  applyLink();
+  buildSun();
+  buildDolphin();
+  renderAwards();
+  renderGrips();
+  renderWheel();
+  layout();
+  calculate();
+  renderHud();
+  game.quiet = false;
+
+  wrap.addEventListener('change', calculate);
+  document.getElementById('target-hours').addEventListener('input', calculate);
+
+  wrap.addEventListener('click', function (event) {
+    var chip = event.target.closest('#presets .az-chip');
+    if (chip) {
+      document.getElementById('target-hours').value = chip.dataset.hours;
+      calculate();
+      return;
+    }
+
+    if (event.target.closest('[data-add-pause]')) {
+      var entry = document.createElement('div');
+      entry.className = 'az-pause-entry';
+      entry.innerHTML =
+        '<input type="time" aria-label="Pause von">' +
+        '<span class="az-sep">bis</span>' +
+        '<input type="time" aria-label="Pause bis">' +
+        '<button type="button" class="btn-remove" data-remove-pause title="Pause entfernen" aria-label="Pause entfernen">×</button>';
+      document.getElementById('pauses').appendChild(entry);
+      entry.querySelector('input').focus();
+      layout();
+      calculate();
+      return;
+    }
+
+    var remove = event.target.closest('[data-remove-pause]');
+    if (remove) {
+      remove.closest('.az-pause-entry').remove();
+      layout();
+      calculate();
+    }
+  });
+
+  if (window.ResizeObserver) {
+    var watch = new ResizeObserver(layout);
+    watch.observe(stage);
+    watch.observe(form);
+  } else {
+    window.addEventListener('resize', layout);
+  }
+
+  setInterval(calculate, 15000);
+  setInterval(paintLunch, 1000);
+
+  // Delfin springt etwa alle zehn Sekunden, mit leichtem Versatz
+  (function nextJump() {
+    setTimeout(function () {
+      launchDolphin();
+      nextJump();
+    }, 9000 + Math.random() * 3000);
+  })();
+})();
+</script>
