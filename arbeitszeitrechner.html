@@ -1610,16 +1610,20 @@
 
     /* Unter 1080px bleiben Spielstand und Mittagspause voll breit,
        sonst wird beides zu eng. */
-    .az-hud    { grid-column: 1 / span 2; }
-    .az-lunch  { grid-column: 3 / span 2; }
-    .az-start  { grid-column: 1 / span 2; }
-    .az-pauses { grid-column: 3 / span 2; }
-    .az-goal   { grid-column: 1 / -1; }
+    .az-hud    { grid-column: 1/ span 4; }
+    .az-lunch  { grid-column: 1 / span 2; }
+    .az-start  { grid-column: 3 / span 2; }
+    .az-pauses { grid-column: 1 / span 2; }
+    .az-goal   { grid-column: 3 / span 2; }
   }
 
   @media (min-width: 1080px) {
-    .az-hud   { grid-column: span 1; }
-    .az-lunch { grid-column: span 1; }
+    .az-form   { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .az-hud    { grid-column: span 6; }
+    .az-lunch  { grid-column: 1 / span 2; }
+    .az-start  { grid-column: 3 / span 2; }
+    .az-pauses { grid-column: 5 / span 2; }
+    .az-goal   { grid-column: 1 / span 6; }
   }
 
   /* Flache Bildschirme, etwa Notebooks. Alles ein Stück kompakter,
@@ -1995,6 +1999,7 @@
           <div class="az-wish-note" id="wish-note"></div>
         </div>
       </div>
+
     </div>
 
     <div class="az-readout">
