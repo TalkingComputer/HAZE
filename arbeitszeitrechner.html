@@ -128,6 +128,20 @@
     pointer-events: none;
   }
 
+  .az-time-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .btn-copy-time {
+    pointer-events: auto;
+    flex: none;
+    align-self: center;
+  }
+
   .az-footer {
     position: relative;
     z-index: 2;
@@ -1682,6 +1696,88 @@
     .az-head-glow { opacity: 0.7; }
     .az-spark { opacity: 0.8; }
   }
+
+  /* ---------- Hangry Hour ----------
+     Überblendet die ruhige Ozeanoptik bewusst mit einer Sendergrafik im
+     Stil dringlicher Countdown-Einblendungen: dunkler Balken, grelle
+     Akzentfarbe, Digitaluhr. Läuft ab 11 Uhr bis zum Beginn der
+     Mittagspause. */
+
+  .az-hangry {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 95;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 9px clamp(1rem, 6vw, 3rem);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(180deg, #241812 0%, #140d09 100%);
+    border-bottom: 3px solid #ff8a1e;
+    box-shadow: 0 8px 22px rgba(10, 6, 3, 0.45);
+    color: #fff6ea;
+    animation: az-hangry-drop 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .az-hangry[hidden] { display: none; }
+
+  @keyframes az-hangry-drop {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  .az-hangry-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 12px;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #241812;
+    background: linear-gradient(180deg, #ffd25c, #ff8a1e);
+    border-radius: 4px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+    animation: az-hangry-pulse 1.1s ease-in-out infinite;
+  }
+
+  @keyframes az-hangry-pulse {
+    0%, 100% { box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 0 0 rgba(255, 120, 40, 0); }
+    50%      { box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 0 16px rgba(255, 138, 30, 0.85); }
+  }
+
+  .az-hangry-clock {
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(17px, 2.6vw, 21px);
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-shadow: 0 0 10px rgba(255, 138, 30, 0.65);
+  }
+
+  .az-hangry-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 246, 234, 0.72);
+  }
+
+  /* Der Balken legt sich über die Kachelreihe, deshalb rückt sie herunter,
+     solange die Hangry Hour läuft. */
+  .az-wrap.is-hangry .az-form {
+    padding-top: calc(clamp(3rem, 8vh, 5.25rem) + 46px);
+    transition: padding-top 300ms ease;
+  }
+
+  @media (max-width: 640px) {
+    .az-hangry { gap: 8px; padding: 7px 14px; }
+    .az-hangry-sub { display: none; }
+  }
 </style>
 
 <div class="az-wrap">
@@ -2004,7 +2100,10 @@
 
     <div class="az-readout">
       <div class="az-eyebrow" id="eyebrow">Feierabend um</div>
-      <div class="az-time" id="time">--:--<small>Uhr</small></div>
+      <div class="az-time-row">
+        <div class="az-time" id="time">--:--<small>Uhr</small></div>
+        <button type="button" class="btn-ghost btn-copy-time" id="az-time-copy" title="Feierabend-Uhrzeit kopieren" aria-label="Feierabend-Uhrzeit kopieren">Kopieren</button>
+      </div>
       <div class="az-wish-line" id="wish-line" hidden></div>
     </div>
 
@@ -2020,6 +2119,12 @@
       </div>
       <span class="sr-only" id="status" aria-live="polite"></span>
     </div>
+  </div>
+
+  <div class="az-hangry" id="az-hangry" role="status" aria-live="polite" hidden>
+    <span class="az-hangry-badge">🍔 Hangry Hour</span>
+    <span class="az-hangry-clock" id="az-hangry-clock">00:00</span>
+    <span class="az-hangry-sub">bis zur Mittagspause</span>
   </div>
 
   <div class="az-toasts" id="az-toasts" aria-live="polite"></div>
@@ -2836,16 +2941,22 @@
     var eyebrow = document.getElementById('eyebrow');
     var timeOut = document.getElementById('time');
 
+    var feierabendClock;
+
     if (remaining <= 0) {
       eyebrow.textContent = 'Feierabend seit';
       timeOut.classList.remove('is-done');
       timeOut.classList.add('is-over');
-      timeOut.innerHTML = toClock(startMin + pauses.total + targetMin) + '<small>Uhr</small>';
+      feierabendClock = toClock(startMin + pauses.total + targetMin);
+      timeOut.innerHTML = feierabendClock + '<small>Uhr</small>';
     } else {
       eyebrow.textContent = 'Feierabend um';
       timeOut.classList.remove('is-done', 'is-over');
-      timeOut.innerHTML = toClock(endMin) + '<small>Uhr</small>';
+      feierabendClock = toClock(endMin);
+      timeOut.innerHTML = feierabendClock + '<small>Uhr</small>';
     }
+
+    timeOut.dataset.clock = feierabendClock;
 
     document.getElementById('progress-fill').style.width = percent.toFixed(1) + '%';
     progressBar.setAttribute('aria-valuenow', String(Math.round(percent)));
@@ -3492,6 +3603,26 @@
     calculate();
   });
 
+  // ---- Feierabend-Uhrzeit kopieren ----
+
+  document.getElementById('az-time-copy').addEventListener('click', function () {
+    var button = this;
+    var clock = document.getElementById('time').dataset.clock;
+    if (!clock) return;
+    var text = 'Ich habe Feierabend um ' + clock + ' Uhr';
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        flashLabel(button, 'Kopiert');
+      }, function () {
+        flashLabel(button, 'Bitte selbst kopieren');
+      });
+      return;
+    }
+
+    flashLabel(button, 'Bitte selbst kopieren');
+  });
+
   // ============================================================
   //  Wunschfeierabend
   //  Rein nachrichtlich. Der Wunsch verschiebt weder die Sollzeit noch
@@ -3593,6 +3724,27 @@
   var LUNCH_RING = 2 * Math.PI * 16;
   var lunchWatch = null;   // Zustand aus dem letzten Takt
 
+  // ---- Hangry Hour ----
+  // Läuft ab 11 Uhr bis zum Beginn der Mittagspause. Ohne erfasste
+  // Pause gilt ersatzweise 12 Uhr als Grenze.
+  var hangryWrap  = document.querySelector('.az-wrap');
+  var hangryEl    = document.getElementById('az-hangry');
+  var hangryClock = document.getElementById('az-hangry-clock');
+  var HANGRY_START    = 11 * 3600;
+  var HANGRY_FALLBACK = 12 * 3600;
+
+  function paintHangry(info, now) {
+    var boundary = null;
+    if (info.state === 'wait') boundary = info.slot.fromSec;
+    else if (info.state === 'none') boundary = HANGRY_FALLBACK;
+
+    var active = boundary !== null && now >= HANGRY_START && now < boundary;
+
+    hangryWrap.classList.toggle('is-hangry', active);
+    hangryEl.hidden = !active;
+    if (active) setText(hangryClock, toCountdown(boundary - now));
+  }
+
   function secondsNow() {
     var d = new Date();
     return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
@@ -3676,6 +3828,8 @@
     var startMin = toMinutes(document.getElementById('start').value);
     var info = nextBreak();
     var now = secondsNow();
+
+    paintHangry(info, now);
 
     lunchEl.classList.remove('is-soon', 'is-now', 'is-done', 'is-none');
     lunchPlan.hidden = info.state !== 'none';
