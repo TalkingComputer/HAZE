@@ -25,6 +25,9 @@
     --az-radius: 10px;
     --az-rainbow: linear-gradient(90deg, #ff5a4d, #ff9a3c, #ffe04a, #4fdd7e, #45d0ff, #6e8bff, #b77bff);
 
+    /* Wird von paintOvertime() ab Sollzeit+Alarm heruntergesetzt, sonst 1 */
+    --az-ebbe-sat: 1;
+
     /* Seitlicher Innenabstand der Kacheln. Auf Desktop 200px. */
     --az-gutter: clamp(1rem, 13vw, 200px);
 
@@ -38,6 +41,9 @@
     font-size: 15px;
     line-height: 1.5;
     color: var(--az-text);
+
+    filter: saturate(var(--az-ebbe-sat));
+    transition: filter 1.2s ease;
   }
 
   .az-wrap *,
@@ -67,7 +73,23 @@
     min-height: 100dvh;
     overflow: hidden;
     isolation: isolate;
-    background: linear-gradient(180deg, #a9e2fa 0%, #dff4ff 62%, #f0fbff 100%);
+    background: linear-gradient(180deg,
+      var(--az-sky-top, #a9e2fa) 0%,
+      var(--az-sky-mid, #dff4ff) 62%,
+      var(--az-sky-bot, #f0fbff) 100%);
+  }
+
+  /* Dezenter Abdunklungs-Schleier für die Nachtstunden, von syncTide()
+     gesetzt. Tagsüber 0 und damit unsichtbar. */
+  .az-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: #0a2540;
+    opacity: var(--az-night-veil, 0);
+    transition: opacity 4s ease;
   }
 
   .az-canvas {
@@ -956,6 +978,9 @@
   #az-dolphin { pointer-events: all; cursor: pointer; }
   #az-dolphin[opacity="0"] { pointer-events: none; }
 
+  #az-crab { pointer-events: all; cursor: pointer; }
+  #az-crab[opacity="0"] { pointer-events: none; }
+
   /* Glücksrad */
 
   .az-modal {
@@ -1172,6 +1197,192 @@
     margin-top: 9px;
     font-size: 12px;
     color: var(--az-muted);
+  }
+
+  /* ---------- Muschel-Shop ---------- */
+
+  .az-shop-section + .az-shop-section { margin-top: 14px; }
+
+  .az-shop-heading {
+    margin: 0 0 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--az-muted);
+  }
+
+  .az-shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+    gap: 9px;
+  }
+
+  .az-shop-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 8px;
+    font-family: inherit;
+    text-align: center;
+    cursor: pointer;
+    color: var(--az-text);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 246, 255, 0.6));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    transition: filter 140ms ease;
+  }
+
+  .az-shop-item:hover { filter: brightness(1.06); }
+
+  .az-shop-item:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--az-ring);
+  }
+
+  .az-shop-item:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.55);
+    opacity: 0.7;
+  }
+
+  .az-shop-swatch {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 3px rgba(4, 54, 86, 0.25);
+  }
+
+  .az-shop-label {
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+
+  .az-shop-price {
+    font-size: 11px;
+    color: var(--az-muted);
+  }
+
+  .az-shop-item.is-active {
+    border-color: var(--az-cyan);
+    box-shadow: 0 0 0 3px var(--az-ring);
+  }
+
+  .az-shop-item.is-active .az-shop-price::before { content: 'Aktiv · '; }
+  .az-shop-item.is-owned:not(.is-active) .az-shop-price::before { content: 'Besitzt · '; }
+
+  /* ---------- Team-Riff ---------- */
+
+  .az-riff {
+    margin: 12px 0;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--az-text);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+  }
+
+  .az-riff:empty { display: none; }
+
+  /* ---------- Muntermacher-Otter (Modal-Inhalt) ---------- */
+
+  .az-otter-quote {
+    min-height: 4.6em;
+    margin: 10px 0 14px;
+    padding: 12px 14px;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    color: var(--az-headline);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 244, 224, 0.75), rgba(255, 229, 196, 0.5));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+
+  /* ---------- Tagesrückblick-Karte ---------- */
+
+  .az-recap {
+    position: relative;
+    margin-bottom: 12px;
+    padding: 12px 34px 12px 14px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 244, 224, 0.75), rgba(214, 255, 244, 0.55));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+
+  .az-recap[hidden] { display: none; }
+
+  .az-recap-title {
+    margin-bottom: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--az-muted);
+  }
+
+  .az-recap-rows {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 13.5px;
+    color: var(--az-text);
+  }
+
+  .az-recap-rows strong { color: var(--az-headline); }
+
+  .az-recap-dismiss {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--az-cyan-deep);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .az-otter-name {
+    margin-bottom: 12px;
+  }
+
+  .az-otter-name input[type="text"] {
+    width: 100%;
+    padding: 9px 11px;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: center;
+    color: var(--az-text);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 252, 255, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: var(--az-radius);
+    box-shadow: inset 0 2px 4px rgba(10, 90, 140, 0.12);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .az-otter-name input[type="text"]:focus-visible {
+    outline: none;
+    border-color: #35c6f0;
+    box-shadow:
+      inset 0 2px 4px rgba(10, 90, 140, 0.1),
+      0 0 0 4px var(--az-ring);
+  }
+
+  .az-otter-actions {
+    display: flex;
+    justify-content: center;
   }
 
   @media (max-width: 640px) {
@@ -1493,6 +1704,25 @@
     animation: az-shine 4s ease-in-out infinite;
   }
 
+  /* ---------- Muntermacher-Otter ---------- */
+
+  #az-otter {
+    pointer-events: all;
+    cursor: pointer;
+  }
+
+  #az-otter:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
+    border-radius: 12px;
+  }
+
+  .az-otter-bob { animation: az-bob 4.8s ease-in-out infinite; }
+
+  #az-otter .az-otter-glow {
+    animation: az-shine 4.6s ease-in-out infinite;
+  }
+
   @keyframes az-shine {
     0%, 100% { opacity: 0.25; }
     50%      { opacity: 0.75; }
@@ -1691,10 +1921,19 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .az-wrap * { transition: none !important; animation: none !important; }
+    .az-wrap,
+    .az-wrap *,
+    .az-stage::after { transition: none !important; animation: none !important; }
     .az-bubble { opacity: 0.35; }
     .az-head-glow { opacity: 0.7; }
     .az-spark { opacity: 0.8; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .az-overtime, .az-overtime-badge, .az-overtime-vignette {
+      animation: none !important;
+    }
+    .az-overtime-vignette { box-shadow: inset 0 0 80px 12px rgba(255, 59, 48, 0.32); }
   }
 
   /* ---------- Hangry Hour ----------
@@ -1778,6 +2017,129 @@
     .az-hangry { gap: 8px; padding: 7px 14px; }
     .az-hangry-sub { display: none; }
   }
+
+  /* ---------- Feierabend-Alarm ----------
+     Baut auf dem Hangry-Hour-Muster auf, aber gedacht als Gegenpol zur
+     Belohnungsmechanik: kein Konfetti fürs Länger-Bleiben, sondern ein
+     spürbarer Alarm. Vorwarnung 15 Minuten vor der Sollzeit (gelb),
+     danach Alarm (rot, mit Vollbild-Vignette), der mit der Dauer der
+     Überstunde schneller pulsiert. */
+
+  .az-overtime {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 96;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 9px clamp(1rem, 6vw, 3rem);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #fff6ea;
+    box-shadow: 0 8px 22px rgba(10, 6, 3, 0.45);
+    animation: az-hangry-drop 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .az-overtime[hidden] { display: none; }
+
+  .az-overtime.is-warn {
+    background: linear-gradient(180deg, #3a2c0c 0%, #241a06 100%);
+    border-bottom: 3px solid #ffcc33;
+  }
+
+  .az-overtime.is-alarm {
+    background: linear-gradient(180deg, #3a0505 0%, #1c0202 100%);
+    border-bottom: 3px solid #ff3b30;
+    --az-alarm-speed: 1.4s;
+    animation: az-hangry-drop 420ms cubic-bezier(0.22, 1, 0.36, 1),
+               az-overtime-shake var(--az-alarm-speed) ease-in-out infinite;
+  }
+
+  /* Hangry Hour steht oben, der Feierabend-Alarm rückt bei Überschneidung
+     darunter, statt sich zu überdecken. */
+  .az-hangry:not([hidden]) + .az-overtime { top: 46px; }
+
+  @media (max-width: 640px) {
+    .az-hangry:not([hidden]) + .az-overtime { top: 40px; }
+  }
+
+  .az-overtime-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 12px;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .az-overtime.is-warn .az-overtime-badge {
+    color: #241812;
+    background: linear-gradient(180deg, #ffe08a, #ffcc33);
+    animation: az-hangry-pulse 1.6s ease-in-out infinite;
+  }
+
+  .az-overtime.is-alarm .az-overtime-badge {
+    color: #2a0303;
+    background: linear-gradient(180deg, #ff8a80, #ff3b30);
+    animation: az-overtime-pulse var(--az-alarm-speed) ease-in-out infinite;
+  }
+
+  @keyframes az-overtime-pulse {
+    0%, 100% { box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 0 0 rgba(255, 59, 48, 0); }
+    50%      { box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 59, 48, 0.95); }
+  }
+
+  @keyframes az-overtime-shake {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-1px); }
+  }
+
+  .az-overtime-clock {
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(17px, 2.6vw, 21px);
+    font-weight: 800;
+    letter-spacing: 0.03em;
+  }
+
+  .az-overtime.is-warn .az-overtime-clock { text-shadow: 0 0 10px rgba(255, 204, 51, 0.65); }
+  .az-overtime.is-alarm .az-overtime-clock { text-shadow: 0 0 12px rgba(255, 59, 48, 0.85); }
+
+  .az-overtime-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 246, 234, 0.72);
+  }
+
+  @media (max-width: 640px) {
+    .az-overtime { gap: 8px; padding: 7px 14px; }
+    .az-overtime-sub { display: none; }
+  }
+
+  /* Vollbild-Vignette für die Alarmphase: pulsierender roter Rand, der
+     nicht mit dem Formular interagiert. */
+  .az-overtime-vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    pointer-events: none;
+    animation: az-vignette-flash var(--az-alarm-speed, 1.4s) ease-in-out infinite;
+  }
+
+  .az-overtime-vignette[hidden] { display: none; }
+
+  @keyframes az-vignette-flash {
+    0%, 100% { box-shadow: inset 0 0 60px 6px rgba(255, 59, 48, 0.18); }
+    50%      { box-shadow: inset 0 0 110px 18px rgba(255, 59, 48, 0.5); }
+  }
 </style>
 
 <div class="az-wrap">
@@ -1832,6 +2194,18 @@
           <stop offset="1" stop-color="#b978c4"/>
         </linearGradient>
 
+        <linearGradient id="az-otter-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#c9976a"/>
+          <stop offset="0.55" stop-color="#a9764a"/>
+          <stop offset="1" stop-color="#7a5233"/>
+        </linearGradient>
+
+        <linearGradient id="az-crab-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ff8f6b"/>
+          <stop offset="0.55" stop-color="#e8623d"/>
+          <stop offset="1" stop-color="#b8442a"/>
+        </linearGradient>
+
         <linearGradient id="az-deep" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#2ab6e0"/>
           <stop offset="0.3" stop-color="#0f8ec6"/>
@@ -1883,6 +2257,11 @@
       <g id="az-horizon"></g>
       <g id="az-clouds" fill="#ffffff" filter="url(#az-cloud)"></g>
 
+      <!-- Wetterereignisse: Sternschnuppe und Regenbogen liegen im Himmel,
+           daher vor dem Wasser -->
+      <g id="az-star" opacity="0" aria-hidden="true"></g>
+      <g id="az-rainbow" opacity="0" aria-hidden="true"></g>
+
       <!-- blasse Spur: der noch offene Teil -->
       <use href="#az-bands" opacity="0.16" filter="url(#az-blur-soft)"/>
 
@@ -1908,6 +2287,11 @@
       <g id="az-water"></g>
       <g id="az-splash" opacity="0"></g>
       <g id="az-shine" fill="#ffffff" opacity="0.55"></g>
+
+      <!-- Fischschwarm treibt an der Wasseroberfläche, Krabbe huscht am
+           Ufer entlang -->
+      <g id="az-fish" opacity="0" aria-hidden="true"></g>
+      <g id="az-crab" opacity="0"></g>
 
       <g id="az-sun"></g>
 
@@ -1951,6 +2335,28 @@
           <path d="M0 12 V-11 M-2 12 L-13 -9 M2 12 L13 -9 M-4 12 L-17 -3 M4 12 L17 -3"
                 fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.55"/>
           <circle cx="-7" cy="-6" r="2.2" fill="#ffffff" opacity="0.75"/>
+        </g>
+      </g>
+
+      <!-- Muntermacher-Otter, treibt auf dem Rücken im flachen Wasser -->
+      <g id="az-otter" transform="translate(-200,-200)" role="button" tabindex="0"
+         aria-label="Muntermacher-Otter öffnen">
+        <g class="az-otter-bob">
+          <ellipse class="az-otter-glow" cx="-2" cy="11" rx="27" ry="9" fill="#ffffff" opacity="0.35"/>
+          <path d="M19 5 Q34 1 31 -9 Q28 2 17 1 Z" fill="url(#az-otter-grad)" stroke="#ffffff" stroke-width="1.1"/>
+          <ellipse cx="-2" cy="2" rx="24" ry="13" fill="url(#az-otter-grad)" stroke="#ffffff" stroke-width="1.3"/>
+          <ellipse cx="-2" cy="4.5" rx="15.5" ry="7.5" fill="#fff3e0" opacity="0.85"/>
+          <circle cx="-20" cy="-4" r="9.5" fill="url(#az-otter-grad)" stroke="#ffffff" stroke-width="1.2"/>
+          <circle cx="-25.5" cy="-11" r="2.6" fill="url(#az-otter-grad)" stroke="#ffffff" stroke-width="1"/>
+          <circle cx="-15.5" cy="-11" r="2.6" fill="url(#az-otter-grad)" stroke="#ffffff" stroke-width="1"/>
+          <path d="M-25 -2 l-6 -1.4M-25 -1 l-6 1.4M-15.5 -2 l6 -1.4M-15.5 -1 l6 1.4"
+                fill="none" stroke="#ffffff" stroke-width="0.7" opacity="0.6"/>
+          <circle cx="-23" cy="-5" r="1.2" fill="#2a1a12"/>
+          <circle cx="-17.5" cy="-5" r="1.2" fill="#2a1a12"/>
+          <path d="M-20.3 -1.2 q0.3 1.6 0.6 0" stroke="#2a1a12" stroke-width="0.9" stroke-linecap="round" fill="none"/>
+          <ellipse cx="-8" cy="-0.5" rx="3.2" ry="2.2" fill="url(#az-otter-grad)" stroke="#ffffff" stroke-width="0.9"/>
+          <ellipse cx="6" cy="-0.5" rx="3.2" ry="2.2" fill="url(#az-otter-grad)" stroke="#ffffff" stroke-width="0.9"/>
+          <path d="M-3 1.5 C-3 -3.5 3 -3.5 3 1.5 C1 3.5 -1 3.5 -3 1.5 Z" fill="#ffd9b0" stroke="#c98a4a" stroke-width="0.8"/>
         </g>
       </g>
 
@@ -2003,6 +2409,14 @@
             <path d="M12 3.5v5.4M12 15.1v5.4M3.5 12h5.4M15.1 12h5.4M6.4 6.4l3.4 3.4M14.2 14.2l3.4 3.4M17.6 6.4l-3.4 3.4M9.8 14.2l-3.4 3.4"/>
           </svg>
           Glücksrad
+        </button>
+
+        <button type="button" class="btn-wheel" id="az-shop-open">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 8.4h15l-1.3 9.3a2 2 0 0 1-2 1.7H7.8a2 2 0 0 1-2-1.7L4.5 8.4Z"/>
+            <path d="M8.4 8.4V6.6a3.6 3.6 0 0 1 7.2 0v1.8"/>
+          </svg>
+          Muschel-Shop
         </button>
 
         <button type="button" class="btn-ghost" id="az-share-open">Teilen</button>
@@ -2108,6 +2522,11 @@
     </div>
 
     <div class="az-footer" id="az-footer">
+      <div class="az-recap" id="az-recap" hidden>
+        <button type="button" class="az-recap-dismiss" id="az-recap-dismiss" aria-label="Tagesrückblick schließen">×</button>
+        <div class="az-recap-title">Tagesrückblick</div>
+        <div class="az-recap-rows" id="az-recap-rows"></div>
+      </div>
       <div class="az-awards-wrap">
         <div class="az-awards" id="az-awards" role="group" aria-label="Abzeichen"></div>
         <div class="az-award-tip" id="az-award-tip" hidden></div>
@@ -2126,6 +2545,13 @@
     <span class="az-hangry-clock" id="az-hangry-clock">00:00</span>
     <span class="az-hangry-sub">bis zur Mittagspause</span>
   </div>
+
+  <div class="az-overtime" id="az-overtime" role="status" aria-live="assertive" hidden>
+    <span class="az-overtime-badge" id="az-overtime-badge">Gleich Feierabend</span>
+    <span class="az-overtime-clock" id="az-overtime-clock">00:00</span>
+    <span class="az-overtime-sub" id="az-overtime-sub">bis Sollzeit</span>
+  </div>
+  <div class="az-overtime-vignette" id="az-overtime-vignette" hidden aria-hidden="true"></div>
 
   <div class="az-toasts" id="az-toasts" aria-live="polite"></div>
 
@@ -2200,6 +2626,29 @@
     </div>
   </div>
 
+  <div class="az-modal" id="az-otter-modal" role="dialog" aria-modal="true" aria-labelledby="az-otter-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge" aria-hidden="true">🦦</span>
+        <span class="az-modal-title" id="az-otter-title">Muntermacher-Otter</span>
+        <button type="button" class="btn-close" id="az-otter-close" aria-label="Muntermacher schließen">×</button>
+      </div>
+
+      <p class="az-modal-sub">Treibt gemütlich auf dem Rücken und hat immer einen süßen Spruch parat. Kostet keine Muschel.</p>
+
+      <div class="az-otter-quote" id="az-otter-quote" aria-live="polite"></div>
+
+      <div class="az-otter-name">
+        <label class="sr-only" for="az-otter-name-input">Dein Name für den Otter</label>
+        <input type="text" id="az-otter-name-input" maxlength="24" placeholder="Dein Name (optional)">
+      </div>
+
+      <div class="az-otter-actions">
+        <button type="button" class="btn-add" id="az-otter-again">Noch einen Spruch</button>
+      </div>
+    </div>
+  </div>
+
   <div class="az-modal" id="az-share-modal" role="dialog" aria-modal="true" aria-labelledby="az-share-title" hidden>
     <div class="az-modal-card">
       <div class="az-modal-head">
@@ -2230,7 +2679,9 @@
         <button type="button" class="btn-ghost" id="az-share-native" hidden>Weitergeben</button>
       </div>
 
-      <p class="az-share-note">Der Link trägt Arbeitsbeginn, Pausen, Sollzeit, Wunschzeit und die Felder des Glücksrads. So arbeitet ein Team mit einem Rad statt mit acht. Stufe, Muscheln und Abzeichen bleiben lokal, jeder sammelt für sich.</p>
+      <div class="az-riff" id="az-riff"></div>
+
+      <p class="az-share-note">Der Link trägt Arbeitsbeginn, Pausen, Sollzeit, Wunschzeit und die Felder des Glücksrads, dazu eine anonyme Trefferquote fürs Team-Riff. So arbeitet ein Team mit einem Rad statt mit acht. Stufe, Muscheln und Abzeichen bleiben lokal, jeder sammelt für sich.</p>
     </div>
   </div>
 
@@ -2297,6 +2748,33 @@
       </div>
     </div>
   </div>
+
+  <div class="az-modal" id="az-shop-modal" role="dialog" aria-modal="true" aria-labelledby="az-shop-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 8.4h15l-1.3 9.3a2 2 0 0 1-2 1.7H7.8a2 2 0 0 1-2-1.7L4.5 8.4Z"/>
+            <path d="M8.4 8.4V6.6a3.6 3.6 0 0 1 7.2 0v1.8"/>
+          </svg>
+        </span>
+        <span class="az-modal-title" id="az-shop-title">Muschel-Shop</span>
+        <button type="button" class="btn-close" id="az-shop-close" aria-label="Muschel-Shop schließen">×</button>
+      </div>
+
+      <p class="az-modal-sub">Rein kosmetisch, gilt nur für diesen Besuch. Nach einem Neuladen ist der Shop wieder leer.</p>
+
+      <div class="az-shop-section">
+        <h3 class="az-shop-heading">Farbthemen</h3>
+        <div class="az-shop-grid" id="az-shop-themes"></div>
+      </div>
+
+      <div class="az-shop-section">
+        <h3 class="az-shop-heading">Delfin-Skins</h3>
+        <div class="az-shop-grid" id="az-shop-skins"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -2339,6 +2817,10 @@
   var sunHit      = document.getElementById('az-sun-hit');
   var dolphinEl   = document.getElementById('az-dolphin');
   var splashEl    = document.getElementById('az-splash');
+  var crabEl      = document.getElementById('az-crab');
+  var fishEl      = document.getElementById('az-fish');
+  var starEl      = document.getElementById('az-star');
+  var rainbowEl   = document.getElementById('az-rainbow');
   var markerEl    = document.getElementById('az-marker');
   var checksEl    = document.getElementById('az-checks');
   var wishMark    = document.getElementById('az-wish-mark');
@@ -2699,6 +3181,53 @@
     paintSun();
   }
 
+  // ---- Tageszeit-Ambiente ----
+  // Himmelfarben und Nacht-Schleier folgen der echten Uhrzeit, unabhängig
+  // von Arbeitszeit/Sollzeit. Werte an .az-stage, siehe CSS-Variablen
+  // --az-sky-top/--az-sky-mid/--az-sky-bot/--az-night-veil.
+
+  var TIDE_PHASES = [
+    { at: 0,    top: '#0a1a35', mid: '#142a4a', bot: '#1c3a5e', veil: 0.55 },
+    { at: 300,  top: '#274666', mid: '#6b8fae', bot: '#f2c9a0', veil: 0.15 },
+    { at: 420,  top: '#7ec8f2', mid: '#bfe6fb', bot: '#eef9ff', veil: 0 },
+    { at: 720,  top: '#a9e2fa', mid: '#dff4ff', bot: '#f0fbff', veil: 0 },
+    { at: 1020, top: '#8fd0f0', mid: '#d7eefc', bot: '#fff3e0', veil: 0 },
+    { at: 1140, top: '#375a82', mid: '#d98a52', bot: '#ffd9a0', veil: 0.1 },
+    { at: 1260, top: '#0a1a35', mid: '#142a4a', bot: '#1c3a5e', veil: 0.55 },
+    { at: 1440, top: '#0a1a35', mid: '#142a4a', bot: '#1c3a5e', veil: 0.55 }
+  ];
+
+  function hexToRgb(hex) {
+    var n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
+  function lerpHex(a, b, t) {
+    var ca = hexToRgb(a), cb = hexToRgb(b);
+    return 'rgb(' +
+      Math.round(ca[0] + (cb[0] - ca[0]) * t) + ',' +
+      Math.round(ca[1] + (cb[1] - ca[1]) * t) + ',' +
+      Math.round(ca[2] + (cb[2] - ca[2]) * t) + ')';
+  }
+
+  var stageEl = document.querySelector('.az-stage');
+
+  function syncTide(minutes) {
+    var m = ((minutes % 1440) + 1440) % 1440;
+    var i = 0;
+    while (i < TIDE_PHASES.length - 1 && TIDE_PHASES[i + 1].at <= m) i++;
+
+    var a = TIDE_PHASES[i];
+    var b = TIDE_PHASES[Math.min(i + 1, TIDE_PHASES.length - 1)];
+    var span = b.at - a.at;
+    var t = span > 0 ? clamp((m - a.at) / span, 0, 1) : 0;
+
+    stageEl.style.setProperty('--az-sky-top', lerpHex(a.top, b.top, t));
+    stageEl.style.setProperty('--az-sky-mid', lerpHex(a.mid, b.mid, t));
+    stageEl.style.setProperty('--az-sky-bot', lerpHex(a.bot, b.bot, t));
+    stageEl.style.setProperty('--az-night-veil', (a.veil + (b.veil - a.veil) * t).toFixed(2));
+  }
+
   // ---- Fortschritt ----
 
   var shown = 0;
@@ -2853,6 +3382,167 @@
     requestAnimationFrame(swim);
   }
 
+  // ---- Strandkrabbe ----
+  // Analog zum Delfin, aber huscht seitlich am Ufer entlang statt zu
+  // springen. Eigener Timer weiter unten, damit sie nicht immer zusammen
+  // mit dem Delfin auftaucht.
+
+  function buildCrab() {
+    crabEl.innerHTML =
+      '<ellipse cx="0" cy="0" rx="11" ry="7.5" fill="url(#az-crab-grad)" stroke="#ffffff" stroke-width="1.1"/>' +
+      '<path d="M-9,-4 C-15,-9 -19,-7 -20,-2" fill="none" stroke="url(#az-crab-grad)" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<path d="M9,-4 C15,-9 19,-7 20,-2" fill="none" stroke="url(#az-crab-grad)" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<circle cx="-20" cy="-2" r="2.6" fill="url(#az-crab-grad)" stroke="#ffffff" stroke-width="0.9"/>' +
+      '<circle cx="20" cy="-2" r="2.6" fill="url(#az-crab-grad)" stroke="#ffffff" stroke-width="0.9"/>' +
+      '<path d="M-6,4 l-3,5M-2,5.5 l-1.4,5.6M2,5.5 l1.4,5.6M6,4 l3,5" fill="none" stroke="#b8442a" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<circle cx="-3.2" cy="-2" r="1" fill="#2a1208"/>' +
+      '<circle cx="3.2" cy="-2" r="1" fill="#2a1208"/>';
+  }
+
+  var crawl = null;
+
+  function launchCrab() {
+    if (calm.matches || document.hidden || !view) return;
+
+    var span = clamp(view.width * 0.14, 90, 170);
+    var dir = Math.random() < 0.5 ? 1 : -1;
+    crawl = {
+      t0: performance.now(),
+      duration: 1600,
+      x0: 60 + Math.random() * Math.max(40, view.width - span - 120),
+      span: span * dir,
+      y: view.waterY - 4
+    };
+
+    crabEl.setAttribute('opacity', '1');
+    requestAnimationFrame(scuttle);
+  }
+
+  function scuttle(now) {
+    if (!crawl) return;
+
+    var p = (now - crawl.t0) / crawl.duration;
+
+    if (p >= 1) {
+      crawl = null;
+      crabEl.setAttribute('opacity', '0');
+      return;
+    }
+
+    var x = crawl.x0 + crawl.span * p;
+    var wobble = Math.sin(p * 26) * 1.6;
+    crawl.x = x;
+    crawl.y2 = crawl.y + wobble;
+
+    crabEl.setAttribute('transform',
+      'translate(' + x.toFixed(1) + ',' + (crawl.y + wobble).toFixed(1) + ') ' +
+      'scale(' + (crawl.span < 0 ? -1 : 1) + ',1)');
+
+    requestAnimationFrame(scuttle);
+  }
+
+  // ---- Wetterereignisse: Sternschnuppe, Fischschwarm, Regenbogen ----
+  // Rein optisch, keine Mechanik. Stern nur nachts, Fisch nur tagsüber,
+  // Regenbogen einmalig bei celebratePunctualFinish().
+
+  function isNightNow() {
+    var m = minutesNow();
+    return m < 300 || m >= 1260;
+  }
+
+  function isDayNow() {
+    var m = minutesNow();
+    return m >= 420 && m < 1020;
+  }
+
+  function spawnStar() {
+    if (calm.matches || document.hidden || !view) return;
+
+    var x0 = view.width * (0.1 + Math.random() * 0.5);
+    var y0 = view.height * (0.08 + Math.random() * 0.14);
+    var len = 90 + Math.random() * 70;
+
+    starEl.innerHTML =
+      '<line x1="0" y1="0" x2="' + (-len) + '" y2="' + (len * 0.4) + '" ' +
+      'stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<circle cx="0" cy="0" r="2" fill="#ffffff"/>';
+    starEl.setAttribute('transform', 'translate(' + x0.toFixed(1) + ',' + y0.toFixed(1) + ')');
+
+    var t0 = performance.now();
+    var span = 900;
+
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / span);
+      var op = p < 0.15 ? p / 0.15 : (1 - (p - 0.15) / 0.85);
+      starEl.setAttribute('opacity', Math.max(0, op).toFixed(2));
+      starEl.setAttribute('transform',
+        'translate(' + (x0 - len * p).toFixed(1) + ',' + (y0 + len * 0.4 * p).toFixed(1) + ')');
+
+      if (p < 1) requestAnimationFrame(step);
+      else starEl.setAttribute('opacity', '0');
+    });
+  }
+
+  function spawnFish() {
+    if (calm.matches || document.hidden || !view) return;
+
+    var count = 4 + Math.floor(Math.random() * 3);
+    var out = '';
+    var i;
+    for (i = 0; i < count; i++) {
+      out += '<path d="M' + (i * 9) + ',0 l-6,-3 l1.5,3 l-1.5,3 Z" fill="#3d7ea6" opacity="0.75"/>';
+    }
+    fishEl.innerHTML = out;
+
+    var y = view.waterY - 10 - Math.random() * 30;
+    var dir = Math.random() < 0.5 ? 1 : -1;
+    var x0 = dir > 0 ? -60 : view.width + 60;
+    var x1 = dir > 0 ? view.width + 60 : -60;
+    var t0 = performance.now();
+    var span = 3400 + Math.random() * 900;
+
+    fishEl.setAttribute('opacity', '0.85');
+
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / span);
+      var x = x0 + (x1 - x0) * p;
+      var bob = Math.sin(p * 10) * 3;
+      fishEl.setAttribute('transform',
+        'translate(' + x.toFixed(1) + ',' + (y + bob).toFixed(1) + ') scale(' + dir + ',1)');
+
+      if (p < 1) requestAnimationFrame(step);
+      else fishEl.setAttribute('opacity', '0');
+    });
+  }
+
+  function spawnRainbow() {
+    if (calm.matches || !view) return;
+
+    rainbowEl.innerHTML =
+      '<path d="M-140,0 A140,140 0 0 1 140,0" fill="none" stroke="#ff5a4d" stroke-width="5" opacity="0.8"/>' +
+      '<path d="M-124,0 A124,124 0 0 1 124,0" fill="none" stroke="#ffe04a" stroke-width="5" opacity="0.8"/>' +
+      '<path d="M-108,0 A108,108 0 0 1 108,0" fill="none" stroke="#4fdd7e" stroke-width="5" opacity="0.8"/>' +
+      '<path d="M-92,0 A92,92 0 0 1 92,0" fill="none" stroke="#45d0ff" stroke-width="5" opacity="0.8"/>';
+    rainbowEl.setAttribute('transform',
+      'translate(' + (view.width * 0.5).toFixed(1) + ',' + (view.height * 0.34).toFixed(1) + ')');
+
+    var t0 = performance.now();
+    var fadeIn = 1000;
+    var hold = 5000;
+    var fadeOut = 2200;
+    var total = fadeIn + hold + fadeOut;
+
+    requestAnimationFrame(function step(now) {
+      var t = now - t0;
+      var op = t < fadeIn ? t / fadeIn :
+        (t < fadeIn + hold ? 1 : Math.max(0, 1 - (t - fadeIn - hold) / fadeOut));
+      rainbowEl.setAttribute('opacity', op.toFixed(2));
+
+      if (t < total) requestAnimationFrame(step);
+      else rainbowEl.setAttribute('opacity', '0');
+    });
+  }
+
   // ---- Rechnen und ausgeben ----
 
   /* Bleibt das Feld bis leer, läuft die Pause noch. Sie zählt dann
@@ -2977,6 +3667,7 @@
       Math.round(percent) + ' Prozent der Sollzeit erreicht, gearbeitet ' + toDuration(worked);
 
     syncSun(now);
+    syncTide(now);
     animateTo(percent);
     paintLunch();
 
@@ -3051,6 +3742,9 @@
     { id: 'dolphin', label: 'Delfinfänger', hint: 'Delfin im Sprung angeklickt',
       note: function () { return 'Der Delfin springt etwa alle zehn Sekunden'; },
       d: '<path d="M3 14.6c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0"/><path d="M3 9.4c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0" opacity="0.5"/>' },
+    { id: 'crab', label: 'Krabbenfreund', hint: 'Krabbe erwischt',
+      note: function () { return 'Sie huscht gelegentlich am Ufer entlang'; },
+      d: '<ellipse cx="12" cy="13" rx="6.4" ry="4.2"/><path d="M6.5 11c-2.4-2-4-1.4-4.4.4M17.5 11c2.4-2 4-1.4 4.4.4"/><path d="M9 16.4 7.6 20M11.3 16.9l-.8 3.4M12.7 16.9l.8 3.4M15 16.4l1.4 3.6"/>' },
     { id: 'sun', label: 'Sonnenschieber', hint: 'Sonne über den Himmel gezogen',
       note: function () { return 'Sonne oben rechts greifen und ziehen'; },
       d: '<path d="M12 4v16M4 12h16M12 4l-2.6 2.8M12 4l2.6 2.8M12 20l-2.6-2.8M12 20l2.6-2.8M4 12l2.8-2.6M4 12l2.8 2.6M20 12l-2.8-2.6M20 12l-2.8 2.6"/>' },
@@ -3312,7 +4006,7 @@
   /* Wird am Ende jeder Berechnung aufgerufen. */
   function updateGame(s) {
     lastState = s;
-    game.workedXp = Math.round(s.worked);
+    game.workedXp = Math.round(Math.min(s.worked, s.targetMin));
 
     MILESTONES.forEach(function (m) {
       if (game.marks[m] || s.percent < m) return;
@@ -3351,6 +4045,155 @@
     pulse(shellsEl);
     unlock('dolphin');
     renderHud();
+  });
+
+  // ---- Krabbe fangen ----
+
+  crabEl.addEventListener('pointerdown', function (event) {
+    if (!crawl) return;
+    event.preventDefault();
+
+    var caught = crawl;
+    crawl = null;
+    game.shells += 1;
+    burstAt(caught.x || 0, caught.y2 || 0);
+    crabEl.setAttribute('opacity', '0');
+
+    toast('Krabbe erwischt', '+1 Muschel');
+    pulse(shellsEl);
+    unlock('crab');
+    renderHud();
+  });
+
+  // ============================================================
+  //  Muschel-Shop: rein kosmetisch, ohne Persistenz. Ein Neuladen
+  //  setzt Käufe und Ausrüstung wie den restlichen Spielstand zurück.
+  // ============================================================
+
+  var SHOP_THEMES = [
+    { id: 'ocean', label: 'Ozean', cost: 0,
+      vars: { '--az-cyan': '#12a5dd', '--az-cyan-deep': '#0a7cb0', '--az-tint': 'rgba(255,255,255,0.28)',
+              '--az-bright': '#c8f7ff', '--az-ring': 'rgba(23,190,240,0.45)',
+              '--az-rainbow': 'linear-gradient(90deg, #ff5a4d, #ff9a3c, #ffe04a, #4fdd7e, #45d0ff, #6e8bff, #b77bff)' } },
+    { id: 'sunset', label: 'Sonnenuntergang', cost: 3,
+      vars: { '--az-cyan': '#ff8a4d', '--az-cyan-deep': '#c85a2b', '--az-tint': 'rgba(255,236,214,0.32)',
+              '--az-bright': '#ffe3b8', '--az-ring': 'rgba(255,138,77,0.45)',
+              '--az-rainbow': 'linear-gradient(90deg, #ff5a4d, #ff8a4d, #ffc84d, #ff6f91, #c85a2b, #ffb199, #ffdca8)' } },
+    { id: 'riff', label: 'Riff', cost: 3,
+      vars: { '--az-cyan': '#2bd0a0', '--az-cyan-deep': '#149a76', '--az-tint': 'rgba(214,255,244,0.32)',
+              '--az-bright': '#baffe9', '--az-ring': 'rgba(43,208,160,0.45)',
+              '--az-rainbow': 'linear-gradient(90deg, #2bd0a0, #45d0ff, #4fdd7e, #ffe04a, #6e8bff, #b77bff, #2bd0a0)' } },
+    { id: 'midnight', label: 'Mitternacht', cost: 5,
+      vars: { '--az-cyan': '#6e7bff', '--az-cyan-deep': '#3d47b3', '--az-tint': 'rgba(226,228,255,0.28)',
+              '--az-bright': '#d6d9ff', '--az-ring': 'rgba(110,123,255,0.45)',
+              '--az-rainbow': 'linear-gradient(90deg, #6e7bff, #b77bff, #45d0ff, #ff8fc4, #4fdd7e, #6e7bff, #b77bff)' } }
+  ];
+
+  var SHOP_SKINS = [
+    { id: 'classic', label: 'Klassisch', cost: 0,
+      stops: ['#5aa2d6', '#31749f', '#215878'] },
+    { id: 'coral', label: 'Koralle', cost: 2,
+      stops: ['#ff9a8a', '#e0634f', '#a83b30'] },
+    { id: 'gold', label: 'Gold', cost: 2,
+      stops: ['#ffe08a', '#e0a52f', '#a8781a'] },
+    { id: 'orca', label: 'Orca', cost: 3,
+      stops: ['#e8f4ff', '#8fa3b8', '#2a3440'] }
+  ];
+
+  var shop = {
+    owned: new Set(['ocean', 'classic']),
+    theme: 'ocean',
+    skin: 'classic'
+  };
+
+  var shopModal      = document.getElementById('az-shop-modal');
+  var shopOpenBtn    = document.getElementById('az-shop-open');
+  var shopCloseBtn   = document.getElementById('az-shop-close');
+  var shopThemesEl   = document.getElementById('az-shop-themes');
+  var shopSkinsEl    = document.getElementById('az-shop-skins');
+
+  function applyShopTheme(id) {
+    var theme = SHOP_THEMES.filter(function (t) { return t.id === id; })[0];
+    if (!theme) return;
+    var wrap = document.querySelector('.az-wrap');
+    Object.keys(theme.vars).forEach(function (key) {
+      wrap.style.setProperty(key, theme.vars[key]);
+    });
+    shop.theme = id;
+  }
+
+  function applyShopSkin(id) {
+    var skin = SHOP_SKINS.filter(function (s) { return s.id === id; })[0];
+    if (!skin) return;
+    var stops = document.querySelectorAll('#az-dolphin-grad stop');
+    stops.forEach(function (stop, i) { if (skin.stops[i]) stop.setAttribute('stop-color', skin.stops[i]); });
+    shop.skin = id;
+  }
+
+  function renderShopGrid(el, items, activeId, kind) {
+    el.innerHTML = items.map(function (item) {
+      var owned = shop.owned.has(item.id);
+      var active = item.id === activeId;
+      var swatch = kind === 'theme'
+        ? item.vars['--az-cyan']
+        : 'linear-gradient(180deg,' + item.stops.join(',') + ')';
+      var price = owned ? (active ? 'Aktiv' : 'Besitzt') : item.cost + ' Muscheln';
+      var locked = !owned && game.shells < item.cost;
+
+      return '<button type="button" class="az-shop-item' + (active ? ' is-active' : '') +
+        (owned ? ' is-owned' : '') + '"' + (locked ? ' disabled' : '') +
+        ' data-shop-kind="' + kind + '" data-shop-id="' + item.id +
+        '" data-shop-cost="' + item.cost + '">' +
+        '<span class="az-shop-swatch" style="background:' + swatch + '"></span>' +
+        '<span class="az-shop-label">' + escapeText(item.label) + '</span>' +
+        '<span class="az-shop-price">' + price + '</span>' +
+        '</button>';
+    }).join('');
+  }
+
+  function renderShop() {
+    renderShopGrid(shopThemesEl, SHOP_THEMES, shop.theme, 'theme');
+    renderShopGrid(shopSkinsEl, SHOP_SKINS, shop.skin, 'skin');
+  }
+
+  function buyShopItem(kind, id, cost) {
+    var owned = shop.owned.has(id);
+
+    if (!owned) {
+      if (game.shells < cost) return;
+      game.shells -= cost;
+      shop.owned.add(id);
+      toast('Freigeschaltet', '-' + cost + ' Muscheln');
+      pulse(shellsEl);
+    }
+
+    if (kind === 'theme') applyShopTheme(id); else applyShopSkin(id);
+    renderShop();
+    renderHud();
+  }
+
+  function openShop() {
+    renderShop();
+    shopModal.hidden = false;
+    shopCloseBtn.focus();
+  }
+
+  function closeShop() {
+    shopModal.hidden = true;
+    shopOpenBtn.focus();
+  }
+
+  shopOpenBtn.addEventListener('click', openShop);
+  shopCloseBtn.addEventListener('click', closeShop);
+
+  shopModal.addEventListener('click', function (event) {
+    if (event.target === shopModal) closeShop();
+    var btn = event.target.closest('[data-shop-id]');
+    if (btn) buyShopItem(btn.dataset.shopKind, btn.dataset.shopId, Number(btn.dataset.shopCost));
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !shopModal.hidden) closeShop();
   });
 
   // ============================================================
@@ -3737,6 +4580,12 @@
   var LUNCH_RING = 2 * Math.PI * 16;
   var lunchWatch = null;   // Zustand aus dem letzten Takt
 
+  // Mittagspause heißt nur so, wenn sie in dieses Fenster fällt.
+  // Liegt die nächste Pause davor oder danach, zeigt der Countdown
+  // stattdessen "nächste Pause".
+  var LUNCH_WIN_START = 11 * 3600 + 30 * 60;
+  var LUNCH_WIN_END   = 13 * 3600 + 30 * 60;
+
   // ---- Hangry Hour ----
   // Läuft täglich fix von 11 bis 12 Uhr, unabhängig von erfassten Pausen.
   var hangryWrap  = document.querySelector('.az-wrap');
@@ -3751,6 +4600,77 @@
     hangryWrap.classList.toggle('is-hangry', active);
     hangryEl.hidden = !active;
     if (active) setText(hangryClock, toCountdown(HANGRY_END - now));
+  }
+
+  // ---- Feierabend-Alarm ----
+  // Gegenpol zur Spielmechanik: keine Belohnung fürs Länger-Bleiben,
+  // sondern ein Alarm, der ab 15 Minuten vor der Sollzeit warnt und ab
+  // deren Erreichen eskaliert.
+  var overtimeEl    = document.getElementById('az-overtime');
+  var overtimeBadge = document.getElementById('az-overtime-badge');
+  var overtimeClock = document.getElementById('az-overtime-clock');
+  var overtimeSub   = document.getElementById('az-overtime-sub');
+  var vignetteEl    = document.getElementById('az-overtime-vignette');
+  var OVERTIME_WARN_LEAD = 15 * 60;
+
+  /* Sauberer "pünktlich erreicht"-Trigger: sawBeforeAlarm merkt, dass wir
+     schon mindestens einen Tick VOR dem Alarm gesehen haben, damit ein
+     Reload nach bereits laufenden Überstunden nicht sofort feiert.
+     celebratedPunctual sorgt dafür, dass es pro Session nur einmal feuert. */
+  var sawBeforeAlarm = false;
+  var celebratedPunctual = false;
+
+  function paintOvertime(now) {
+    if (!lastState || !lastState.targetMin) {
+      overtimeEl.hidden = true;
+      vignetteEl.hidden = true;
+      return;
+    }
+
+    var endSec = (lastState.startMin + lastState.pauseTotal + lastState.targetMin) * 60;
+    var remaining = endSec - now;
+
+    if (remaining > OVERTIME_WARN_LEAD) {
+      overtimeEl.hidden = true;
+      vignetteEl.hidden = true;
+      hangryWrap.style.setProperty('--az-ebbe-sat', '1');
+      sawBeforeAlarm = true;
+      return;
+    }
+
+    overtimeEl.hidden = false;
+    overtimeEl.classList.remove('is-warn', 'is-alarm');
+
+    if (remaining > 0) {
+      overtimeEl.classList.add('is-warn');
+      vignetteEl.hidden = true;
+      hangryWrap.style.setProperty('--az-ebbe-sat', '1');
+      sawBeforeAlarm = true;
+      setText(overtimeBadge, 'Gleich Feierabend');
+      setText(overtimeClock, toCountdown(remaining));
+      setText(overtimeSub, 'bis Sollzeit');
+    } else {
+      var over = -remaining;
+      if (sawBeforeAlarm && !celebratedPunctual) {
+        celebratedPunctual = true;
+        celebratePunctualFinish();
+      }
+      overtimeEl.classList.add('is-alarm');
+      vignetteEl.hidden = false;
+      setText(overtimeBadge, 'Überstunden-Alarm');
+      setText(overtimeClock, toCountdown(over));
+      setText(overtimeSub, 'über Sollzeit');
+
+      var step = Math.min(3, Math.floor(over / (15 * 60)));
+      var speed = (1.4 - step * 0.3).toFixed(2) + 's';
+      overtimeEl.style.setProperty('--az-alarm-speed', speed);
+      vignetteEl.style.setProperty('--az-alarm-speed', speed);
+
+      // "Ebbe"-Effekt: verblasst über die erste Überstunden-Stunde,
+      // gedeckelt, damit die Szene nicht komplett ausgraut.
+      var ebbeSat = Math.max(0.55, 1 - Math.min(0.45, (over / 3600) * 0.45));
+      hangryWrap.style.setProperty('--az-ebbe-sat', ebbeSat.toFixed(2));
+    }
   }
 
   function secondsNow() {
@@ -3838,6 +4758,7 @@
     var now = secondsNow();
 
     paintHangry(info, now);
+    paintOvertime(now);
 
     lunchEl.classList.remove('is-soon', 'is-now', 'is-done', 'is-none');
     lunchPlan.hidden = info.state !== 'none';
@@ -3874,8 +4795,9 @@
       var next = info.slot;
       var left = next.fromSec - now;
       var minutes = left / 60;
+      var isLunch = next.fromSec >= LUNCH_WIN_START && next.fromSec <= LUNCH_WIN_END;
 
-      setText(lunchBrow, 'Mittagspause in');
+      setText(lunchBrow, isLunch ? 'Mittagspause in' : 'nächste Pause in');
       setText(lunchClock, toCountdown(left));
       setText(lunchLine, lunchWords(minutes));
       setText(lunchMeta, 'geplant ' + toClock(next.from) +
@@ -4175,6 +5097,134 @@
   });
 
   // ============================================================
+  //  Muntermacher-Otter: eigenständig, kostet keine Muschel.
+  //  Ultra mausig und süß, bewusst ohne Druck oder
+  //  Länger-Dranbleiben-Appelle.
+  // ============================================================
+
+  /* Nur die Sprüche mit einer Kosename-Anrede an Komma-Stelle bekommen ein
+     {n}-Token, fallback trägt den bisherigen Kosenamen. Die übrigen bleiben
+     unpersonalisiert, das wirkt natürlicher als ein Name in jedem Satz. */
+  var MOTIVATION_QUOTES = [
+    { text: 'Du machst das ganz wundervoll, du kleine Schnecke mit Superkräften. 🐌💫' },
+    { text: 'Jeder kleine Schritt zählt, {n}. Und deiner ist gerade ziemlich groß. 🐾', fallback: 'mein Schatz' },
+    { text: 'Psst, kleines Geheimnis: Du bist heute schon ein bisschen wunderbar. 🌸' },
+    { text: 'Selbst kleine Muscheln bauen große Riffe. Mach weiter, {n}. 🐚', fallback: 'Schnuckelchen' },
+    { text: 'Tief durchatmen, kurz lächeln, weiterhüpfen. Du schaffst das, {n}. 🐭', fallback: 'Mäuschen' },
+    { text: 'Dein Fleiß ist so niedlich wie ein schlafender Seehund. Und genauso stark. 🦭' },
+    { text: 'Ein Sonnenstrahl extra nur für dich, weil du dir das verdient hast. ☀️💛' },
+    { text: 'Kleine Pause, große Liebe. Du machst das ganz zauberhaft. 🎀' },
+    { text: 'Wenn Fleiß knuffig wäre, wärst du Weltmeisterin. Weiter so, {n}. 💕', fallback: 'Herzchen' },
+    { text: 'Du bist wie eine kleine Welle: sanft, beharrlich und einfach bezaubernd. 🌊' },
+    { text: 'Kein Grund zur Eile, {n}. Du glänzt sowieso schon. ✨', fallback: 'kleiner Stern' },
+    { text: 'Für dich extra flauschig verpackt: eine Extra-Portion Zuversicht. 🧸' },
+    { text: 'Du bist das Süßeste, was diesem Tag heute passiert ist. 🐣' },
+    { text: 'Mach eine kleine Pause, streck dich wie ein Kätzchen, und weiter geht’s. 🐱' }
+  ];
+
+  /* Extra für die Feierabend-Gratulation: kleiner, eigener Ton, weil es
+     ums Geschafft-Haben geht statt ums allgemeine Aufmuntern. */
+  var OTTER_PUNCTUAL_QUOTES = [
+    { text: 'Geschafft, {n}! Genau richtig aufgehört, jetzt ab an den Strand. 🦦🌅', fallback: 'du Schlaufuchs' },
+    { text: 'Perfekt getimt, {n}. Der Feierabend wartet schon mit Muschelmusik. 🐚🎶', fallback: 'Mäuschen' },
+    { text: 'Sollzeit erreicht, {n}! Der Otter macht heute für dich ein Fläschchen auf. 🦦🍾', fallback: 'Schnuckelchen' },
+    { text: 'So sieht ein rundum gelungener Tag aus, {n}. Zeit, die Pfoten hochzulegen. 🦦💤', fallback: 'Herzchen' },
+    { text: 'Du hast dein Soll erreicht, {n}, ganz ohne Extrarunden. Wunderbar gemacht. 🌊💛', fallback: 'kleiner Stern' },
+    { text: 'Klappe zu, {n}, Tag vorbei. Der Otter klatscht mit den Flossen. 🦦👏', fallback: 'Schatz' }
+  ];
+
+  var otterModal = document.getElementById('az-otter-modal');
+  var otterShell = document.getElementById('az-otter');
+  var otterClose = document.getElementById('az-otter-close');
+  var otterAgain = document.getElementById('az-otter-again');
+  var otterQuote = document.getElementById('az-otter-quote');
+  var otterNameInput = document.getElementById('az-otter-name-input');
+  var otterName  = '';
+  var otterLastIndex = -1;
+
+  function fillName(entry) {
+    var name = (otterName.trim() || entry.fallback || '').trim();
+    return entry.text.replace('{n}', name);
+  }
+
+  function showOtterQuote() {
+    var i = Math.floor(Math.random() * MOTIVATION_QUOTES.length);
+    if (MOTIVATION_QUOTES.length > 1) {
+      while (i === otterLastIndex) i = Math.floor(Math.random() * MOTIVATION_QUOTES.length);
+    }
+    otterLastIndex = i;
+    otterQuote.textContent = fillName(MOTIVATION_QUOTES[i]);
+  }
+
+  function openOtter() {
+    showOtterQuote();
+    otterModal.hidden = false;
+    otterAgain.focus();
+  }
+
+  function closeOtter() {
+    otterModal.hidden = true;
+    otterShell.focus();
+  }
+
+  otterShell.addEventListener('click', openOtter);
+
+  otterShell.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openOtter();
+  });
+
+  otterClose.addEventListener('click', closeOtter);
+  otterAgain.addEventListener('click', showOtterQuote);
+
+  otterNameInput.addEventListener('input', function () {
+    otterName = otterNameInput.value;
+  });
+
+  otterModal.addEventListener('click', function (event) {
+    if (event.target === otterModal) closeOtter();
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !otterModal.hidden) closeOtter();
+  });
+
+  /* Feiert einmalig, wenn die Sollzeit ohne vorheriges Beobachten von
+     Überstunden erreicht wird (siehe sawBeforeAlarm/celebratedPunctual in
+     paintOvertime). Bewusst kein Modal, um nicht zu unterbrechen. */
+  function celebratePunctualFinish() {
+    var entry = pick(OTTER_PUNCTUAL_QUOTES);
+    toast('🦦 ' + fillName(entry), '');
+    spawnRainbow();
+    showRecapCard();
+  }
+
+  // ---- Tagesrückblick-Karte ----
+
+  var recapEl     = document.getElementById('az-recap');
+  var recapRowsEl = document.getElementById('az-recap-rows');
+  var recapDismiss = document.getElementById('az-recap-dismiss');
+
+  function showRecapCard() {
+    var s = lastState;
+    var lawDone = s.lawNeed === 0 || s.pauseTotal >= s.lawNeed;
+
+    recapRowsEl.innerHTML =
+      '<span>Pausen: <strong>' + toDuration(s.pauseTotal) +
+        (lawDone ? ', Pflicht erfüllt' : '') + '</strong></span>' +
+      '<span>Pünktlich: <strong>ja</strong></span>' +
+      '<span>Stufe: <strong>' + (game.level + 1) + ', ' + LEVELS[game.level].name + '</strong></span>' +
+      '<span>Muscheln: <strong>' + game.shells + '</strong></span>';
+
+    recapEl.hidden = false;
+  }
+
+  recapDismiss.addEventListener('click', function () {
+    recapEl.hidden = true;
+  });
+
+  // ============================================================
   //  Teilen: Zustand im Link und Bildkarte
   // ============================================================
 
@@ -4205,6 +5255,12 @@
       '<button type="button" class="btn-remove" data-remove-pause title="Pause entfernen" aria-label="Pause entfernen">×</button>';
     return entry;
   }
+
+  /* Anonymer Gemeinschafts-Zähler fürs Team-Riff: nur wie oft der Link
+     nach Erreichen der Sollzeit weitergereicht wurde, und wie oft davon
+     ohne aktiven Überstunden-Alarm. Keine Namen, keine Einzelwerte. */
+  var teamRiff = { n: 0, ja: 0 };
+  var riffEl = document.getElementById('az-riff');
 
   /* Liest den Zustand aus der Adresszeile. Alle Werte werden geprüft,
      unbrauchbare Angaben fallen weg. */
@@ -4248,6 +5304,13 @@
 
       if (fields.length >= 2) wheelItems = fields;
     }
+
+    var riffN = parseInt(params.get('riffN'), 10);
+    var riffJa = parseInt(params.get('riffJa'), 10);
+    if (!isNaN(riffN) && riffN >= 0) {
+      teamRiff.n = Math.min(9999, riffN);
+      teamRiff.ja = !isNaN(riffJa) ? Math.min(teamRiff.n, Math.max(0, riffJa)) : 0;
+    }
   }
 
   function buildShareUrl() {
@@ -4272,7 +5335,31 @@
       return String(text).replace(/\|/g, '/');
     }).join('|'));
 
+    // Team-Riff: erst mitzählen, wenn die eigene Sollzeit erreicht ist,
+    // sonst nur unverändert weiterreichen. Teilt dieselbe Person mehrfach
+    // nach Sollzeit-Erreichen, kann sie mehrfach mitzählen — ohne Server
+    // oder Speicher ist das nicht zu verhindern, für einen informellen
+    // Team-Vibe aber unkritisch. "Pünktlich" nutzt celebratedPunctual statt
+    // der is-alarm-Klasse, die schon Sekunden nach Sollzeit-Erreichen aktiv
+    // bleibt und beim Klickzeitpunkt fast nie mehr false wäre. Ein Reload
+    // nach bereits erreichter Sollzeit zählt in dieser Session nicht mehr
+    // als "pünktlich" — konsistent mit "keine Persistenz".
+    if (lastState && lastState.percent >= 100) {
+      teamRiff.n += 1;
+      if (celebratedPunctual) teamRiff.ja += 1;
+    }
+    params.set('riffN', String(teamRiff.n));
+    params.set('riffJa', String(teamRiff.ja));
+
     return base + '?' + params.toString();
+  }
+
+  function renderRiff() {
+    if (teamRiff.n === 0) {
+      riffEl.innerHTML = '🐠 Noch kein Team-Riff. Der erste geteilte Link nach Feierabend startet die Zählung.';
+      return;
+    }
+    riffEl.innerHTML = '🐠 Riff-Team: ' + teamRiff.ja + ' von ' + teamRiff.n + ' heute pünktlich Feierabend';
   }
 
   // ---- Bildkarte auf Leinwand, 1200 mal 630 ----
@@ -4460,6 +5547,7 @@
   function openShare() {
     drawShareCard();
     shareUrlEl.value = buildShareUrl();
+    renderRiff();
     shareBtnNat.hidden = !(navigator.share && navigator.canShare);
     shareModal.hidden = false;
     shareBtnUrl.focus();
@@ -4572,6 +5660,12 @@
     oracleShell.setAttribute('transform',
       'translate(' + Math.round(clamp(view.width * 0.06, 34, 78)) + ',' +
       Math.round(view.waterY - 15) + ')');
+
+    // Otter treibt spiegelbildlich rechts, gleiche Wasserlinie
+    otterShell.setAttribute('transform',
+      'translate(' + Math.round(view.width - clamp(view.width * 0.06, 34, 78)) + ',' +
+      Math.round(view.waterY - 15) + ')');
+
     syncSun(minutesNow());
   }
 
@@ -4580,6 +5674,7 @@
   applyLink();
   buildSun();
   buildDolphin();
+  buildCrab();
   renderAwards();
   renderGrips();
   renderWheel();
@@ -4639,6 +5734,24 @@
       launchDolphin();
       nextJump();
     }, 9000 + Math.random() * 3000);
+  })();
+
+  // Krabbe huscht seltener und zeitversetzt zum Delfin vorbei
+  (function nextCrab() {
+    setTimeout(function () {
+      launchCrab();
+      nextCrab();
+    }, 14000 + Math.random() * 10000);
+  })();
+
+  // Wetterereignis alle 25 bis 45s, still übersprungen, wenn Tageszeit
+  // zu keinem der beiden passt (z.B. Dämmerung)
+  (function nextWeather() {
+    setTimeout(function () {
+      if (isNightNow()) spawnStar();
+      else if (isDayNow()) spawnFish();
+      nextWeather();
+    }, 25000 + Math.random() * 20000);
   })();
 })();
 </script>
