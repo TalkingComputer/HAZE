@@ -461,6 +461,16 @@
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 
+  /* Tages-Wetterbericht: ein Satz über dem Feierabend-Readout, generiert
+     aus dem aktuellen Rechenstand */
+  .az-weather-report {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--az-headline);
+    margin-bottom: 8px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
   .az-time {
     font-size: clamp(30px, 5vw, 46px);
     font-weight: 700;
@@ -528,7 +538,7 @@
     text-shadow: 0 1px 3px rgba(4, 52, 82, 0.4);
   }
 
-  .az-metric-value.highlight { color: var(--az-bright); }
+  .az-metric-value.highlight { color: var(--az-bright); transition: color 400ms ease; }
 
   .az-progress {
     position: relative;
@@ -626,6 +636,20 @@
   @keyframes az-twinkle {
     0%, 100% { opacity: 0;    transform: scale(0.3) rotate(0deg); }
     50%      { opacity: 0.95; transform: scale(1) rotate(45deg); }
+  }
+
+  /* Sternenfeld, sichtbar von 17:30 bis 09:00 Uhr (Gruppen-Deckkraft
+     kommt von syncStarfield()). Ruhiger als .az-spark, das für den
+     Abzeichen-Glanz reserviert bleibt. */
+  .az-star-dot {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: az-star-twinkle 3.2s ease-in-out infinite;
+  }
+
+  @keyframes az-star-twinkle {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 0.9; }
   }
 
   .az-sun-rays { animation: az-spin 60s linear infinite; }
@@ -753,6 +777,7 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--az-cyan-deep);
+    transition: color 400ms ease;
   }
 
   .az-shells svg {
@@ -804,6 +829,53 @@
   .btn-wheel svg {
     width: 17px;
     height: 17px;
+  }
+
+  /* Muschel-Sammlung-Leiste: eigene Zeile unterhalb der HUD-Buttons */
+  .az-catches {
+    display: flex;
+    flex: 1 0 100%;
+    gap: 6px;
+  }
+
+  .az-catch {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    color: rgba(10, 90, 134, 0.32);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.32);
+    transition: color 400ms ease, background 400ms ease;
+  }
+
+  .az-catch svg { width: 15px; height: 15px; }
+
+  .az-catch.is-caught {
+    color: #0c8163;
+    border-color: rgba(255, 255, 255, 0.9);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(200, 247, 220, 0.65));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .az-catch-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #ffffff;
+    background: linear-gradient(180deg, #ffb02e 0%, #dd7f05 100%);
+    box-shadow: 0 1px 3px rgba(120, 68, 5, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   /* Hinweis zur Pflichtpause */
@@ -981,6 +1053,31 @@
   #az-crab { pointer-events: all; cursor: pointer; }
   #az-crab[opacity="0"] { pointer-events: none; }
 
+  /* Strandfund lässt sich fangen, solange er sichtbar ist */
+
+  #az-treasure { pointer-events: all; cursor: pointer; }
+  #az-treasure[opacity="0"] { pointer-events: none; }
+
+  /* Flaschenpost lässt sich fangen, solange sie treibt */
+
+  #az-bottle { pointer-events: all; cursor: pointer; }
+  #az-bottle[opacity="0"] { pointer-events: none; }
+
+  /* Wasserstand: Wasser und Horizontschimmer heben sich sanft mit dem
+     Fortschritt, die Flutlinie leuchtet erst bei erreichter Sollzeit auf */
+
+  #az-water,
+  #az-horizon {
+    transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  #az-tidemark {
+    opacity: 0.4;
+    transition: opacity 900ms ease;
+  }
+
+  #az-tidemark.is-full { opacity: 1; }
+
   /* Glücksrad */
 
   .az-modal {
@@ -1044,6 +1141,7 @@
     border-radius: 10px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(222, 246, 255, 0.6));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    transition: color 400ms ease;
   }
 
   .btn-close:hover { color: #c9503f; }
@@ -1148,7 +1246,7 @@
     border-radius: 999px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 246, 255, 0.6));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
-    transition: filter 140ms ease;
+    transition: filter 140ms ease, color 400ms ease;
   }
 
   .btn-ghost:hover { filter: brightness(1.06); }
@@ -1157,6 +1255,26 @@
     outline: none;
     box-shadow: 0 0 0 4px var(--az-ring);
   }
+
+  /* Sound-Ambiente: Mute-Icon, rund statt Pille, damit es neben den
+     runden Abzeichen nicht wie ein weiterer Textbutton wirkt. Nach
+     .btn-ghost notiert, damit padding:0 dessen Pillen-Padding schlägt. */
+  .btn-mute {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-mute svg { width: 18px; height: 18px; }
+
+  .btn-mute .az-mute-x { opacity: 1; }
+  .btn-mute .az-mute-wave { opacity: 0; }
+
+  .btn-mute.is-on .az-mute-x { opacity: 0; }
+  .btn-mute.is-on .az-mute-wave { opacity: 1; }
 
   .az-wheel-edit {
     margin-top: 14px;
@@ -1287,6 +1405,37 @@
 
   .az-riff:empty { display: none; }
 
+  .az-riff-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px;
+    margin-bottom: 5px;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .az-riff-fish {
+    opacity: 0.32;
+    filter: grayscale(1);
+  }
+
+  .az-riff-fish.is-lit {
+    opacity: 1;
+    filter: none;
+  }
+
+  .az-riff-more {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--az-muted);
+    margin-left: 2px;
+  }
+
+  .az-riff-label {
+    font-size: 13px;
+  }
+
   /* ---------- Muntermacher-Otter (Modal-Inhalt) ---------- */
 
   .az-otter-quote {
@@ -1312,6 +1461,7 @@
     border-radius: 14px;
     background: linear-gradient(180deg, rgba(255, 244, 224, 0.75), rgba(214, 255, 244, 0.55));
     border: 1px solid rgba(255, 255, 255, 0.9);
+    animation: az-card-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .az-recap[hidden] { display: none; }
@@ -1337,10 +1487,10 @@
 
   .az-recap-dismiss {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 22px;
-    height: 22px;
+    top: 7px;
+    right: 7px;
+    width: 30px;
+    height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1351,6 +1501,12 @@
     border: 1px solid rgba(255, 255, 255, 0.9);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.7);
+    transition: color 400ms ease;
+  }
+
+  .az-recap-dismiss:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--az-ring);
   }
 
   .az-otter-name {
@@ -1817,6 +1973,7 @@
     border-radius: 999px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(219, 246, 255, 0.6));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    transition: color 400ms ease, filter 140ms ease;
   }
 
   .az-oracle-hint:hover { filter: brightness(1.06); }
@@ -1927,6 +2084,7 @@
     .az-bubble { opacity: 0.35; }
     .az-head-glow { opacity: 0.7; }
     .az-spark { opacity: 0.8; }
+    .az-star-dot { opacity: 0.7; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -2140,6 +2298,97 @@
     0%, 100% { box-shadow: inset 0 0 60px 6px rgba(255, 59, 48, 0.18); }
     50%      { box-shadow: inset 0 0 110px 18px rgba(255, 59, 48, 0.5); }
   }
+
+  /* Sturm-Effekt: zusätzliche Regenstriche während der Überstunden-Eskalation,
+     Menge und Tempo wachsen mit paintOvertime() in Stufen (lvl-1..lvl-3). */
+  .az-storm {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 700ms ease;
+  }
+
+  .az-storm.is-active { opacity: 1; }
+
+  .az-storm-drop {
+    position: absolute;
+    top: -12vh;
+    left: 0;
+    width: 1.5px;
+    height: 8vh;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.55));
+    transform: rotate(11deg);
+    animation: az-storm-fall 2.2s linear infinite;
+  }
+
+  .az-storm.lvl-1 .az-storm-drop { animation-duration: 2.2s; opacity: 0.45; }
+  .az-storm.lvl-2 .az-storm-drop { animation-duration: 1.5s; opacity: 0.7; }
+  .az-storm.lvl-3 .az-storm-drop { animation-duration: 1s;   opacity: 0.95; }
+
+  .az-storm-drop:nth-child(1)  { left: 3%;  animation-delay: 0s; }
+  .az-storm-drop:nth-child(2)  { left: 9%;  animation-delay: 0.4s; }
+  .az-storm-drop:nth-child(3)  { left: 16%; animation-delay: 0.9s; }
+  .az-storm-drop:nth-child(4)  { left: 23%; animation-delay: 0.2s; }
+  .az-storm-drop:nth-child(5)  { left: 30%; animation-delay: 1.1s; }
+  .az-storm-drop:nth-child(6)  { left: 37%; animation-delay: 0.6s; }
+  .az-storm-drop:nth-child(7)  { left: 44%; animation-delay: 1.4s; }
+  .az-storm-drop:nth-child(8)  { left: 51%; animation-delay: 0.1s; }
+  .az-storm-drop:nth-child(9)  { left: 58%; animation-delay: 0.8s; }
+  .az-storm-drop:nth-child(10) { left: 65%; animation-delay: 1.3s; }
+  .az-storm-drop:nth-child(11) { left: 72%; animation-delay: 0.5s; }
+  .az-storm-drop:nth-child(12) { left: 79%; animation-delay: 1.6s; }
+  .az-storm-drop:nth-child(13) { left: 85%; animation-delay: 0.3s; }
+  .az-storm-drop:nth-child(14) { left: 91%; animation-delay: 1s; }
+  .az-storm-drop:nth-child(15) { left: 97%; animation-delay: 0.7s; }
+  .az-storm-drop:nth-child(16) { left: 13%; animation-delay: 1.8s; }
+  .az-storm-drop:nth-child(17) { left: 54%; animation-delay: 0.9s; }
+  .az-storm-drop:nth-child(18) { left: 82%; animation-delay: 1.2s; }
+
+  @keyframes az-storm-fall {
+    from { transform: translateY(0) rotate(11deg); }
+    to   { transform: translateY(125vh) rotate(11deg); }
+  }
+
+  /* Sonnencreme-Pausen-Reminder: dezentes Icon unten links, wird
+     dringlicher, je länger keine Pause erfasst wurde (siehe
+     paintSuncream()). Kein Vollbild-Overlay wie die Hangry Hour. */
+  .az-suncream {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 60;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    line-height: 1;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(219, 246, 255, 0.6));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 14px rgba(6, 66, 102, 0.22);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 400ms ease, transform 400ms ease, background 400ms ease;
+    pointer-events: none;
+  }
+
+  .az-suncream.is-visible { opacity: 0.5; transform: scale(0.92); }
+  .az-suncream.is-warn    { opacity: 0.85; transform: scale(1); }
+  .az-suncream.is-urgent {
+    opacity: 1;
+    transform: scale(1.08);
+    background: linear-gradient(180deg, #ffe08a 0%, #ffb02e 100%);
+    animation: az-suncream-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes az-suncream-pulse {
+    0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 14px rgba(6, 66, 102, 0.22); }
+    50%      { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 20px rgba(255, 138, 20, 0.6); }
+  }
 </style>
 
 <div class="az-wrap">
@@ -2206,6 +2455,12 @@
           <stop offset="1" stop-color="#b8442a"/>
         </linearGradient>
 
+        <linearGradient id="az-gull-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="0.55" stop-color="#e7edf2"/>
+          <stop offset="1" stop-color="#b9c4cc"/>
+        </linearGradient>
+
         <linearGradient id="az-deep" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#2ab6e0"/>
           <stop offset="0.3" stop-color="#0f8ec6"/>
@@ -2257,10 +2512,18 @@
       <g id="az-horizon"></g>
       <g id="az-clouds" fill="#ffffff" filter="url(#az-cloud)"></g>
 
+      <!-- Sternenfeld: von 17:30 bis 09:00 Uhr sichtbar, Deckkraft der
+           ganzen Gruppe kommt von syncStarfield() -->
+      <g id="az-starfield" fill="#ffffff" opacity="0" aria-hidden="true"></g>
+
       <!-- Wetterereignisse: Sternschnuppe und Regenbogen liegen im Himmel,
            daher vor dem Wasser -->
       <g id="az-star" opacity="0" aria-hidden="true"></g>
       <g id="az-rainbow" opacity="0" aria-hidden="true"></g>
+
+      <!-- Möwe: fliegt einmalig vorbei, sobald die Pflichtpause erfüllt
+           ist. Rein dekorativ, kein Klick-Ziel. -->
+      <g id="az-law-gull" opacity="0" aria-hidden="true"></g>
 
       <!-- blasse Spur: der noch offene Teil -->
       <use href="#az-bands" opacity="0.16" filter="url(#az-blur-soft)"/>
@@ -2288,10 +2551,29 @@
       <g id="az-splash" opacity="0"></g>
       <g id="az-shine" fill="#ffffff" opacity="0.55"></g>
 
+      <!-- Saisondeko: Blätter, Schnee oder Blüten je nach Kalendermonat,
+           einmalig beim Start berechnet -->
+      <g id="az-season" aria-hidden="true"></g>
+
       <!-- Fischschwarm treibt an der Wasseroberfläche, Krabbe huscht am
            Ufer entlang -->
       <g id="az-fish" opacity="0" aria-hidden="true"></g>
       <g id="az-crab" opacity="0"></g>
+
+      <!-- Flaschenpost: treibt gelegentlich vorbei, wie Krabbe und Delfin
+           fangbar -->
+      <g id="az-bottle" opacity="0"></g>
+
+      <!-- Strandfund: einmaliger, zufälliger Glitzerfund, nur vor
+           Erreichen der Sollzeit möglich -->
+      <g id="az-treasure" opacity="0"></g>
+
+      <!-- Wasserstand-Markierung: Flutlinie, leuchtet bei 100% Sollzeit -->
+      <g id="az-tidemark" aria-hidden="true"></g>
+
+      <!-- Strandfigur: dauerhaft sichtbar, Ausstattung im Muschel-Shop
+           wählbar -->
+      <g id="az-avatar" aria-hidden="true"></g>
 
       <g id="az-sun"></g>
 
@@ -2420,6 +2702,18 @@
         </button>
 
         <button type="button" class="btn-ghost" id="az-share-open">Teilen</button>
+
+        <button type="button" class="btn-ghost btn-mute" id="az-sound-toggle" aria-pressed="false"
+                aria-label="Sound ein- oder ausschalten" title="Sound ein- oder ausschalten">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.4 9.6h3.4l5-4.2v13.2l-5-4.2H4.4Z"/>
+            <path class="az-mute-wave" d="M15.4 8.6a5 5 0 0 1 0 6.8"/>
+            <path class="az-mute-wave" d="M17.9 6.1a8.6 8.6 0 0 1 0 11.8"/>
+            <path class="az-mute-x" d="M15.6 8.4l5 7.2M20.6 8.4l-5 7.2"/>
+          </svg>
+        </button>
+
+        <div class="az-catches" id="az-catches" role="group" aria-label="Gefangene Kreaturen dieser Sitzung"></div>
       </div>
 
       <div class="az-block az-lunch" id="az-lunch">
@@ -2513,6 +2807,7 @@
     </div>
 
     <div class="az-readout">
+      <div class="az-weather-report" id="az-weather-report" aria-live="polite"></div>
       <div class="az-eyebrow" id="eyebrow">Feierabend um</div>
       <div class="az-time-row">
         <div class="az-time" id="time">--:--<small>Uhr</small></div>
@@ -2552,6 +2847,17 @@
     <span class="az-overtime-sub" id="az-overtime-sub">bis Sollzeit</span>
   </div>
   <div class="az-overtime-vignette" id="az-overtime-vignette" hidden aria-hidden="true"></div>
+
+  <div class="az-storm" id="az-storm" aria-hidden="true">
+    <span class="az-storm-drop"></span><span class="az-storm-drop"></span><span class="az-storm-drop"></span>
+    <span class="az-storm-drop"></span><span class="az-storm-drop"></span><span class="az-storm-drop"></span>
+    <span class="az-storm-drop"></span><span class="az-storm-drop"></span><span class="az-storm-drop"></span>
+    <span class="az-storm-drop"></span><span class="az-storm-drop"></span><span class="az-storm-drop"></span>
+    <span class="az-storm-drop"></span><span class="az-storm-drop"></span><span class="az-storm-drop"></span>
+    <span class="az-storm-drop"></span><span class="az-storm-drop"></span><span class="az-storm-drop"></span>
+  </div>
+
+  <div class="az-suncream" id="az-suncream" role="status" aria-live="polite" title="Zeit für eine Pause?">🧴</div>
 
   <div class="az-toasts" id="az-toasts" aria-live="polite"></div>
 
@@ -2773,6 +3079,21 @@
         <h3 class="az-shop-heading">Delfin-Skins</h3>
         <div class="az-shop-grid" id="az-shop-skins"></div>
       </div>
+
+      <div class="az-shop-section">
+        <h3 class="az-shop-heading">Strandfigur: Kopf</h3>
+        <div class="az-shop-grid" id="az-shop-hats"></div>
+      </div>
+
+      <div class="az-shop-section">
+        <h3 class="az-shop-heading">Strandfigur: Brille</h3>
+        <div class="az-shop-grid" id="az-shop-glasses"></div>
+      </div>
+
+      <div class="az-shop-section">
+        <h3 class="az-shop-heading">Strandfigur: Schwimmring</h3>
+        <div class="az-shop-grid" id="az-shop-rings"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2791,6 +3112,10 @@
 
   // Länge eines Wellenbogens in Pixel. Größer heißt breitere Wellen.
   var WAVE_SEGMENT = { front: 150, back: 185 };
+
+  // Gezeiten: maximaler Hub in Pixel, den das Wasser bei 100% Sollzeit
+  // gegenüber dem Ruhestand anhebt.
+  var TIDE_MAX_LIFT = 22;
 
   /* RUHEPLATZ DER SONNE, oben rechts in der Ecke.
      nudgeX  schiebt sie waagerecht, positive Werte nach rechts
@@ -2818,9 +3143,20 @@
   var dolphinEl   = document.getElementById('az-dolphin');
   var splashEl    = document.getElementById('az-splash');
   var crabEl      = document.getElementById('az-crab');
+  var treasureEl  = document.getElementById('az-treasure');
+  var bottleEl    = document.getElementById('az-bottle');
+  var tidemarkEl  = document.getElementById('az-tidemark');
+  var seasonEl    = document.getElementById('az-season');
+  var avatarEl    = document.getElementById('az-avatar');
+  var weatherReportEl = document.getElementById('az-weather-report');
+  var suncreamEl  = document.getElementById('az-suncream');
+  var stormEl     = document.getElementById('az-storm');
+  var catchesEl   = document.getElementById('az-catches');
   var fishEl      = document.getElementById('az-fish');
+  var starfieldEl = document.getElementById('az-starfield');
   var starEl      = document.getElementById('az-star');
   var rainbowEl   = document.getElementById('az-rainbow');
+  var lawGullEl   = document.getElementById('az-law-gull');
   var markerEl    = document.getElementById('az-marker');
   var checksEl    = document.getElementById('az-checks');
   var wishMark    = document.getElementById('az-wish-mark');
@@ -2978,6 +3314,66 @@
       'fill="url(#az-horizon-glow)"/>';
   }
 
+  // Flutlinie: gestrichelte Markierung genau auf Höhe des vollen
+  // Gezeitenhubs, leuchtet erst auf, wenn die Sollzeit erreicht ist
+  // (siehe syncTideLevel()).
+  function drawTidemark() {
+    tidemarkEl.innerHTML =
+      '<line x1="0" y1="0" x2="' + view.width + '" y2="0" ' +
+      'stroke="#ffffff" stroke-width="1.4" stroke-dasharray="2 9" opacity="0.6"/>';
+    tidemarkEl.setAttribute('transform', 'translate(0,' + (view.waterY - TIDE_MAX_LIFT) + ')');
+  }
+
+  // Hebt Wasser und Horizontschimmer mit dem Fortschritt an, gedeckelt auf
+  // TIDE_MAX_LIFT. Läuft aus calculate() mit, kein eigener Zustand.
+  function syncTideLevel(percent) {
+    var lift = clamp(percent, 0, 100) / 100 * TIDE_MAX_LIFT;
+    var t = 'translateY(' + (-lift).toFixed(1) + 'px)';
+    waterEl.style.transform = t;
+    horizonEl.style.transform = t;
+    tidemarkEl.classList.toggle('is-full', percent >= 100);
+  }
+
+  /* Saisondeko: ein paar treibende Blätter, Schneeflecken oder Blüten je
+     nach Kalendermonat. Rein aus dem Datum berechnet, kein eigener
+     Zustand, ändert sich also von allein über das Jahr. */
+  function drawSeason() {
+    var month = new Date().getMonth(); // 0 = Januar
+    var spots = [0.08, 0.24, 0.4, 0.58, 0.74, 0.9];
+    var out = '';
+
+    if (month === 11 || month === 0 || month === 1) {
+      // Winter: kleine Schneeflecken, die auf dem Wasser treiben
+      spots.forEach(function (p, i) {
+        var x = view.width * p;
+        var y = view.waterY + 6 + (i % 2) * 9;
+        out += '<ellipse cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" rx="' +
+          (7 + (i % 3)) + '" ry="2.6" fill="#ffffff" opacity="0.5"/>';
+      });
+    } else if (month >= 2 && month <= 4) {
+      // Frühling: Blütenblätter
+      spots.forEach(function (p, i) {
+        var x = view.width * p;
+        var y = view.waterY - 4 - (i % 3) * 7;
+        out += '<ellipse cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" rx="4" ry="2.6" ' +
+          'fill="#ff8fc4" opacity="0.6" transform="rotate(' + (i * 37) + ' ' + x.toFixed(0) + ' ' + y.toFixed(0) + ')"/>';
+      });
+    } else if (month >= 8 && month <= 10) {
+      // Herbst: treibende Blätter
+      spots.forEach(function (p, i) {
+        var x = view.width * p;
+        var y = view.waterY - 2 - (i % 3) * 6;
+        var color = i % 2 === 0 ? '#e0a52f' : '#c85a2b';
+        out += '<path d="M' + x.toFixed(0) + ',' + y.toFixed(0) + ' q5,-6 10,0 q-5,6 -10,0 Z" ' +
+          'fill="' + color + '" opacity="0.55"/>';
+      });
+    }
+    // Sommer (Juni bis August): keine Extra-Deko, das Funkeln von
+    // drawShine() reicht als saisonaler Akzent.
+
+    seasonEl.innerHTML = out;
+  }
+
   function star(x, y, size) {
     var a = size, b = size * 0.16;
     return '<path d="M' + x + ' ' + (y - a) +
@@ -3019,6 +3415,30 @@
              '<ellipse cx="' + (cx + 26 * s) + '" cy="' + (cy - 11 * s) + '" rx="' + 24 * s + '" ry="' + 19 * s + '"/>' +
              '<ellipse cx="' + (cx - 26 * s) + '" cy="' + (cy - 3 * s) + '" rx="' + 21 * s + '" ry="' + 12 * s + '"/>' +
              '</g>';
+    }).join('');
+  }
+
+  // ---- Sternenfeld ----
+  // Feste, prozentuale Positionen in der oberen Bildhälfte, damit sie auf
+  // jeder Breite verteilt bleiben - dieselbe Technik wie bei den Wolken.
+  // Sichtbarkeit über den Tagesverlauf regelt syncStarfield().
+  var STAR_DOTS = [
+    { x: 0.04, y: 0.09, r: 1.5, d: 0.0 }, { x: 0.11, y: 0.22, r: 1.0, d: 0.6 },
+    { x: 0.19, y: 0.05, r: 1.3, d: 1.3 }, { x: 0.27, y: 0.16, r: 0.9, d: 1.9 },
+    { x: 0.34, y: 0.27, r: 1.5, d: 0.3 }, { x: 0.41, y: 0.08, r: 1.0, d: 1.6 },
+    { x: 0.49, y: 0.19, r: 1.2, d: 2.2 }, { x: 0.57, y: 0.05, r: 0.9, d: 0.9 },
+    { x: 0.64, y: 0.25, r: 1.4, d: 1.8 }, { x: 0.71, y: 0.12, r: 1.0, d: 0.4 },
+    { x: 0.79, y: 0.20, r: 1.3, d: 2.5 }, { x: 0.86, y: 0.07, r: 0.9, d: 1.1 },
+    { x: 0.92, y: 0.29, r: 1.5, d: 0.7 }, { x: 0.15, y: 0.33, r: 0.8, d: 2.8 },
+    { x: 0.59, y: 0.31, r: 0.8, d: 1.4 }, { x: 0.82, y: 0.34, r: 0.9, d: 0.2 }
+  ];
+
+  function buildStarfield() {
+    starfieldEl.innerHTML = STAR_DOTS.map(function (s) {
+      var cx = (s.x * view.width).toFixed(1);
+      var cy = (s.y * view.height).toFixed(1);
+      return '<circle class="az-star-dot" cx="' + cx + '" cy="' + cy + '" r="' + s.r +
+        '" style="animation-delay:' + s.d + 's"/>';
     }).join('');
   }
 
@@ -3228,6 +3648,31 @@
     stageEl.style.setProperty('--az-night-veil', (a.veil + (b.veil - a.veil) * t).toFixed(2));
   }
 
+  /* Sternenfeld: eigenes, einfacheres Zeitfenster als der Nacht-Schleier,
+     bewusst weiter gefasst (17:30 bis 09:00) und mit weichem Ein-/
+     Ausblenden an den Rändern statt hartem Umschalten. */
+  var STAR_PHASES = [
+    { at: 0,    op: 1 },
+    { at: 480,  op: 1 },
+    { at: 540,  op: 0 },
+    { at: 1050, op: 0 },
+    { at: 1140, op: 1 },
+    { at: 1440, op: 1 }
+  ];
+
+  function syncStarfield(minutes) {
+    var m = ((minutes % 1440) + 1440) % 1440;
+    var i = 0;
+    while (i < STAR_PHASES.length - 1 && STAR_PHASES[i + 1].at <= m) i++;
+
+    var a = STAR_PHASES[i];
+    var b = STAR_PHASES[Math.min(i + 1, STAR_PHASES.length - 1)];
+    var span = b.at - a.at;
+    var t = span > 0 ? clamp((m - a.at) / span, 0, 1) : 0;
+
+    starfieldEl.style.opacity = (a.op + (b.op - a.op) * t).toFixed(2);
+  }
+
   // ---- Fortschritt ----
 
   var shown = 0;
@@ -3387,6 +3832,27 @@
   // springen. Eigener Timer weiter unten, damit sie nicht immer zusammen
   // mit dem Delfin auftaucht.
 
+  /* Wochentagsfarbe: Krabbe und Strandfund teilen sich az-crab-grad,
+     dadurch färbt ein Tausch der Farbverlaufsstufen beide zugleich - ein
+     kleiner, wiederkehrender Farbwechsel je nach echtem Wochentag, kein
+     eigener Zustand. */
+  var WEEKDAY_CRAB_COLORS = {
+    0: ['#ffb2a0', '#ff7a52', '#c14a26'], // Sonntag: Koralle
+    1: ['#ff8f6b', '#e8623d', '#b8442a'], // Montag: Standard
+    2: ['#8fe0c8', '#3fb894', '#1f7a5c'], // Dienstag: Türkis
+    3: ['#ffe08a', '#e0a52f', '#a8781a'], // Mittwoch: Gold
+    4: ['#c9a8ff', '#9a6bdb', '#6b3fa8'], // Donnerstag: Lila
+    5: ['#ffd1e8', '#ff8fc4', '#c65a95'], // Freitag: Pink
+    6: ['#a8d8ff', '#5aa2d6', '#2f5f8a']  // Samstag: Himmelblau
+  };
+
+  function applyWeekdayCrabColor() {
+    var stops = WEEKDAY_CRAB_COLORS[new Date().getDay()];
+    document.querySelectorAll('#az-crab-grad stop').forEach(function (stop, i) {
+      if (stops[i]) stop.setAttribute('stop-color', stops[i]);
+    });
+  }
+
   function buildCrab() {
     crabEl.innerHTML =
       '<ellipse cx="0" cy="0" rx="11" ry="7.5" fill="url(#az-crab-grad)" stroke="#ffffff" stroke-width="1.1"/>' +
@@ -3439,6 +3905,103 @@
       'scale(' + (crawl.span < 0 ? -1 : 1) + ',1)');
 
     requestAnimationFrame(scuttle);
+  }
+
+  // ---- Flaschenpost ----
+  // Treibt langsam über die Wasseroberfläche, statt wie der Delfin zu
+  // springen oder wie die Krabbe zu huschen. Eigener, langsamerer Timer
+  // unten am Ende der Datei.
+
+  function buildBottle() {
+    bottleEl.innerHTML =
+      '<ellipse cx="0" cy="9" rx="10" ry="2.6" fill="#0a5580" opacity="0.14"/>' +
+      '<path d="M-3.4,-14 h6.8 v4.4 c2.6,1.6 4.4,4.6 4.4,8.2 v6.4 a4 4 0 0 1 -4 4 h-7.6 a4 4 0 0 1 -4,-4 v-6.4 ' +
+      'c0,-3.6 1.8,-6.6 4.4,-8.2 Z" fill="#8fe0c8" stroke="#ffffff" stroke-width="1.1" opacity="0.9"/>' +
+      '<rect x="-2.6" y="-16.4" width="5.2" height="3.6" rx="1" fill="#a9764a"/>' +
+      '<path d="M-2.2,2 q2.2,-1.6 4.4,0 v3.6 q-2.2,1.6 -4.4,0 Z" fill="#fff6df" opacity="0.9"/>';
+  }
+
+  var bottleDrift = null;
+
+  function launchBottle() {
+    if (calm.matches || document.hidden || !view) return;
+
+    var span = clamp(view.width * 0.22, 140, 260);
+    var dir = Math.random() < 0.5 ? 1 : -1;
+    bottleDrift = {
+      t0: performance.now(),
+      duration: 6200,
+      x0: 50 + Math.random() * Math.max(40, view.width - span - 100),
+      span: span * dir,
+      y: view.waterY - 10
+    };
+
+    bottleEl.setAttribute('opacity', '1');
+    requestAnimationFrame(driftBottle);
+  }
+
+  function driftBottle(now) {
+    if (!bottleDrift) return;
+
+    var p = (now - bottleDrift.t0) / bottleDrift.duration;
+
+    if (p >= 1) {
+      bottleDrift = null;
+      bottleEl.setAttribute('opacity', '0');
+      return;
+    }
+
+    var x = bottleDrift.x0 + bottleDrift.span * p;
+    var bob = Math.sin(p * 14) * 3;
+    var tilt = Math.sin(p * 14) * 5;
+    bottleDrift.x = x;
+    bottleDrift.y2 = bottleDrift.y + bob;
+
+    bottleEl.setAttribute('transform',
+      'translate(' + x.toFixed(1) + ',' + (bottleDrift.y + bob).toFixed(1) + ') rotate(' + tilt.toFixed(1) + ')');
+
+    requestAnimationFrame(driftBottle);
+  }
+
+  // ---- Strandfund ----
+  // Ein einziger, zufälliger Glitzerfund pro Sitzung. Erscheint nur, wenn
+  // die Sollzeit noch nicht erreicht ist, und verschwindet nach kurzer
+  // Zeit von allein, wenn er nicht angeklickt wird. Kein wiederholender
+  // Timer wie bei Delfin/Krabbe - je länger gearbeitet wird, desto
+  // kleiner wird das Zeitfenster, in dem der Fund überhaupt noch
+  // erscheinen kann, nie größer.
+
+  function buildTreasure() {
+    treasureEl.innerHTML =
+      '<ellipse cx="0" cy="5" rx="10" ry="3.6" fill="#0a5580" opacity="0.14"/>' +
+      '<path d="M0,9 C-9,6 -12,-3 -6,-8 -3,-11 2,-9 4,-5 7,-9 12,-6 9,1 6,7 0,9 0,9Z" ' +
+      'fill="url(#az-crab-grad)" stroke="#ffffff" stroke-width="1"/>' +
+      '<path class="az-spark" d="M0,-11 L2,-2 L11,0 L2,2 L0,11 L-2,2 L-11,0 L-2,-2 Z" ' +
+      'fill="#ffe04a" transform="translate(0,-7) scale(0.45)"/>';
+  }
+
+  var treasureLive = null;
+  var treasureUsed = false;
+
+  function launchTreasure() {
+    if (treasureUsed || calm.matches || document.hidden || !view) return;
+    if (!lastState || !lastState.targetMin) return;
+    if (lastState.targetMin - lastState.worked <= 0) return;
+
+    treasureUsed = true;
+
+    var x = 40 + Math.random() * Math.max(40, view.width - 80);
+    var y = view.waterY - 6;
+    treasureLive = { x: x, y: y };
+
+    treasureEl.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')');
+    treasureEl.setAttribute('opacity', '1');
+
+    setTimeout(function () {
+      if (!treasureLive) return;
+      treasureLive = null;
+      treasureEl.setAttribute('opacity', '0');
+    }, 7000);
   }
 
   // ---- Wetterereignisse: Sternschnuppe, Fischschwarm, Regenbogen ----
@@ -3512,6 +4075,42 @@
 
       if (p < 1) requestAnimationFrame(step);
       else fishEl.setAttribute('opacity', '0');
+    });
+  }
+
+  // ---- Möwe zur Pflichtpause ----
+  // Rein dekorativ, kein Klick-Ziel. Fliegt genau einmal quer durchs
+  // Bild, sobald die gesetzliche Pflichtpause erfüllt ist - das
+  // "law"-Abzeichen samt Muschel gibt es bereits über unlock(), die
+  // Möwe ist nur der sichtbare, sinnfällige Moment dazu.
+
+  function buildLawGull() {
+    lawGullEl.innerHTML =
+      '<path d="M-12,0 Q-6,-7 0,0 Q6,-7 12,0" fill="none" ' +
+      'stroke="url(#az-gull-grad)" stroke-width="2.4" stroke-linecap="round"/>';
+  }
+
+  function spawnLawGull() {
+    if (calm.matches || document.hidden || !view) return;
+
+    var y0 = view.height * (0.12 + Math.random() * 0.1);
+    var dir = Math.random() < 0.5 ? 1 : -1;
+    var x0 = dir > 0 ? -40 : view.width + 40;
+    var x1 = dir > 0 ? view.width + 40 : -40;
+    var t0 = performance.now();
+    var span = 3200;
+
+    lawGullEl.setAttribute('opacity', '0.9');
+
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / span);
+      var x = x0 + (x1 - x0) * p;
+      var bob = Math.sin(p * 8) * 6;
+      lawGullEl.setAttribute('transform',
+        'translate(' + x.toFixed(1) + ',' + (y0 + bob).toFixed(1) + ') scale(' + dir + ',1)');
+
+      if (p < 1) requestAnimationFrame(step);
+      else lawGullEl.setAttribute('opacity', '0');
     });
   }
 
@@ -3593,6 +4192,24 @@
     });
   }
 
+  /* Tages-Wetterbericht: ein kurzer, generierter Satz statt einer echten
+     Vorhersage, rein aus dem aktuellen Rechenstand zusammengesetzt. */
+  function weatherReport(s) {
+    var text;
+    if (s.overMin >= 15) {
+      text = '⛈️ Sturm mit Verspätungsrisiko, seit ' + toDuration(s.overMin) + ' über der Sollzeit.';
+    } else if (s.remaining <= 0) {
+      text = '🌤️ Aufklarend, Feierabend seit ' + s.clock + ' Uhr erreicht.';
+    } else if (s.remaining <= 15) {
+      text = '⛅ Leicht bewölkt, Feierabend zieht auf, um ' + s.clock + ' Uhr.';
+    } else if (s.percent >= 50) {
+      text = '🌤️ Freundlich, Aussicht auf Feierabend um ' + s.clock + ' Uhr.';
+    } else {
+      text = '☀️ Sonnig, Aussicht auf Feierabend um ' + s.clock + ' Uhr.';
+    }
+    setText(weatherReportEl, text);
+  }
+
   function calculate() {
     var startMin = toMinutes(document.getElementById('start').value);
     if (startMin === null) return;
@@ -3614,15 +4231,21 @@
     // Pflichtpause nach Arbeitszeitgesetz, gemessen an der Sollzeit
     var lawNeed = targetMin > 540 ? 45 : (targetMin > 360 ? 30 : 0);
 
+    // Status nicht nur über Farbe unterscheiden, sondern auch über ein
+    // kleines Symbol - barrierefrei und deutlicher auf einen Blick.
+    var LAW_ICON_NEUTRAL = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/></svg>';
+    var LAW_ICON_OK = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>';
+    var LAW_ICON_OPEN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.4 21 19.4H3Z"/><path d="M12 10.2v3.6"/><circle cx="12" cy="16.6" r="0.7" fill="currentColor" stroke="none"/></svg>';
+
     if (lawNeed === 0) {
       lawEl.className = 'az-law';
-      lawEl.textContent = 'Bis 6 Stunden Arbeitszeit ohne Pflichtpause';
+      lawEl.innerHTML = LAW_ICON_NEUTRAL + '<span>Bis 6 Stunden Arbeitszeit ohne Pflichtpause</span>';
     } else if (pauses.total >= lawNeed) {
       lawEl.className = 'az-law is-ok';
-      lawEl.textContent = 'Pflichtpause erfüllt, gefordert sind ' + lawNeed + ' min';
+      lawEl.innerHTML = LAW_ICON_OK + '<span>Pflichtpause erfüllt, gefordert sind ' + lawNeed + ' min</span>';
     } else {
       lawEl.className = 'az-law is-open';
-      lawEl.textContent = 'Pflichtpause offen, es fehlen ' + (lawNeed - pauses.total) + ' min von ' + lawNeed + ' min';
+      lawEl.innerHTML = LAW_ICON_OPEN + '<span>Pflichtpause offen, es fehlen ' + (lawNeed - pauses.total) + ' min von ' + lawNeed + ' min</span>';
     }
 
     markActivePreset(targetHours);
@@ -3668,8 +4291,12 @@
 
     syncSun(now);
     syncTide(now);
+    syncStarfield(now);
+    syncTideLevel(percent);
     animateTo(percent);
     paintLunch();
+    paintSuncream(now, startMin);
+    weatherReport({ percent: percent, remaining: remaining, overMin: now - endMin, clock: feierabendClock });
 
     paintWish({
       endsAt: startMin + pauses.total + targetMin,
@@ -3685,7 +4312,8 @@
       pauseCount: pauses.count,
       startMin: startMin,
       targetMin: targetMin,
-      lawNeed: lawNeed
+      lawNeed: lawNeed,
+      overMin: now - endMin
     });
   }
 
@@ -3708,6 +4336,20 @@
   ];
 
   var MILESTONES = [10, 25, 50, 75, 100];
+
+  /* Kurze Botschaften, die die Flaschenpost beim Öffnen zeigt. */
+  var BOTTLE_MESSAGES = [
+    'Wer das liest, hat gerade eine Flasche gefangen. Weiter so.',
+    'Kleine Erinnerung: Wasser trinken nicht vergessen.',
+    'Irgendwo da draußen freut sich jemand über deinen Feierabend.',
+    'Kurz durchatmen. Der Rest wartet.',
+    'Diese Nachricht schwimmt seit Minuten auf dich zu. Gut gefangen.',
+    'Tipp aus der Flasche: die nächste Pause verdient ihren Namen.',
+    'Nicht jede Flasche enthält eine Botschaft. Diese schon.',
+    'Ein Schluck Ozean, ein Schluck Motivation. Weiter geht’s.',
+    'Auch Flaschenpost braucht manchmal einen Moment Pause.',
+    'Gut aufgepasst. Nicht jede treibt bis ans Ufer.'
+  ];
 
   /* Abzeichen. d enthält den Pfad des Symbols, 24 mal 24, nur Kontur. */
   var AWARDS = [
@@ -3745,6 +4387,9 @@
     { id: 'crab', label: 'Krabbenfreund', hint: 'Krabbe erwischt',
       note: function () { return 'Sie huscht gelegentlich am Ufer entlang'; },
       d: '<ellipse cx="12" cy="13" rx="6.4" ry="4.2"/><path d="M6.5 11c-2.4-2-4-1.4-4.4.4M17.5 11c2.4-2 4-1.4 4.4.4"/><path d="M9 16.4 7.6 20M11.3 16.9l-.8 3.4M12.7 16.9l.8 3.4M15 16.4l1.4 3.6"/>' },
+    { id: 'bottle', label: 'Flaschensammler', hint: 'Flaschenpost gefangen',
+      note: function () { return 'Sie treibt langsam über die Wasseroberfläche'; },
+      d: '<path d="M10.4 2.6h3.2v2.8a1 1 0 0 0 .4.8c1.4 1.1 2.4 2.7 2.4 4.6v7.8a2.4 2.4 0 0 1-2.4 2.4h-4a2.4 2.4 0 0 1-2.4-2.4V10.8c0-1.9 1-3.5 2.4-4.6a1 1 0 0 0 .4-.8V2.6Z"/><path d="M9.6 12.6h4.8"/>' },
     { id: 'sun', label: 'Sonnenschieber', hint: 'Sonne über den Himmel gezogen',
       note: function () { return 'Sonne oben rechts greifen und ziehen'; },
       d: '<path d="M12 4v16M4 12h16M12 4l-2.6 2.8M12 4l2.6 2.8M12 20l-2.6-2.8M12 20l2.6-2.8M4 12l2.8-2.6M4 12l2.8 2.6M20 12l-2.8-2.6M20 12l-2.8 2.6"/>' },
@@ -3753,7 +4398,23 @@
       d: '<path d="M12 20.4C5.6 17 3.1 10.6 5.6 6.9 7.7 3.8 10.4 4.7 12 6.7c1.6-2 4.3-2.9 6.4.2 2.5 3.7 0 10.1-6.4 13.5Z"/><path d="M12 19.6V7.1"/>' },
     { id: 'wheel', label: 'Glücksritter', hint: 'Glücksrad gedreht',
       note: function () { return 'Eine Muschel reicht für einen Dreh'; },
-      d: '<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="2.2"/><path d="M12 3.6v5.4M12 15v5.4M3.6 12H9M15 12h5.4"/>' }
+      d: '<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="2.2"/><path d="M12 3.6v5.4M12 15v5.4M3.6 12H9M15 12h5.4"/>' },
+    { id: 'gelassen', label: 'Gelassen', hint: 'Sollzeit erreicht, ohne dass der Alarm eskaliert ist',
+      note: function (s) { return s.overMin >= 15 ? 'Der Alarm ist diesmal eskaliert' : 'Noch offen, bis die Sollzeit erreicht ist'; },
+      d: '<path d="M2.6 9.4c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6-1.6"/><path d="M2.6 14.6c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6-1.6"/>' },
+    { id: 'dreiklang', label: 'Dreiklang', hint: 'Drei oder mehr Pausen erfasst',
+      note: function (s) { return Math.min(3, s.pauseCount) + ' von 3 Pausen'; },
+      d: '<rect x="3.2" y="5.2" width="17.6" height="13.6" rx="3"/><path d="M8.2 9v6M12 9v6M15.8 9v6"/>' },
+    { id: 'grosszuegig', label: 'Großzügig', hint: 'Pause deutlich über der Pflicht genommen',
+      note: function (s) {
+        if (s.lawNeed === 0) return 'Diese Sollzeit kennt keine Pflichtpause';
+        var need = s.lawNeed + 15;
+        return Math.min(need, s.pauseTotal) + ' von ' + need + ' min';
+      },
+      d: '<path d="M5 8h11v5.4a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V8Z"/><path d="M16 9.6h1.8a2.2 2.2 0 0 1 0 4.4H16"/><path d="M6.5 4.2c1.1 1 1.1 2 0 3M17.5 4.2c-1.1 1-1.1 2 0 3"/>' },
+    { id: 'spaetstarter', label: 'Spätstarter', hint: 'Arbeitsbeginn ab 8:45 Uhr',
+      note: function (s) { return 'Beginn ' + toClock(s.startMin) + ' Uhr, auch ein späterer Start hat seinen Rhythmus'; },
+      d: '<circle cx="12" cy="14.6" r="4.2"/><path d="M12 20.4v-2.6M4.4 14.6H7M17 14.6h2.6M6.6 9l1.9 1.9M17.4 9l-1.9 1.9"/><path d="M3.4 20.4h17.2"/>' }
   ];
 
   var game = {
@@ -3763,8 +4424,23 @@
     level: 0,
     shells: 1,      // eine Startmuschel, damit das Rad sofort läuft
     awards: {},
-    marks: {}
+    marks: {},
+    caught: { dolphin: 0, crab: 0, bottle: 0, treasure: 0 }
   };
+
+  /* Muschel-Sammlung-Leiste: zeigt, welche Kreaturen in dieser Sitzung
+     schon gefangen wurden. Eigene, kleinere Symbole statt der
+     AWARDS-Icons, damit die Leiste unabhängig von deren Reihenfolge bleibt. */
+  var CATCH_ITEMS = [
+    { id: 'dolphin', label: 'Delfin',
+      d: '<path d="M3 14.6c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0"/><path d="M3 9.4c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0" opacity="0.5"/>' },
+    { id: 'crab', label: 'Krabbe',
+      d: '<ellipse cx="12" cy="13" rx="6.4" ry="4.2"/><path d="M6.5 11c-2.4-2-4-1.4-4.4.4M17.5 11c2.4-2 4-1.4 4.4.4"/><path d="M9 16.4 7.6 20M11.3 16.9l-.8 3.4M12.7 16.9l.8 3.4M15 16.4l1.4 3.6"/>' },
+    { id: 'bottle', label: 'Flaschenpost',
+      d: '<path d="M10.4 2.6h3.2v2.8a1 1 0 0 0 .4.8c1.4 1.1 2.4 2.7 2.4 4.6v7.8a2.4 2.4 0 0 1-2.4 2.4h-4a2.4 2.4 0 0 1-2.4-2.4V10.8c0-1.9 1-3.5 2.4-4.6a1 1 0 0 0 .4-.8V2.6Z"/><path d="M9.6 12.6h4.8"/>' },
+    { id: 'treasure', label: 'Strandfund',
+      d: '<path d="M12 2 L13.6 10.4 L22 12 L13.6 13.6 L12 22 L10.4 13.6 L2 12 L10.4 10.4 Z"/>' }
+  ];
 
   var hudRing   = document.getElementById('az-level-ring');
   var hudNum    = document.getElementById('az-level-num');
@@ -3812,6 +4488,58 @@
     el.classList.remove('is-fresh');
     void el.offsetWidth;
     el.classList.add('is-fresh');
+  }
+
+  // ---- Sound-Ambiente ----
+  // Standardmäßig aus, damit die Seite nie ungefragt Ton abspielt. Läuft
+  // rein über die Web Audio API mit kurzen, synthetisierten Tönen, keine
+  // externen Audiodateien. Zustand nur im Speicher, wie der Rest des
+  // Spielstands.
+
+  var soundOn = false;
+  var audioCtx = null;
+  var soundBtn = document.getElementById('az-sound-toggle');
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    }
+    return audioCtx;
+  }
+
+  function playTone(freq, delay, duration) {
+    var ctx = ensureAudio();
+    if (!ctx) return;
+    var t0 = ctx.currentTime + (delay || 0);
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(0.12, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + (duration || 0.28));
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + (duration || 0.28) + 0.03);
+  }
+
+  function playCue(kind) {
+    if (!soundOn || game.quiet) return;
+    if (kind === 'level') { playTone(660, 0, 0.16); playTone(880, 0.12, 0.24); }
+    else if (kind === 'badge') { playTone(740, 0, 0.2); }
+    else { playTone(520, 0, 0.14); }
+  }
+
+  if (soundBtn) {
+    soundBtn.addEventListener('click', function () {
+      soundOn = !soundOn;
+      var ctx = ensureAudio();
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      soundBtn.classList.toggle('is-on', soundOn);
+      soundBtn.setAttribute('aria-pressed', String(soundOn));
+      if (soundOn) playTone(660, 0, 0.16);
+    });
   }
 
   // ---- Konfetti aus Blasen und Farbtupfern ----
@@ -3866,6 +4594,21 @@
     }).join('');
 
     if (tipFor) showTip(tipFor, tipSticky);
+  }
+
+  function renderCatches() {
+    if (!catchesEl) return;
+    catchesEl.innerHTML = CATCH_ITEMS.map(function (c) {
+      var count = game.caught[c.id] || 0;
+      var got = count > 0;
+      var stateText = got ? ', ' + count + '× gefangen' : ', noch offen';
+      return '<span class="az-catch' + (got ? ' is-caught' : '') + '" title="' +
+        escapeText(c.label + stateText) + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + c.d + '</svg>' +
+        (got ? '<span class="az-catch-count" aria-hidden="true">' + count + '</span>' : '') +
+        '</span>';
+    }).join('');
   }
 
   /* Ein Tipp pro Abzeichen. Er nennt die Bedingung und den Stand.
@@ -3964,11 +4707,54 @@
 
     toast('Abzeichen ' + a.label, '+1 Muschel');
     pulse(shellsEl);
+    playCue('badge');
 
     if (tipFor === id) showTip(id, tipSticky);
   }
 
   // ---- Kopfzeile ----
+
+  /* Ringfüllung weich hochzählen statt hart zu springen, exakt im Muster
+     von animateTo() für den Fortschrittsbogen. ringAnimId bricht einen
+     noch laufenden Tween ab, falls renderHud() erneut feuert, bevor der
+     vorherige fertig ist (z.B. zwei calculate()-Aufrufe kurz hintereinander) -
+     sonst schreiben zwei rAF-Loops abwechselnd auf dieselbe Variable. */
+  var ringDeg = 0;
+  var ringAnimId = 0;
+
+  function animateRing(from, to) {
+    var id = ++ringAnimId;
+    var delta = to - from;
+
+    if (Math.abs(delta) < 0.2 || calm.matches) {
+      hudRing.style.setProperty('--az-xp', to.toFixed(1) + 'deg');
+      return;
+    }
+
+    var t0 = performance.now();
+    requestAnimationFrame(function step(now) {
+      if (id !== ringAnimId) return;
+      var p = Math.min(1, (now - t0) / 700);
+      var val = from + delta * (1 - Math.pow(1 - p, 3));
+      hudRing.style.setProperty('--az-xp', val.toFixed(1) + 'deg');
+      if (p < 1) requestAnimationFrame(step);
+    });
+  }
+
+  /* Konfetti beim Stufenaufstieg direkt am Level-Ring auslösen statt am
+     Regenbogenkopf quer über den Bildschirm - view ist eine SVG-Fläche
+     mit viewBox="0 0 view.width view.height" und preserveAspectRatio
+     "none" (layout()), daher bildet sich die Bildschirmposition des
+     HTML-Rings 1:1 auf die SVG-Koordinaten ab. */
+  function burstAtRing() {
+    if (!svg) return;
+    var svgRect = svg.getBoundingClientRect();
+    var ringRect = hudRing.getBoundingClientRect();
+    burstAt(
+      ringRect.left + ringRect.width / 2 - svgRect.left,
+      ringRect.top + ringRect.height / 2 - svgRect.top
+    );
+  }
 
   function renderHud() {
     var marks = 0;
@@ -3984,7 +4770,8 @@
       game.shells += 1;
       toast('Stufe ' + (lvl + 1) + ', ' + LEVELS[lvl].name, '+1 Muschel');
       pulse(shellsEl);
-      if (lastPoint) burstAt(lastPoint.x, lastPoint.y);
+      playCue('level');
+      burstAtRing();
     }
     game.level = lvl;
 
@@ -3992,7 +4779,9 @@
     var next = lvl + 1 < LEVELS.length ? LEVELS[lvl + 1].at : null;
     var deg = next ? clamp((game.xp - base) / (next - base), 0, 1) * 360 : 360;
 
-    hudRing.style.setProperty('--az-xp', deg.toFixed(1) + 'deg');
+    if (Math.abs(deg - ringDeg) > 0.05) animateRing(ringDeg, deg);
+    ringDeg = deg;
+
     hudNum.textContent = String(lvl + 1);
     hudName.textContent = LEVELS[lvl].name;
     hudXp.textContent = next
@@ -4018,11 +4807,19 @@
     });
 
     if (s.startMin < 480) unlock('early');
+    if (s.startMin >= 480) unlock('spaetstarter');
     if (s.pauseTotal >= 30) unlock('coffee');
     if (s.pauseCount >= 2) unlock('balance');
-    if (s.lawNeed > 0 && s.pauseTotal >= s.lawNeed) unlock('law');
+    if (s.pauseCount >= 3) unlock('dreiklang');
+    if (s.lawNeed > 0 && s.pauseTotal >= s.lawNeed + 15) unlock('grosszuegig');
+    if (s.lawNeed > 0 && s.pauseTotal >= s.lawNeed) {
+      var lawWasOpen = !!game.awards.law;
+      unlock('law');
+      if (!lawWasOpen && game.awards.law) spawnLawGull();
+    }
     if (s.percent >= 50) unlock('half');
     if (s.percent >= 100) unlock('target');
+    if (s.percent >= 100 && s.overMin < 15) unlock('gelassen');
     if (s.worked >= s.targetMin && s.worked <= s.targetMin + 5) unlock('exact');
 
     renderHud();
@@ -4043,7 +4840,10 @@
 
     toast('Delfin gefangen', '+1 Muschel');
     pulse(shellsEl);
+    playCue('catch');
     unlock('dolphin');
+    game.caught.dolphin = (game.caught.dolphin || 0) + 1;
+    renderCatches();
     renderHud();
   });
 
@@ -4061,7 +4861,52 @@
 
     toast('Krabbe erwischt', '+1 Muschel');
     pulse(shellsEl);
+    playCue('catch');
     unlock('crab');
+    game.caught.crab = (game.caught.crab || 0) + 1;
+    renderCatches();
+    renderHud();
+  });
+
+  // ---- Flaschenpost fangen ----
+
+  bottleEl.addEventListener('pointerdown', function (event) {
+    if (!bottleDrift) return;
+    event.preventDefault();
+
+    var caught = bottleDrift;
+    bottleDrift = null;
+    game.shells += 1;
+    burstAt(caught.x || 0, caught.y2 || 0);
+    bottleEl.setAttribute('opacity', '0');
+
+    var message = BOTTLE_MESSAGES[Math.floor(Math.random() * BOTTLE_MESSAGES.length)];
+    toast('Flaschenpost geöffnet', message);
+    pulse(shellsEl);
+    playCue('catch');
+    unlock('bottle');
+    game.caught.bottle = (game.caught.bottle || 0) + 1;
+    renderCatches();
+    renderHud();
+  });
+
+  // ---- Strandfund fangen ----
+
+  treasureEl.addEventListener('pointerdown', function (event) {
+    if (!treasureLive) return;
+    event.preventDefault();
+
+    var caught = treasureLive;
+    treasureLive = null;
+    game.shells += 1;
+    burstAt(caught.x || 0, caught.y || 0);
+    treasureEl.setAttribute('opacity', '0');
+
+    toast('Fund am Strand', '+1 Muschel');
+    pulse(shellsEl);
+    playCue('catch');
+    game.caught.treasure = (game.caught.treasure || 0) + 1;
+    renderCatches();
     renderHud();
   });
 
@@ -4086,7 +4931,11 @@
     { id: 'midnight', label: 'Mitternacht', cost: 5,
       vars: { '--az-cyan': '#6e7bff', '--az-cyan-deep': '#3d47b3', '--az-tint': 'rgba(226,228,255,0.28)',
               '--az-bright': '#d6d9ff', '--az-ring': 'rgba(110,123,255,0.45)',
-              '--az-rainbow': 'linear-gradient(90deg, #6e7bff, #b77bff, #45d0ff, #ff8fc4, #4fdd7e, #6e7bff, #b77bff)' } }
+              '--az-rainbow': 'linear-gradient(90deg, #6e7bff, #b77bff, #45d0ff, #ff8fc4, #4fdd7e, #6e7bff, #b77bff)' } },
+    { id: 'lagune', label: 'Lagune', cost: 4,
+      vars: { '--az-cyan': '#1fd6c0', '--az-cyan-deep': '#0f9a8a', '--az-tint': 'rgba(210,255,248,0.3)',
+              '--az-bright': '#baffef', '--az-ring': 'rgba(31,214,192,0.45)',
+              '--az-rainbow': 'linear-gradient(90deg, #1fd6c0, #45d0ff, #4fdd7e, #ffe04a, #6e8bff, #1fd6c0, #baffef)' } }
   ];
 
   var SHOP_SKINS = [
@@ -4097,11 +4946,40 @@
     { id: 'gold', label: 'Gold', cost: 2,
       stops: ['#ffe08a', '#e0a52f', '#a8781a'] },
     { id: 'orca', label: 'Orca', cost: 3,
-      stops: ['#e8f4ff', '#8fa3b8', '#2a3440'] }
+      stops: ['#e8f4ff', '#8fa3b8', '#2a3440'] },
+    { id: 'perlmutt', label: 'Perlmutt', cost: 3,
+      stops: ['#f6f2ff', '#c9c2e8', '#8f87b8'] }
   ];
 
+  /* Strandfigur: dauerhaft sichtbare Ausstattung, ebenfalls rein
+     kosmetisch und ohne Persistenz. Eigene ID-Präfixe, damit sie sich
+     nicht mit Themen/Skins in shop.owned überschneiden. */
+  var SHOP_HATS = [
+    { id: 'hat-none', label: 'Ohne', cost: 0, color: 'rgba(255,255,255,0.5)' },
+    { id: 'hat-straw', label: 'Strohhut', cost: 2, color: '#e8c37a' },
+    { id: 'hat-cap', label: 'Käppi', cost: 2, color: '#45d0ff' }
+  ];
+
+  var SHOP_GLASSES = [
+    { id: 'glasses-none', label: 'Ohne', cost: 0, color: 'rgba(255,255,255,0.5)' },
+    { id: 'glasses-round', label: 'Rund', cost: 2, color: '#2a3440' },
+    { id: 'glasses-star', label: 'Sternform', cost: 3, color: '#ffb02e' }
+  ];
+
+  var SHOP_RINGS = [
+    { id: 'ring-yellow', label: 'Gelb', cost: 0, color: '#ffe04a' },
+    { id: 'ring-pink', label: 'Pink', cost: 2, color: '#ff8fc4' },
+    { id: 'ring-mint', label: 'Mint', cost: 2, color: '#4fdd7e' }
+  ];
+
+  var avatar = {
+    hat: 'hat-none',
+    glasses: 'glasses-none',
+    ring: 'ring-yellow'
+  };
+
   var shop = {
-    owned: new Set(['ocean', 'classic']),
+    owned: new Set(['ocean', 'classic', 'hat-none', 'glasses-none', 'ring-yellow']),
     theme: 'ocean',
     skin: 'classic'
   };
@@ -4111,32 +4989,164 @@
   var shopCloseBtn   = document.getElementById('az-shop-close');
   var shopThemesEl   = document.getElementById('az-shop-themes');
   var shopSkinsEl    = document.getElementById('az-shop-skins');
+  var shopHatsEl     = document.getElementById('az-shop-hats');
+  var shopGlassesEl  = document.getElementById('az-shop-glasses');
+  var shopRingsEl    = document.getElementById('az-shop-rings');
 
+  /* Farbverläufe (--az-rainbow) lassen sich nicht zuverlässig per
+     CSS-Transition überblenden, deshalb hier ein direkter, frame-für-
+     frame gesteuerter Deckkraft-Tween statt einer klassenbasierten
+     CSS-Transition - dieselbe zuverlässige Technik wie animateRing()
+     und der Delfin-Skin-Tween in applyShopSkin(), unabhängig von
+     Bildwiederholrate oder Transition-Timing des Browsers. */
   function applyShopTheme(id) {
     var theme = SHOP_THEMES.filter(function (t) { return t.id === id; })[0];
     if (!theme) return;
     var wrap = document.querySelector('.az-wrap');
-    Object.keys(theme.vars).forEach(function (key) {
-      wrap.style.setProperty(key, theme.vars[key]);
-    });
+
+    function setVars() {
+      Object.keys(theme.vars).forEach(function (key) {
+        wrap.style.setProperty(key, theme.vars[key]);
+      });
+    }
+
+    if (calm.matches) {
+      setVars();
+    } else {
+      var fadeEls = [document.querySelector('.az-topline'), document.querySelector('.az-progress-fill')];
+      var t0 = performance.now();
+      var dip = 120;
+      var rise = 160;
+      var applied = false;
+
+      requestAnimationFrame(function step(now) {
+        var t = now - t0;
+
+        if (t < dip) {
+          var op = 1 - 0.75 * (t / dip);
+          fadeEls.forEach(function (el) { if (el) el.style.opacity = op.toFixed(2); });
+          requestAnimationFrame(step);
+        } else if (t < dip + rise) {
+          // Auf großen Frame-Abständen (langsame Geräte, Tab-Throttling)
+          // kann ein enges Zeitfenster übersprungen werden - deshalb ein
+          // once-Flag statt eines Zeitfensters, damit setVars() garantiert
+          // genau einmal läuft.
+          if (!applied) { applied = true; setVars(); }
+          var p = (t - dip) / rise;
+          var op2 = 0.25 + 0.75 * p;
+          fadeEls.forEach(function (el) { if (el) el.style.opacity = op2.toFixed(2); });
+          requestAnimationFrame(step);
+        } else {
+          if (!applied) { applied = true; setVars(); }
+          fadeEls.forEach(function (el) { if (el) el.style.opacity = ''; });
+        }
+      });
+    }
+
     shop.theme = id;
   }
 
+  /* stop-color per setAttribute lässt sich nicht zuverlässig
+     browserübergreifend per CSS transitionieren, deshalb ein kleiner
+     rAF-Tween mit dem bereits vorhandenen lerpHex(), analog zu
+     animateTo()/animateRing(). */
   function applyShopSkin(id) {
     var skin = SHOP_SKINS.filter(function (s) { return s.id === id; })[0];
     if (!skin) return;
     var stops = document.querySelectorAll('#az-dolphin-grad stop');
-    stops.forEach(function (stop, i) { if (skin.stops[i]) stop.setAttribute('stop-color', skin.stops[i]); });
+
+    if (calm.matches) {
+      stops.forEach(function (stop, i) { if (skin.stops[i]) stop.setAttribute('stop-color', skin.stops[i]); });
+      shop.skin = id;
+      return;
+    }
+
+    // Kann sowohl "#rrggbb" (Ausgangsfarben aus dem Markup) als auch
+    // "rgb(r,g,b)" (Ergebnis eines vorherigen Tweens hier) einlesen -
+    // lerpHex()/hexToRgb() erwarten nur Hex-Strings.
+    function parseAnyColor(str) {
+      if (str.charAt(0) === '#') return hexToRgb(str);
+      var nums = str.match(/\d+(\.\d+)?/g) || [255, 255, 255];
+      return [parseInt(nums[0], 10), parseInt(nums[1], 10), parseInt(nums[2], 10)];
+    }
+
+    var from = [];
+    stops.forEach(function (stop) { from.push(parseAnyColor(stop.getAttribute('stop-color') || '#ffffff')); });
+
+    var t0 = performance.now();
+    requestAnimationFrame(function step(now) {
+      var p = Math.min(1, (now - t0) / 400);
+      stops.forEach(function (stop, i) {
+        if (!skin.stops[i]) return;
+        var ca = from[i], cb = hexToRgb(skin.stops[i]);
+        stop.setAttribute('stop-color', 'rgb(' +
+          Math.round(ca[0] + (cb[0] - ca[0]) * p) + ',' +
+          Math.round(ca[1] + (cb[1] - ca[1]) * p) + ',' +
+          Math.round(ca[2] + (cb[2] - ca[2]) * p) + ')');
+      });
+      if (p < 1) requestAnimationFrame(step);
+    });
+
     shop.skin = id;
   }
 
+  /* Strandfigur neu zeichnen, mit aktuell gewählter Kopfbedeckung,
+     Sonnenbrille und Schwimmring. Direkter Redraw statt Tween wie bei
+     Thema/Skin, reicht für eine kleine, feste Figur am Ufer. */
+  function findShopItem(list, id) {
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return list[0];
+  }
+
+  function buildAvatar() {
+    var hat = findShopItem(SHOP_HATS, avatar.hat);
+    var glasses = findShopItem(SHOP_GLASSES, avatar.glasses);
+    var ring = findShopItem(SHOP_RINGS, avatar.ring);
+
+    var out =
+      '<ellipse cx="0" cy="9" rx="24" ry="6" fill="' + ring.color + '" stroke="#ffffff" stroke-width="1.6" opacity="0.92"/>' +
+      '<ellipse cx="0" cy="9" rx="15" ry="3.4" fill="#ffffff" opacity="0.3"/>' +
+      '<circle cx="0" cy="-3" r="10.5" fill="url(#az-oracle-grad)" stroke="#ffffff" stroke-width="1.3"/>';
+
+    if (glasses.id === 'glasses-round') {
+      out += '<circle cx="-4.2" cy="-4" r="3" fill="none" stroke="#2a3440" stroke-width="1.6"/>' +
+             '<circle cx="4.2" cy="-4" r="3" fill="none" stroke="#2a3440" stroke-width="1.6"/>' +
+             '<path d="M-1.2,-4 h2.4" stroke="#2a3440" stroke-width="1.6"/>';
+    } else if (glasses.id === 'glasses-star') {
+      out += '<path d="M-4.2,-6.4 L-3.2,-4.4 L-1.2,-4.4 L-2.8,-3 L-2.2,-1 L-4.2,-2.2 L-6.2,-1 L-5.6,-3 L-7.2,-4.4 L-5.2,-4.4 Z" fill="#ffb02e"/>' +
+             '<path d="M4.2,-6.4 L5.2,-4.4 L7.2,-4.4 L5.6,-3 L6.2,-1 L4.2,-2.2 L2.2,-1 L2.8,-3 L1.2,-4.4 L3.2,-4.4 Z" fill="#ffb02e"/>';
+    }
+
+    if (hat.id === 'hat-straw') {
+      out += '<ellipse cx="0" cy="-11.5" rx="12.5" ry="2.8" fill="#e8c37a" stroke="#c89a4a" stroke-width="0.9"/>' +
+             '<path d="M-6,-12 C-6,-17 6,-17 6,-12 Z" fill="#e8c37a" stroke="#c89a4a" stroke-width="0.9"/>';
+    } else if (hat.id === 'hat-cap') {
+      out += '<path d="M-8,-11.6 C-8,-17 8,-17 8,-11.6 Z" fill="#45d0ff" stroke="#ffffff" stroke-width="0.9"/>' +
+             '<path d="M-8,-11.6 L-13,-10.4 L-7.6,-9.6 Z" fill="#0f92cb"/>';
+    }
+
+    avatarEl.innerHTML = out;
+  }
+
+  function layoutAvatar() {
+    if (!view || !avatarEl) return;
+    avatarEl.setAttribute('transform',
+      'translate(' + Math.round(view.width * 0.5) + ',' + Math.round(view.waterY - 6) + ')');
+  }
+
+  function applyAvatarPart(kind, id) {
+    avatar[kind] = id;
+    buildAvatar();
+  }
+
   function renderShopGrid(el, items, activeId, kind) {
+    if (!el) return;
     el.innerHTML = items.map(function (item) {
       var owned = shop.owned.has(item.id);
       var active = item.id === activeId;
-      var swatch = kind === 'theme'
-        ? item.vars['--az-cyan']
-        : 'linear-gradient(180deg,' + item.stops.join(',') + ')';
+      var swatch = kind === 'theme' ? item.vars['--az-cyan']
+        : kind === 'skin' ? 'linear-gradient(180deg,' + item.stops.join(',') + ')'
+        : item.color;
       var price = owned ? (active ? 'Aktiv' : 'Besitzt') : item.cost + ' Muscheln';
       var locked = !owned && game.shells < item.cost;
 
@@ -4154,6 +5164,9 @@
   function renderShop() {
     renderShopGrid(shopThemesEl, SHOP_THEMES, shop.theme, 'theme');
     renderShopGrid(shopSkinsEl, SHOP_SKINS, shop.skin, 'skin');
+    renderShopGrid(shopHatsEl, SHOP_HATS, avatar.hat, 'hat');
+    renderShopGrid(shopGlassesEl, SHOP_GLASSES, avatar.glasses, 'glasses');
+    renderShopGrid(shopRingsEl, SHOP_RINGS, avatar.ring, 'ring');
   }
 
   function buyShopItem(kind, id, cost) {
@@ -4167,7 +5180,10 @@
       pulse(shellsEl);
     }
 
-    if (kind === 'theme') applyShopTheme(id); else applyShopSkin(id);
+    if (kind === 'theme') applyShopTheme(id);
+    else if (kind === 'skin') applyShopSkin(id);
+    else applyAvatarPart(kind, id);
+
     renderShop();
     renderHud();
   }
@@ -4202,6 +5218,12 @@
 
   var WHEEL_COLORS = ['#ff5a4d', '#ff9a3c', '#ffe04a', '#4fdd7e', '#45d0ff', '#6e8bff', '#b77bff', '#ff8fc4'];
 
+  /* Sonderfall am Rad: exakter Textabgleich statt versteckter ID, weil
+     Rad-Einträge frei editierbar und per Link teilbar sind. Wer den
+     Eintrag umbenennt oder löscht, verliert damit auch den Bonus - so
+     bleibt das Rad ohne Sonderfall-Logik im Datenmodell. */
+  var WHEEL_BONUS_LABEL = 'Bonus-Muschel';
+
   var WHEEL_DEFAULT = [
     'Kaffee holen',
     'Fünf Minuten Sonne',
@@ -4210,7 +5232,11 @@
     'Snack',
     'Frische Luft',
     'Tisch aufräumen',
-    'Kollegen loben'
+    'Kollegen loben',
+    'Playlist wechseln',
+    'Schultern kreisen',
+    'Wasser nachfüllen',
+    WHEEL_BONUS_LABEL
   ];
 
   var wheelItems = WHEEL_DEFAULT.slice();
@@ -4347,9 +5373,11 @@
       spinning = false;
 
       var prize = String(wheelItems[winner]).trim() || 'Freilos';
+      var isBonus = prize === WHEEL_BONUS_LABEL;
+      if (isBonus) { game.shells += 1; pulse(shellsEl); }
       setWheelOut('Gewonnen', prize);
       unlock('wheel');
-      toast('Glücksrad, ' + prize, '');
+      toast('Glücksrad, ' + prize, isBonus ? '+1 Muschel gefunden' : '');
       renderHud();
     });
   }
@@ -4624,6 +5652,7 @@
     if (!lastState || !lastState.targetMin) {
       overtimeEl.hidden = true;
       vignetteEl.hidden = true;
+      stormEl.classList.remove('is-active');
       return;
     }
 
@@ -4633,6 +5662,7 @@
     if (remaining > OVERTIME_WARN_LEAD) {
       overtimeEl.hidden = true;
       vignetteEl.hidden = true;
+      stormEl.classList.remove('is-active');
       hangryWrap.style.setProperty('--az-ebbe-sat', '1');
       sawBeforeAlarm = true;
       return;
@@ -4644,6 +5674,7 @@
     if (remaining > 0) {
       overtimeEl.classList.add('is-warn');
       vignetteEl.hidden = true;
+      stormEl.classList.remove('is-active');
       hangryWrap.style.setProperty('--az-ebbe-sat', '1');
       sawBeforeAlarm = true;
       setText(overtimeBadge, 'Gleich Feierabend');
@@ -4666,10 +5697,59 @@
       overtimeEl.style.setProperty('--az-alarm-speed', speed);
       vignetteEl.style.setProperty('--az-alarm-speed', speed);
 
+      // Sturm-Effekt eskaliert in denselben drei Stufen wie das
+      // Alarmtempo, ein Tick höher als step (0 bleibt ungenutzt, damit
+      // schon die erste Alarmminute sichtbar Regen bringt).
+      if (calm.matches) {
+        stormEl.classList.remove('is-active');
+      } else {
+        stormEl.className = 'az-storm is-active lvl-' + Math.min(3, step + 1);
+      }
+
       // "Ebbe"-Effekt: verblasst über die erste Überstunden-Stunde,
       // gedeckelt, damit die Szene nicht komplett ausgraut.
       var ebbeSat = Math.max(0.55, 1 - Math.min(0.45, (over / 3600) * 0.45));
       hangryWrap.style.setProperty('--az-ebbe-sat', ebbeSat.toFixed(2));
+    }
+  }
+
+  /* Sonnencreme-Pausen-Reminder: dezentes Icon, wird dringlicher, je
+     länger seit der letzten erfassten Pause gearbeitet wurde. Läuft
+     unabhängig von readPauses(), weil es den letzten Pausen-Endzeitpunkt
+     braucht statt der Gesamtsumme. */
+  function paintSuncream(now, startMin) {
+    var lastEnd = startMin;
+    var running = false;
+
+    document.querySelectorAll('#pauses .az-pause-entry').forEach(function (entry) {
+      var f = entry.querySelectorAll('input[type="time"]');
+      var from = toMinutes(f[0].value);
+      var to = toMinutes(f[1].value);
+      if (from === null) return;
+      if (to !== null && to <= now && to > lastEnd) lastEnd = to;
+      if (from <= now && (to === null || now < to)) running = true;
+    });
+
+    suncreamEl.classList.remove('is-visible', 'is-warn', 'is-urgent');
+
+    if (running) {
+      suncreamEl.title = 'Pause läuft, gut so.';
+      return;
+    }
+
+    var since = Math.max(0, now - lastEnd);
+
+    if (since >= 240) {
+      suncreamEl.classList.add('is-urgent');
+      suncreamEl.title = 'Seit ' + toDuration(since) + ' keine Pause. Sonnencreme und kurz raus.';
+    } else if (since >= 180) {
+      suncreamEl.classList.add('is-warn');
+      suncreamEl.title = 'Seit ' + toDuration(since) + ' keine Pause.';
+    } else if (since >= 120) {
+      suncreamEl.classList.add('is-visible');
+      suncreamEl.title = 'Seit ' + toDuration(since) + ' keine Pause.';
+    } else {
+      suncreamEl.title = 'Zeit für eine Pause?';
     }
   }
 
@@ -5105,7 +6185,11 @@
   /* Nur die Sprüche mit einer Kosename-Anrede an Komma-Stelle bekommen ein
      {n}-Token, fallback trägt den bisherigen Kosenamen. Die übrigen bleiben
      unpersonalisiert, das wirkt natürlicher als ein Name in jedem Satz. */
-  var MOTIVATION_QUOTES = [
+  /* Zwei Zeit-Töpfe statt einem: früh am Tag geht es ums Ankommen und
+     Mitmachen, näher an der Sollzeit ums Runterkommen und den Endspurt
+     würdigen - aber nie ums Dranbleiben. Welcher Topf gilt, entscheidet
+     currentQuotePool() anhand von lastState. */
+  var MOTIVATION_QUOTES_EARLY = [
     { text: 'Du machst das ganz wundervoll, du kleine Schnecke mit Superkräften. 🐌💫' },
     { text: 'Jeder kleine Schritt zählt, {n}. Und deiner ist gerade ziemlich groß. 🐾', fallback: 'mein Schatz' },
     { text: 'Psst, kleines Geheimnis: Du bist heute schon ein bisschen wunderbar. 🌸' },
@@ -5116,10 +6200,25 @@
     { text: 'Kleine Pause, große Liebe. Du machst das ganz zauberhaft. 🎀' },
     { text: 'Wenn Fleiß knuffig wäre, wärst du Weltmeisterin. Weiter so, {n}. 💕', fallback: 'Herzchen' },
     { text: 'Du bist wie eine kleine Welle: sanft, beharrlich und einfach bezaubernd. 🌊' },
+    { text: 'Guten Start in den Tag, {n}. Alles hat sein Tempo. 🐢', fallback: 'Schnuckelchen' },
+    { text: 'Ein Schritt nach dem anderen, {n}, das Riff wächst von allein. 🐠', fallback: 'kleiner Fisch' },
+    { text: 'Frischer Wind, klarer Kopf, und du mittendrin. 🌬️🐚' },
+    { text: 'Der Vormittag gehört dir, {n}. Genieß ihn in deinem Tempo. 🌤️', fallback: 'Herzchen' },
+    { text: 'Ganz ruhig, ganz du. Der Tag läuft mit dir, nicht gegen dich. 🐌🌿' },
+    { text: 'Auch ein ruhiger Anfang ist ein guter Anfang, {n}. 🐚', fallback: 'mein Schatz' }
+  ];
+
+  var MOTIVATION_QUOTES_LATE = [
     { text: 'Kein Grund zur Eile, {n}. Du glänzt sowieso schon. ✨', fallback: 'kleiner Stern' },
     { text: 'Für dich extra flauschig verpackt: eine Extra-Portion Zuversicht. 🧸' },
     { text: 'Du bist das Süßeste, was diesem Tag heute passiert ist. 🐣' },
-    { text: 'Mach eine kleine Pause, streck dich wie ein Kätzchen, und weiter geht’s. 🐱' }
+    { text: 'Mach eine kleine Pause, streck dich wie ein Kätzchen, und weiter geht’s. 🐱' },
+    { text: 'Der Tag neigt sich, {n}, und du hast ihn gut gemeistert. 🌇', fallback: 'Schnuckelchen' },
+    { text: 'Fast geschafft, {n}. Die letzten Schritte dürfen ruhig sein. 🦦', fallback: 'Mäuschen' },
+    { text: 'Die Sonne wandert schon Richtung Feierabend, ganz wie du. ☀️🌊' },
+    { text: 'Bald ist Zeit für die Füße hochlegen, {n}. Du hast dir das verdient. 🦶🧸', fallback: 'Herzchen' },
+    { text: 'Ruhig ausklingen lassen, {n}. Der Rest kommt von allein. 🐚', fallback: 'kleiner Stern' },
+    { text: 'Ein schöner Tag geht auch schön zu Ende, {n}. 🌅', fallback: 'Schatz' }
   ];
 
   /* Extra für die Feierabend-Gratulation: kleiner, eigener Ton, weil es
@@ -5147,13 +6246,19 @@
     return entry.text.replace('{n}', name);
   }
 
+  function currentQuotePool() {
+    var late = lastState && lastState.targetMin > 0 && (lastState.worked / lastState.targetMin) >= 0.6;
+    return late ? MOTIVATION_QUOTES_LATE : MOTIVATION_QUOTES_EARLY;
+  }
+
   function showOtterQuote() {
-    var i = Math.floor(Math.random() * MOTIVATION_QUOTES.length);
-    if (MOTIVATION_QUOTES.length > 1) {
-      while (i === otterLastIndex) i = Math.floor(Math.random() * MOTIVATION_QUOTES.length);
+    var pool = currentQuotePool();
+    var i = Math.floor(Math.random() * pool.length);
+    if (pool.length > 1) {
+      while (i === otterLastIndex) i = Math.floor(Math.random() * pool.length);
     }
     otterLastIndex = i;
-    otterQuote.textContent = fillName(MOTIVATION_QUOTES[i]);
+    otterQuote.textContent = fillName(pool[i]);
   }
 
   function openOtter() {
@@ -5359,7 +6464,17 @@
       riffEl.innerHTML = '🐠 Noch kein Team-Riff. Der erste geteilte Link nach Feierabend startet die Zählung.';
       return;
     }
-    riffEl.innerHTML = '🐠 Riff-Team: ' + teamRiff.ja + ' von ' + teamRiff.n + ' heute pünktlich Feierabend';
+
+    var shown = Math.min(teamRiff.n, 20);
+    var dots = '';
+    for (var i = 0; i < shown; i++) {
+      dots += '<span class="az-riff-fish' + (i < teamRiff.ja ? ' is-lit' : '') + '" aria-hidden="true">🐠</span>';
+    }
+    var more = teamRiff.n > shown ? '<span class="az-riff-more">+' + (teamRiff.n - shown) + '</span>' : '';
+
+    riffEl.innerHTML =
+      '<div class="az-riff-row">' + dots + more + '</div>' +
+      '<div class="az-riff-label">Riff-Team: ' + teamRiff.ja + ' von ' + teamRiff.n + ' heute pünktlich Feierabend</div>';
   }
 
   // ---- Bildkarte auf Leinwand, 1200 mal 630 ----
@@ -5646,9 +6761,13 @@
 
     drawHorizon();
     drawClouds();
+    buildStarfield();
     drawBands();
     drawWater();
     drawShine();
+    drawTidemark();
+    drawSeason();
+    layoutAvatar();
 
     bandLength = midBand.getTotalLength();
     drawChecks();
@@ -5675,7 +6794,13 @@
   buildSun();
   buildDolphin();
   buildCrab();
+  buildBottle();
+  buildTreasure();
+  buildLawGull();
+  buildAvatar();
+  applyWeekdayCrabColor();
   renderAwards();
+  renderCatches();
   renderGrips();
   renderWheel();
   layout();
@@ -5744,6 +6869,14 @@
     }, 14000 + Math.random() * 10000);
   })();
 
+  // Flaschenpost treibt am seltensten vorbei, dafür lange sichtbar
+  (function nextBottle() {
+    setTimeout(function () {
+      launchBottle();
+      nextBottle();
+    }, 22000 + Math.random() * 18000);
+  })();
+
   // Wetterereignis alle 25 bis 45s, still übersprungen, wenn Tageszeit
   // zu keinem der beiden passt (z.B. Dämmerung)
   (function nextWeather() {
@@ -5753,5 +6886,10 @@
       nextWeather();
     }, 25000 + Math.random() * 20000);
   })();
+
+  // Strandfund: genau ein Versuch pro Sitzung, 3 bis 43 Minuten nach dem
+  // Laden. launchTreasure() selbst prüft, ob die Sollzeit inzwischen
+  // schon erreicht ist, und überspringt den Fund in dem Fall ersatzlos.
+  setTimeout(launchTreasure, 3 * 60 * 1000 + Math.random() * 40 * 60 * 1000);
 })();
 </script>
