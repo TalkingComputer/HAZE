@@ -543,6 +543,13 @@
   .az-progress {
     position: relative;
     margin: 14px var(--az-gutter) 0;
+  }
+
+  /* Der eigentliche Balken mit abgerundeten Enden und overflow:hidden,
+     damit die Füllung sauber innen bleibt. Das Zeitleisten-Tier sitzt
+     außerhalb davon (siehe .az-progress-pet), sonst würde es hier
+     mit abgeschnitten. */
+  .az-progress-track {
     height: 8px;
     border-radius: 999px;
     background: rgba(4, 52, 82, 0.28);
@@ -569,6 +576,50 @@
     height: 50%;
     border-radius: 999px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+  }
+
+  /* Zeitleisten-Tier: eigenes Element außerhalb von .az-progress-track,
+     sonst schneidet dessen overflow:hidden das Tier an. left wird von
+     calculate() im selben Takt wie die Balkenbreite gesetzt (siehe
+     progress-fill), die eigene transition hält beide synchron. Antippbar,
+     solange ein Tier gesetzt ist (siehe pokePet()) - :empty bleibt ohne
+     Tier unsichtbar und damit automatisch auch nicht klickbar. */
+  .az-progress-pet {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    z-index: 1;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    line-height: 1;
+    cursor: pointer;
+    /* .az-footer lässt Klicks sonst zur Sonne durch (pointer-events: none) -
+       hier explizit wieder anschalten, sonst reagiert der Antipp-Effekt nicht. */
+    pointer-events: auto;
+    filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4));
+    transition: left 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .az-progress-pet:empty { display: none; cursor: default; }
+
+  .az-progress-pet:focus-visible {
+    outline: none;
+    filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4)) drop-shadow(0 0 0 3px var(--az-ring));
+  }
+
+  .az-progress-pet.is-bob { animation: az-progress-pet-bob 900ms ease-in-out infinite; }
+
+  .az-progress-pet.is-poked { animation: az-progress-pet-poke 480ms ease; }
+
+  @keyframes az-progress-pet-poke {
+    0%   { filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4)) brightness(1); }
+    35%  { filter: drop-shadow(0 5px 12px rgba(255, 176, 46, 0.9)) brightness(1.3); }
+    100% { filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4)) brightness(1); }
+  }
+
+  @keyframes az-progress-pet-bob {
+    0%, 100% { transform: translate(-50%, -50%) rotate(-8deg); }
+    50%      { transform: translate(-50%, -58%) rotate(8deg); }
   }
 
   /* Luftblasen */
@@ -1063,6 +1114,11 @@
   #az-bottle { pointer-events: all; cursor: pointer; }
   #az-bottle[opacity="0"] { pointer-events: none; }
 
+  /* Feierabend-Truhe lässt sich öffnen, solange sie sichtbar ist */
+
+  #az-chest { pointer-events: all; cursor: pointer; }
+  #az-chest[opacity="0"] { pointer-events: none; }
+
   /* Wasserstand: Wasser und Horizontschimmer heben sich sanft mit dem
      Fortschritt, die Flutlinie leuchtet erst bei erreichter Sollzeit auf */
 
@@ -1373,6 +1429,13 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 3px rgba(4, 54, 86, 0.25);
   }
 
+  .az-shop-swatch-emoji {
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    line-height: 1;
+  }
+
   .az-shop-label {
     font-size: 12.5px;
     font-weight: 700;
@@ -1462,6 +1525,9 @@
     background: linear-gradient(180deg, rgba(255, 244, 224, 0.75), rgba(214, 255, 244, 0.55));
     border: 1px solid rgba(255, 255, 255, 0.9);
     animation: az-card-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+    /* .az-footer lässt Klicks sonst zur Sonne durch (pointer-events: none) -
+       hier explizit wieder anschalten, sonst reagiert der Schließen-Button nicht. */
+    pointer-events: auto;
   }
 
   .az-recap[hidden] { display: none; }
@@ -2354,7 +2420,10 @@
 
   /* Sonnencreme-Pausen-Reminder: dezentes Icon unten links, wird
      dringlicher, je länger keine Pause erfasst wurde (siehe
-     paintSuncream()). Kein Vollbild-Overlay wie die Hangry Hour. */
+     paintSuncream()). Kein Vollbild-Overlay wie die Hangry Hour.
+     pointer-events bleibt aus, solange das Icon unsichtbar ist (opacity 0),
+     erst in den sichtbaren Stufen an - sonst greift der Klick/Hover für den
+     Tooltip ins Leere bzw. blockt unsichtbar die Szene dahinter. */
   .az-suncream {
     position: fixed;
     left: 16px;
@@ -2374,21 +2443,48 @@
     transform: scale(0.8);
     transition: opacity 400ms ease, transform 400ms ease, background 400ms ease;
     pointer-events: none;
+    cursor: help;
   }
 
-  .az-suncream.is-visible { opacity: 0.5; transform: scale(0.92); }
-  .az-suncream.is-warn    { opacity: 0.85; transform: scale(1); }
+  .az-suncream.is-visible { opacity: 0.5; transform: scale(0.92); pointer-events: auto; }
+  .az-suncream.is-warn    { opacity: 0.85; transform: scale(1); pointer-events: auto; }
   .az-suncream.is-urgent {
     opacity: 1;
     transform: scale(1.08);
     background: linear-gradient(180deg, #ffe08a 0%, #ffb02e 100%);
     animation: az-suncream-pulse 1.5s ease-in-out infinite;
+    pointer-events: auto;
   }
 
   @keyframes az-suncream-pulse {
     0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 14px rgba(6, 66, 102, 0.22); }
     50%      { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 20px rgba(255, 138, 20, 0.6); }
   }
+
+  /* Sprechblase zum Sonnencreme-Icon: title-Attribut allein erklärt auf
+     Touch-Geräten nichts (kein Hover), darum zusätzlich per Antippen/Fokus
+     einblendbar - selbes Muster wie die Abzeichen-Tipps (.az-award-tip). */
+  .az-suncream-tip {
+    position: fixed;
+    left: 16px;
+    bottom: 62px;
+    z-index: 61;
+    width: max-content;
+    max-width: min(220px, 70vw);
+    padding: 8px 12px 9px;
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(224, 245, 255, 0.94));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 12px 28px rgba(6, 66, 102, 0.3), inset 0 1px 0 #ffffff;
+    color: var(--az-text);
+    font-size: 12.5px;
+    line-height: 1.4;
+    pointer-events: none;
+  }
+
+  .az-suncream-tip[hidden] { display: none; }
 </style>
 
 <div class="az-wrap">
@@ -2568,12 +2664,13 @@
            Erreichen der Sollzeit möglich -->
       <g id="az-treasure" opacity="0"></g>
 
+      <!-- Feierabend-Truhe: dauerhaft sichtbar, aber nur im 30-Minuten-
+           Fenster ab 7h 45min Arbeitszeit anklickbar, einmalig pro
+           Sitzung -->
+      <g id="az-chest" opacity="0"></g>
+
       <!-- Wasserstand-Markierung: Flutlinie, leuchtet bei 100% Sollzeit -->
       <g id="az-tidemark" aria-hidden="true"></g>
-
-      <!-- Strandfigur: dauerhaft sichtbar, Ausstattung im Muschel-Shop
-           wählbar -->
-      <g id="az-avatar" aria-hidden="true"></g>
 
       <g id="az-sun"></g>
 
@@ -2829,7 +2926,10 @@
       <div class="az-metrics" id="metrics"></div>
       <div class="az-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
            aria-label="Fortschritt zur Sollarbeitszeit">
-        <div class="az-progress-fill" id="progress-fill"></div>
+        <div class="az-progress-track">
+          <div class="az-progress-fill" id="progress-fill"></div>
+        </div>
+        <span class="az-progress-pet" id="az-progress-pet"></span>
       </div>
       <span class="sr-only" id="status" aria-live="polite"></span>
     </div>
@@ -2857,7 +2957,9 @@
     <span class="az-storm-drop"></span><span class="az-storm-drop"></span><span class="az-storm-drop"></span>
   </div>
 
-  <div class="az-suncream" id="az-suncream" role="status" aria-live="polite" title="Zeit für eine Pause?">🧴</div>
+  <div class="az-suncream" id="az-suncream" role="status" aria-live="polite" tabindex="0"
+       title="Sonnencreme-Reminder: Zeit für eine Pause?" aria-label="Sonnencreme-Reminder: Zeit für eine Pause?">🧴</div>
+  <div class="az-suncream-tip" id="az-suncream-tip" hidden></div>
 
   <div class="az-toasts" id="az-toasts" aria-live="polite"></div>
 
@@ -3081,18 +3183,13 @@
       </div>
 
       <div class="az-shop-section">
-        <h3 class="az-shop-heading">Strandfigur: Kopf</h3>
-        <div class="az-shop-grid" id="az-shop-hats"></div>
+        <h3 class="az-shop-heading">Krabbenfarbe</h3>
+        <div class="az-shop-grid" id="az-shop-crab-colors"></div>
       </div>
 
       <div class="az-shop-section">
-        <h3 class="az-shop-heading">Strandfigur: Brille</h3>
-        <div class="az-shop-grid" id="az-shop-glasses"></div>
-      </div>
-
-      <div class="az-shop-section">
-        <h3 class="az-shop-heading">Strandfigur: Schwimmring</h3>
-        <div class="az-shop-grid" id="az-shop-rings"></div>
+        <h3 class="az-shop-heading">Zeitleisten-Tier</h3>
+        <div class="az-shop-grid" id="az-shop-pets"></div>
       </div>
     </div>
   </div>
@@ -3145,11 +3242,12 @@
   var crabEl      = document.getElementById('az-crab');
   var treasureEl  = document.getElementById('az-treasure');
   var bottleEl    = document.getElementById('az-bottle');
+  var chestEl     = document.getElementById('az-chest');
   var tidemarkEl  = document.getElementById('az-tidemark');
   var seasonEl    = document.getElementById('az-season');
-  var avatarEl    = document.getElementById('az-avatar');
   var weatherReportEl = document.getElementById('az-weather-report');
   var suncreamEl  = document.getElementById('az-suncream');
+  var suncreamTipEl = document.getElementById('az-suncream-tip');
   var stormEl     = document.getElementById('az-storm');
   var catchesEl   = document.getElementById('az-catches');
   var fishEl      = document.getElementById('az-fish');
@@ -4004,18 +4102,64 @@
     }, 7000);
   }
 
+  // ---- Feierabend-Truhe ----
+  // Ist von Anfang an dauerhaft sichtbar, an einer einmalig zufällig
+  // gewählten x-Position, aber mit genug Abstand zur Wasserlinie, damit
+  // sie nicht hinter den Kennzahlen-Kacheln im Footer landet. Anklickbar
+  // (Öffnen, Belohnung) ist sie nur innerhalb des 30-Minuten-Fensters ab
+  // 7h 45min Arbeitszeit, davor und danach reagiert sie nicht auf Klicks.
+  // syncChest() läuft mit calculate() mit, kein eigener Timer, weil
+  // "worked" durch Pausen von der realen Uhrzeit abweicht.
+
+  var CHEST_APPEAR_MIN = 7 * 60 + 45; // 7h 45min
+  var CHEST_OPEN_WINDOW_MIN = 30;
+
+  function buildChest() {
+    chestEl.innerHTML =
+      '<rect x="-13" y="-6" width="26" height="14" rx="2" fill="#a9764a" stroke="#5c3a1e" stroke-width="1.2"/>' +
+      '<path d="M-13,-6 a13,7 0 0 1 26,0 Z" fill="#c48a54" stroke="#5c3a1e" stroke-width="1.2"/>' +
+      '<rect x="-2.4" y="-7" width="4.8" height="5.6" rx="1" fill="#ffe04a" stroke="#8a6a1a" stroke-width="0.8"/>' +
+      '<path d="M-13,-1 h26M-13,3 h26" stroke="#5c3a1e" stroke-width="1" opacity="0.5"/>';
+  }
+
+  var chestLive = null;
+  var chestXFrac = Math.random(); // einmal zufällig gewählt, Position bleibt sonst über Layout-Änderungen stabil
+  var chestUsed = false;
+  var chestOpenable = false;
+
+  function syncChest(worked) {
+    if (!chestEl || !view || chestUsed) return;
+
+    /* Transform bei jedem Aufruf neu aus dem aktuellen view berechnen
+       (nicht nur einmal), sonst hängt die Truhe nach einer Layout-
+       Änderung (z.B. Fenster-Resize) an ihrer alten Position fest und
+       kann hinter den Kennzahlen-Kacheln landen. */
+    var x = 40 + chestXFrac * Math.max(40, view.width - 80);
+    var y = view.waterY - 34;
+    chestLive = { x: x, y: y };
+    chestEl.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')');
+    chestEl.setAttribute('opacity', '1');
+
+    chestOpenable = worked >= CHEST_APPEAR_MIN && worked <= CHEST_APPEAR_MIN + CHEST_OPEN_WINDOW_MIN;
+    chestEl.style.pointerEvents = chestOpenable ? 'all' : 'none';
+    chestEl.style.cursor = chestOpenable ? 'pointer' : 'default';
+  }
+
   // ---- Wetterereignisse: Sternschnuppe, Fischschwarm, Regenbogen ----
   // Rein optisch, keine Mechanik. Stern nur nachts, Fisch nur tagsüber,
   // Regenbogen einmalig bei celebratePunctualFinish().
 
+  var NIGHT_START_MIN = 17 * 60 + 30; // 17:30
+  var NIGHT_END_MIN = 9 * 60;         // 09:00
+
   function isNightNow() {
     var m = minutesNow();
-    return m < 300 || m >= 1260;
+    return m >= NIGHT_START_MIN || m < NIGHT_END_MIN;
   }
 
   function isDayNow() {
     var m = minutesNow();
-    return m >= 420 && m < 1020;
+    return m >= NIGHT_END_MIN && m < NIGHT_START_MIN;
   }
 
   function spawnStar() {
@@ -4285,6 +4429,7 @@
     timeOut.dataset.clock = feierabendClock;
 
     document.getElementById('progress-fill').style.width = percent.toFixed(1) + '%';
+    progressPetEl.style.left = percent.toFixed(1) + '%';
     progressBar.setAttribute('aria-valuenow', String(Math.round(percent)));
     document.getElementById('status').textContent =
       Math.round(percent) + ' Prozent der Sollzeit erreicht, gearbeitet ' + toDuration(worked);
@@ -4293,6 +4438,7 @@
     syncTide(now);
     syncStarfield(now);
     syncTideLevel(percent);
+    syncChest(worked);
     animateTo(percent);
     paintLunch();
     paintSuncream(now, startMin);
@@ -4349,6 +4495,18 @@
     'Ein Schluck Ozean, ein Schluck Motivation. Weiter geht’s.',
     'Auch Flaschenpost braucht manchmal einen Moment Pause.',
     'Gut aufgepasst. Nicht jede treibt bis ans Ufer.'
+  ];
+
+  /* Sprüche, die die Feierabend-Truhe beim Öffnen zeigt. */
+  var CHEST_QUOTES = [
+    'Sollzeit erreicht. Der Rest gehört dir.',
+    'Nicht jeder findet die Truhe. Du schon.',
+    'Dreißig Minuten Fenster, ein guter Fang.',
+    'Feierabend verdient. Genieß ihn.',
+    'Diese Truhe öffnet sich nur einmal am Tag. Heute warst du es.',
+    'Der Ozean merkt sich, wer pünktlich aufhört.',
+    'Kleiner Schatz für einen fertigen Tag.',
+    'Gut gemacht. Morgen ist auch noch ein Tag.'
   ];
 
   /* Abzeichen. d enthält den Pfad des Symbols, 24 mal 24, nur Kontur. */
@@ -4425,7 +4583,7 @@
     shells: 1,      // eine Startmuschel, damit das Rad sofort läuft
     awards: {},
     marks: {},
-    caught: { dolphin: 0, crab: 0, bottle: 0, treasure: 0 }
+    caught: { dolphin: 0, crab: 0, bottle: 0, treasure: 0, chest: 0 }
   };
 
   /* Muschel-Sammlung-Leiste: zeigt, welche Kreaturen in dieser Sitzung
@@ -4439,7 +4597,9 @@
     { id: 'bottle', label: 'Flaschenpost',
       d: '<path d="M10.4 2.6h3.2v2.8a1 1 0 0 0 .4.8c1.4 1.1 2.4 2.7 2.4 4.6v7.8a2.4 2.4 0 0 1-2.4 2.4h-4a2.4 2.4 0 0 1-2.4-2.4V10.8c0-1.9 1-3.5 2.4-4.6a1 1 0 0 0 .4-.8V2.6Z"/><path d="M9.6 12.6h4.8"/>' },
     { id: 'treasure', label: 'Strandfund',
-      d: '<path d="M12 2 L13.6 10.4 L22 12 L13.6 13.6 L12 22 L10.4 13.6 L2 12 L10.4 10.4 Z"/>' }
+      d: '<path d="M12 2 L13.6 10.4 L22 12 L13.6 13.6 L12 22 L10.4 13.6 L2 12 L10.4 10.4 Z"/>' },
+    { id: 'chest', label: 'Truhe',
+      d: '<rect x="3" y="10" width="18" height="10" rx="1.6"/><path d="M3 10a9 5 0 0 1 18 0"/><path d="M12 10v3"/>' }
   ];
 
   var hudRing   = document.getElementById('az-level-ring');
@@ -4910,6 +5070,28 @@
     renderHud();
   });
 
+  // ---- Truhe öffnen ----
+
+  chestEl.addEventListener('pointerdown', function (event) {
+    if (!chestLive || !chestOpenable) return;
+    event.preventDefault();
+
+    var caught = chestLive;
+    chestLive = null;
+    chestUsed = true;
+    game.shells += 1;
+    burstAt(caught.x || 0, caught.y || 0);
+    chestEl.setAttribute('opacity', '0');
+
+    var quote = CHEST_QUOTES[Math.floor(Math.random() * CHEST_QUOTES.length)];
+    toast('Truhe geöffnet', quote);
+    pulse(shellsEl);
+    playCue('catch');
+    game.caught.chest = (game.caught.chest || 0) + 1;
+    renderCatches();
+    renderHud();
+  });
+
   // ============================================================
   //  Muschel-Shop: rein kosmetisch, ohne Persistenz. Ein Neuladen
   //  setzt Käufe und Ausrüstung wie den restlichen Spielstand zurück.
@@ -4951,35 +5133,48 @@
       stops: ['#f6f2ff', '#c9c2e8', '#8f87b8'] }
   ];
 
-  /* Strandfigur: dauerhaft sichtbare Ausstattung, ebenfalls rein
-     kosmetisch und ohne Persistenz. Eigene ID-Präfixe, damit sie sich
-     nicht mit Themen/Skins in shop.owned überschneiden. */
-  var SHOP_HATS = [
-    { id: 'hat-none', label: 'Ohne', cost: 0, color: 'rgba(255,255,255,0.5)' },
-    { id: 'hat-straw', label: 'Strohhut', cost: 2, color: '#e8c37a' },
-    { id: 'hat-cap', label: 'Käppi', cost: 2, color: '#45d0ff' }
+  /* Krabbenfarbe: wahlweise automatisch nach Wochentag (siehe
+     WEEKDAY_CRAB_COLORS weiter unten) oder fest gekauft, rein kosmetisch
+     und ohne Persistenz. Eigene ID-Präfixe, damit sie sich nicht mit
+     Themen/Skins in shop.owned überschneiden. */
+  var SHOP_CRAB_COLORS = [
+    { id: 'crab-auto', label: 'Automatisch', cost: 0,
+      color: 'linear-gradient(135deg,#ff8f6b,#8fe0c8,#c9a8ff)' },
+    { id: 'crab-classic', label: 'Standard', cost: 0,
+      color: '#e8623d', stops: ['#ff8f6b', '#e8623d', '#b8442a'] },
+    { id: 'crab-coral', label: 'Koralle', cost: 2,
+      color: '#ff7a52', stops: ['#ffb2a0', '#ff7a52', '#c14a26'] },
+    { id: 'crab-turquoise', label: 'Türkis', cost: 2,
+      color: '#3fb894', stops: ['#8fe0c8', '#3fb894', '#1f7a5c'] },
+    { id: 'crab-gold', label: 'Gold', cost: 2,
+      color: '#e0a52f', stops: ['#ffe08a', '#e0a52f', '#a8781a'] },
+    { id: 'crab-violet', label: 'Lila', cost: 2,
+      color: '#9a6bdb', stops: ['#c9a8ff', '#9a6bdb', '#6b3fa8'] },
+    { id: 'crab-pink', label: 'Pink', cost: 2,
+      color: '#ff8fc4', stops: ['#ffd1e8', '#ff8fc4', '#c65a95'] },
+    { id: 'crab-sky', label: 'Himmelblau', cost: 2,
+      color: '#5aa2d6', stops: ['#a8d8ff', '#5aa2d6', '#2f5f8a'] }
   ];
 
-  var SHOP_GLASSES = [
-    { id: 'glasses-none', label: 'Ohne', cost: 0, color: 'rgba(255,255,255,0.5)' },
-    { id: 'glasses-round', label: 'Rund', cost: 2, color: '#2a3440' },
-    { id: 'glasses-star', label: 'Sternform', cost: 3, color: '#ffb02e' }
+  /* Zeitleisten-Tier: reitet auf dem rechten Rand des Fortschrittsbalkens
+     mit (siehe .az-progress-pet, Kind von #progress-fill), Nyan-Cat-Art
+     ohne eigene Positions-Logik. Rein kosmetisch wie die übrigen
+     Shop-Kategorien, eigener ID-Präfix wie bei der Krabbenfarbe. */
+  var SHOP_PETS = [
+    { id: 'pet-none', label: 'Ohne', cost: 0, color: 'rgba(255,255,255,0.5)', emoji: '' },
+    { id: 'pet-dog', label: 'Hund', cost: 3, color: '#ffe3b8', emoji: '🐶', sound: 'Wuff wuff!' },
+    { id: 'pet-cat', label: 'Katze', cost: 3, color: '#f6f2ff', emoji: '🐱', sound: 'Miau!' },
+    { id: 'pet-otter', label: 'Seeotter', cost: 4, color: '#baffef', emoji: '🦦', sound: 'Fiep fiep!' },
+    { id: 'pet-unicorn', label: 'Einhorn', cost: 5, color: '#ffd6f6', emoji: '🦄', sound: 'Glitzerwiehern! ✨' }
   ];
 
-  var SHOP_RINGS = [
-    { id: 'ring-yellow', label: 'Gelb', cost: 0, color: '#ffe04a' },
-    { id: 'ring-pink', label: 'Pink', cost: 2, color: '#ff8fc4' },
-    { id: 'ring-mint', label: 'Mint', cost: 2, color: '#4fdd7e' }
-  ];
-
-  var avatar = {
-    hat: 'hat-none',
-    glasses: 'glasses-none',
-    ring: 'ring-yellow'
+  var cosmetics = {
+    pet: 'pet-none',
+    crabColor: 'crab-auto'
   };
 
   var shop = {
-    owned: new Set(['ocean', 'classic', 'hat-none', 'glasses-none', 'ring-yellow']),
+    owned: new Set(['ocean', 'classic', 'crab-auto', 'crab-classic', 'pet-none']),
     theme: 'ocean',
     skin: 'classic'
   };
@@ -4989,9 +5184,9 @@
   var shopCloseBtn   = document.getElementById('az-shop-close');
   var shopThemesEl   = document.getElementById('az-shop-themes');
   var shopSkinsEl    = document.getElementById('az-shop-skins');
-  var shopHatsEl     = document.getElementById('az-shop-hats');
-  var shopGlassesEl  = document.getElementById('az-shop-glasses');
-  var shopRingsEl    = document.getElementById('az-shop-rings');
+  var shopCrabColorsEl = document.getElementById('az-shop-crab-colors');
+  var shopPetsEl     = document.getElementById('az-shop-pets');
+  var progressPetEl  = document.getElementById('az-progress-pet');
 
   /* Farbverläufe (--az-rainbow) lassen sich nicht zuverlässig per
      CSS-Transition überblenden, deshalb hier ein direkter, frame-für-
@@ -5090,60 +5285,93 @@
     shop.skin = id;
   }
 
-  /* Strandfigur neu zeichnen, mit aktuell gewählter Kopfbedeckung,
-     Sonnenbrille und Schwimmring. Direkter Redraw statt Tween wie bei
-     Thema/Skin, reicht für eine kleine, feste Figur am Ufer. */
   function findShopItem(list, id) {
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return list[0];
   }
 
-  function buildAvatar() {
-    var hat = findShopItem(SHOP_HATS, avatar.hat);
-    var glasses = findShopItem(SHOP_GLASSES, avatar.glasses);
-    var ring = findShopItem(SHOP_RINGS, avatar.ring);
-
-    var out =
-      '<ellipse cx="0" cy="9" rx="24" ry="6" fill="' + ring.color + '" stroke="#ffffff" stroke-width="1.6" opacity="0.92"/>' +
-      '<ellipse cx="0" cy="9" rx="15" ry="3.4" fill="#ffffff" opacity="0.3"/>' +
-      '<circle cx="0" cy="-3" r="10.5" fill="url(#az-oracle-grad)" stroke="#ffffff" stroke-width="1.3"/>';
-
-    if (glasses.id === 'glasses-round') {
-      out += '<circle cx="-4.2" cy="-4" r="3" fill="none" stroke="#2a3440" stroke-width="1.6"/>' +
-             '<circle cx="4.2" cy="-4" r="3" fill="none" stroke="#2a3440" stroke-width="1.6"/>' +
-             '<path d="M-1.2,-4 h2.4" stroke="#2a3440" stroke-width="1.6"/>';
-    } else if (glasses.id === 'glasses-star') {
-      out += '<path d="M-4.2,-6.4 L-3.2,-4.4 L-1.2,-4.4 L-2.8,-3 L-2.2,-1 L-4.2,-2.2 L-6.2,-1 L-5.6,-3 L-7.2,-4.4 L-5.2,-4.4 Z" fill="#ffb02e"/>' +
-             '<path d="M4.2,-6.4 L5.2,-4.4 L7.2,-4.4 L5.6,-3 L6.2,-1 L4.2,-2.2 L2.2,-1 L2.8,-3 L1.2,-4.4 L3.2,-4.4 Z" fill="#ffb02e"/>';
+  /* Krabbenfarbe anwenden: 'crab-auto' folgt weiterhin dem echten
+     Wochentag (applyWeekdayCrabColor()), alles andere setzt die Stops von
+     az-crab-grad fest - dasselbe Verlauf-Element wie Krabbe und
+     Strandfund, siehe applyWeekdayCrabColor() weiter oben. */
+  function applyCrabColor(id) {
+    cosmetics.crabColor = id;
+    if (id === 'crab-auto') {
+      applyWeekdayCrabColor();
+      return;
     }
 
-    if (hat.id === 'hat-straw') {
-      out += '<ellipse cx="0" cy="-11.5" rx="12.5" ry="2.8" fill="#e8c37a" stroke="#c89a4a" stroke-width="0.9"/>' +
-             '<path d="M-6,-12 C-6,-17 6,-17 6,-12 Z" fill="#e8c37a" stroke="#c89a4a" stroke-width="0.9"/>';
-    } else if (hat.id === 'hat-cap') {
-      out += '<path d="M-8,-11.6 C-8,-17 8,-17 8,-11.6 Z" fill="#45d0ff" stroke="#ffffff" stroke-width="0.9"/>' +
-             '<path d="M-8,-11.6 L-13,-10.4 L-7.6,-9.6 Z" fill="#0f92cb"/>';
+    var item = findShopItem(SHOP_CRAB_COLORS, id);
+    if (!item.stops) return;
+    document.querySelectorAll('#az-crab-grad stop').forEach(function (stop, i) {
+      if (item.stops[i]) stop.setAttribute('stop-color', item.stops[i]);
+    });
+  }
+
+  /* Setzt Emoji + Wippanimation des Zeitleisten-Tiers. Die Position selbst
+     kommt gratis von der bestehenden width-Transition des Elternelements
+     (#progress-fill), hier wird nur der Inhalt getauscht. Ohne Tier bleibt
+     das Element leer (":empty" blendet es aus und macht es unklickbar),
+     mit Tier wird es zum antippbaren Button (siehe pokePet()). */
+  function applyPet(id) {
+    cosmetics.pet = id;
+    var pet = findShopItem(SHOP_PETS, id);
+    progressPetEl.textContent = pet.emoji || '';
+    progressPetEl.classList.toggle('is-bob', !!pet.emoji);
+
+    if (pet.emoji) {
+      progressPetEl.setAttribute('role', 'button');
+      progressPetEl.setAttribute('tabindex', '0');
+      progressPetEl.setAttribute('aria-label', pet.label + ', zum Spaß antippen');
+    } else {
+      progressPetEl.removeAttribute('role');
+      progressPetEl.removeAttribute('tabindex');
+      progressPetEl.removeAttribute('aria-label');
+    }
+  }
+
+  /* Konfetti von burstAt() braucht SVG-Koordinaten der Szene, das Tier
+     sitzt aber als HTML-Element im Footer außerhalb des SVGs. Da das SVG
+     exakt deckungsgleich mit .az-stage liegt und dessen viewBox 1:1 in
+     CSS-Pixeln gesetzt wird (siehe layout()/measure()), reicht die
+     Differenz der Bounding-Rects ohne weitere Skalierung. */
+  function pokePet() {
+    var pet = findShopItem(SHOP_PETS, cosmetics.pet);
+    if (!pet.emoji) return;
+
+    toast(pet.emoji + ' ' + pet.sound, pet.label);
+    playCue('catch');
+
+    if (view) {
+      var stageRect = stage.getBoundingClientRect();
+      var petRect = progressPetEl.getBoundingClientRect();
+      burstAt(petRect.left + petRect.width / 2 - stageRect.left,
+              petRect.top + petRect.height / 2 - stageRect.top);
     }
 
-    avatarEl.innerHTML = out;
+    progressPetEl.classList.remove('is-poked');
+    void progressPetEl.offsetWidth;
+    progressPetEl.classList.add('is-poked');
   }
 
-  function layoutAvatar() {
-    if (!view || !avatarEl) return;
-    avatarEl.setAttribute('transform',
-      'translate(' + Math.round(view.width * 0.5) + ',' + Math.round(view.waterY - 6) + ')');
-  }
+  progressPetEl.addEventListener('click', pokePet);
 
-  function applyAvatarPart(kind, id) {
-    avatar[kind] = id;
-    buildAvatar();
-  }
+  progressPetEl.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    pokePet();
+  });
+
+  progressPetEl.addEventListener('animationend', function (event) {
+    if (event.animationName === 'az-progress-pet-poke') progressPetEl.classList.remove('is-poked');
+  });
 
   function renderShopGrid(el, items, activeId, kind) {
     if (!el) return;
     el.innerHTML = items.map(function (item) {
       var owned = shop.owned.has(item.id);
       var active = item.id === activeId;
+      var isEmoji = kind === 'pet';
       var swatch = kind === 'theme' ? item.vars['--az-cyan']
         : kind === 'skin' ? 'linear-gradient(180deg,' + item.stops.join(',') + ')'
         : item.color;
@@ -5154,7 +5382,8 @@
         (owned ? ' is-owned' : '') + '"' + (locked ? ' disabled' : '') +
         ' data-shop-kind="' + kind + '" data-shop-id="' + item.id +
         '" data-shop-cost="' + item.cost + '">' +
-        '<span class="az-shop-swatch" style="background:' + swatch + '"></span>' +
+        '<span class="az-shop-swatch' + (isEmoji ? ' az-shop-swatch-emoji' : '') +
+        '" style="background:' + swatch + '">' + (isEmoji ? escapeText(item.emoji) : '') + '</span>' +
         '<span class="az-shop-label">' + escapeText(item.label) + '</span>' +
         '<span class="az-shop-price">' + price + '</span>' +
         '</button>';
@@ -5164,9 +5393,8 @@
   function renderShop() {
     renderShopGrid(shopThemesEl, SHOP_THEMES, shop.theme, 'theme');
     renderShopGrid(shopSkinsEl, SHOP_SKINS, shop.skin, 'skin');
-    renderShopGrid(shopHatsEl, SHOP_HATS, avatar.hat, 'hat');
-    renderShopGrid(shopGlassesEl, SHOP_GLASSES, avatar.glasses, 'glasses');
-    renderShopGrid(shopRingsEl, SHOP_RINGS, avatar.ring, 'ring');
+    renderShopGrid(shopCrabColorsEl, SHOP_CRAB_COLORS, cosmetics.crabColor, 'crabColor');
+    renderShopGrid(shopPetsEl, SHOP_PETS, cosmetics.pet, 'pet');
   }
 
   function buyShopItem(kind, id, cost) {
@@ -5182,7 +5410,8 @@
 
     if (kind === 'theme') applyShopTheme(id);
     else if (kind === 'skin') applyShopSkin(id);
-    else applyAvatarPart(kind, id);
+    else if (kind === 'pet') applyPet(id);
+    else if (kind === 'crabColor') applyCrabColor(id);
 
     renderShop();
     renderHud();
@@ -5732,26 +5961,77 @@
 
     suncreamEl.classList.remove('is-visible', 'is-warn', 'is-urgent');
 
+    var text;
     if (running) {
-      suncreamEl.title = 'Pause läuft, gut so.';
-      return;
-    }
-
-    var since = Math.max(0, now - lastEnd);
-
-    if (since >= 240) {
-      suncreamEl.classList.add('is-urgent');
-      suncreamEl.title = 'Seit ' + toDuration(since) + ' keine Pause. Sonnencreme und kurz raus.';
-    } else if (since >= 180) {
-      suncreamEl.classList.add('is-warn');
-      suncreamEl.title = 'Seit ' + toDuration(since) + ' keine Pause.';
-    } else if (since >= 120) {
-      suncreamEl.classList.add('is-visible');
-      suncreamEl.title = 'Seit ' + toDuration(since) + ' keine Pause.';
+      text = 'Sonnencreme-Reminder: Pause läuft, gut so.';
     } else {
-      suncreamEl.title = 'Zeit für eine Pause?';
+      var since = Math.max(0, now - lastEnd);
+
+      if (since >= 240) {
+        suncreamEl.classList.add('is-urgent');
+        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause. Sonnencreme und kurz raus.';
+      } else if (since >= 180) {
+        suncreamEl.classList.add('is-warn');
+        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause.';
+      } else if (since >= 120) {
+        suncreamEl.classList.add('is-visible');
+        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause.';
+      } else {
+        text = 'Sonnencreme-Reminder: Zeit für eine Pause?';
+      }
     }
+
+    suncreamEl.title = text;
+    suncreamEl.setAttribute('aria-label', text);
+    suncreamTipEl.textContent = text;
   }
+
+  /* Sprechblase zum Sonnencreme-Icon: title allein erklärt auf Touch-
+     Geräten nichts, da es keinen Hover gibt. Darum zusätzlich per
+     Antippen/Fokus umschaltbar, gleiches Muster wie die Abzeichen-Tipps. */
+  var suncreamTipSticky = false;
+
+  function showSuncreamTip(sticky) {
+    suncreamTipEl.hidden = false;
+    suncreamTipSticky = suncreamTipSticky || sticky;
+  }
+
+  function hideSuncreamTip() {
+    suncreamTipEl.hidden = true;
+    suncreamTipSticky = false;
+  }
+
+  /* click deckt Touch ab (Fokus feuert davor schon "focus", darum kein
+     eigener Hover/Focus-Autozeiger hier - sonst schaltet der Klick die
+     gerade per Fokus geöffnete Blase sofort wieder zu). Enter/Leertaste
+     bedienen dieselbe Umschaltung für reine Tastaturnutzung. */
+  function toggleSuncreamTip() {
+    if (suncreamTipSticky) hideSuncreamTip();
+    else showSuncreamTip(true);
+  }
+
+  suncreamEl.addEventListener('click', toggleSuncreamTip);
+
+  suncreamEl.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    toggleSuncreamTip();
+  });
+
+  document.addEventListener('click', function (event) {
+    if (suncreamTipSticky && event.target !== suncreamEl) hideSuncreamTip();
+  });
+
+  suncreamEl.addEventListener('pointerover', function (event) {
+    if (event.pointerType !== 'mouse' || suncreamTipSticky) return;
+    showSuncreamTip(false);
+  });
+
+  suncreamEl.addEventListener('pointerleave', function (event) {
+    if (event.pointerType === 'mouse' && !suncreamTipSticky) hideSuncreamTip();
+  });
+
+  suncreamEl.addEventListener('blur', hideSuncreamTip);
 
   function secondsNow() {
     var d = new Date();
@@ -6767,7 +7047,6 @@
     drawShine();
     drawTidemark();
     drawSeason();
-    layoutAvatar();
 
     bandLength = midBand.getTotalLength();
     drawChecks();
@@ -6796,9 +7075,9 @@
   buildCrab();
   buildBottle();
   buildTreasure();
+  buildChest();
   buildLawGull();
-  buildAvatar();
-  applyWeekdayCrabColor();
+  applyCrabColor(cosmetics.crabColor);
   renderAwards();
   renderCatches();
   renderGrips();
