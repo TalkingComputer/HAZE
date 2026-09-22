@@ -471,6 +471,19 @@
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 
+  /* Feiertagshinweis für Baden-Württemberg, unabhängig vom
+     metaphorischen Wetterbericht darüber. Bleibt leer und damit
+     unsichtbar (:empty), solange kein Feiertag ansteht. */
+  .az-holiday-note {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--az-muted);
+    margin-bottom: 4px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .az-holiday-note:empty { display: none; }
+
   .az-time {
     font-size: clamp(30px, 5vw, 46px);
     font-weight: 700;
@@ -539,6 +552,36 @@
   }
 
   .az-metric-value.highlight { color: var(--az-bright); transition: color 400ms ease; }
+
+  .az-metric-remaining { padding-right: 2.2rem; }
+
+  .btn-copy-remaining {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background 140ms ease;
+  }
+
+  .btn-copy-remaining:hover { background: rgba(255, 255, 255, 0.34); }
+
+  .btn-copy-remaining:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--az-ring);
+  }
+
+  .btn-copy-remaining.is-copied { background: rgba(80, 220, 170, 0.45); }
 
   .az-progress {
     position: relative;
@@ -813,6 +856,73 @@
     color: var(--az-muted);
     font-variant-numeric: tabular-nums;
   }
+
+  /* Echtes Wetter für Eberbach, direkt neben dem Profil. Bleibt leer und
+     damit unsichtbar (:empty), solange noch keine Daten da sind - kein
+     Layout-Sprung, kein Hinweis auf einen fehlgeschlagenen Request. Der
+     Tagestipp sitzt daneben nur als Icon, der Text kommt als Sprechblase
+     -sonst wird die Kopfkachel schnell überfüllt (gleiches Muster wie
+     .az-suncream-tip / .az-award-tip). */
+  .az-hud-note {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 11.5px;
+    color: var(--az-muted);
+  }
+
+  .az-hud-weather { display: block; }
+  .az-hud-weather:empty { display: none; }
+
+  .az-hud-tip {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: help;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .az-hud-tip:hover { background: rgba(255, 255, 255, 0.8); }
+
+  .az-hud-tip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--az-ring);
+  }
+
+  .az-hud-tip-bubble {
+    position: absolute;
+    z-index: 5;
+    top: 100%;
+    left: 0;
+    margin-top: 6px;
+    width: max-content;
+    max-width: min(230px, 78vw);
+    padding: 8px 12px 9px;
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(224, 245, 255, 0.94));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 12px 28px rgba(6, 66, 102, 0.3), inset 0 1px 0 #ffffff;
+    color: var(--az-text);
+    font-size: 12.5px;
+    line-height: 1.4;
+    pointer-events: none;
+  }
+
+  .az-hud-tip-bubble[hidden] { display: none; }
 
   .az-shells {
     display: inline-flex;
@@ -1118,6 +1228,11 @@
 
   #az-chest { pointer-events: all; cursor: pointer; }
   #az-chest[opacity="0"] { pointer-events: none; }
+
+  /* Möwenschwarm lässt sich fangen, solange er über den Himmel fliegt */
+
+  #az-gullflock { pointer-events: all; cursor: pointer; }
+  #az-gullflock[opacity="0"] { pointer-events: none; }
 
   /* Wasserstand: Wasser und Horizontschimmer heben sich sanft mit dem
      Fortschritt, die Flutlinie leuchtet erst bei erreichter Sollzeit auf */
@@ -1515,15 +1630,25 @@
     border: 1px solid rgba(255, 255, 255, 0.9);
   }
 
-  /* ---------- Tagesrückblick-Karte ---------- */
+  /* ---------- Tagesrückblick-Karte ----------
+     Erscheint einmalig bei pünktlichem Feierabend, zusammen mit Toast
+     und Regenbogen (siehe celebratePunctualFinish()). Bewusst als kleine
+     Trophäen-Karte mit eigener Stat-Kachel-Reihe statt loser Textzeilen,
+     damit der Erfolg auch optisch nach etwas aussieht. */
 
   .az-recap {
     position: relative;
-    margin-bottom: 12px;
-    padding: 12px 34px 12px 14px;
-    border-radius: 14px;
-    background: linear-gradient(180deg, rgba(255, 244, 224, 0.75), rgba(214, 255, 244, 0.55));
-    border: 1px solid rgba(255, 255, 255, 0.9);
+    margin-bottom: 14px;
+    padding: 14px 34px 14px 14px;
+    border-radius: 18px;
+    background: linear-gradient(155deg,
+      rgba(255, 232, 194, 0.92) 0%,
+      rgba(255, 214, 214, 0.62) 42%,
+      rgba(210, 255, 240, 0.68) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 14px 30px rgba(6, 66, 102, 0.2);
     animation: az-card-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
     /* .az-footer lässt Klicks sonst zur Sonne durch (pointer-events: none) -
        hier explizit wieder anschalten, sonst reagiert der Schließen-Button nicht. */
@@ -1532,29 +1657,93 @@
 
   .az-recap[hidden] { display: none; }
 
+  .az-recap-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .az-recap-icon {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #fff2c6 0%, #ffd166 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 12px rgba(217, 143, 43, 0.4);
+  }
+
+  .az-recap-head-text { min-width: 0; }
+
   .az-recap-title {
-    margin-bottom: 6px;
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
+    color: var(--az-headline);
+  }
+
+  .az-recap-sub {
+    margin-top: 1px;
+    font-size: 12.5px;
     color: var(--az-muted);
   }
 
   .az-recap-rows {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 16px;
-    font-size: 13.5px;
-    color: var(--az-text);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
   }
 
-  .az-recap-rows strong { color: var(--az-headline); }
+  .az-recap-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 8px 9px 9px;
+    border-radius: 12px;
+    min-width: 0;
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  }
+
+  .az-recap-stat-icon {
+    font-size: 14px;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .az-recap-stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--az-muted);
+  }
+
+  .az-recap-stat-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--az-headline);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .az-recap-stat-note {
+    font-size: 10px;
+    font-weight: 600;
+    color: #0c8163;
+  }
 
   .az-recap-dismiss {
     position: absolute;
-    top: 7px;
-    right: 7px;
+    top: 8px;
+    right: 8px;
     width: 30px;
     height: 30px;
     display: inline-flex;
@@ -1573,6 +1762,10 @@
   .az-recap-dismiss:focus-visible {
     outline: none;
     box-shadow: 0 0 0 4px var(--az-ring);
+  }
+
+  @media (max-width: 640px) {
+    .az-recap-rows { grid-template-columns: repeat(2, 1fr); }
   }
 
   .az-otter-name {
@@ -2418,6 +2611,105 @@
     to   { transform: translateY(125vh) rotate(11deg); }
   }
 
+  /* Sandburg-Baufortschritt: fünf Stufen, die sich mit den bestehenden
+     MILESTONES (10/25/50/75/100 %) decken. Jede Stufe ist eine eigene
+     Untergruppe, die per Klasse ein- und ausgeblendet wird. */
+
+  .az-sandcastle-stage {
+    opacity: 0;
+    transform: scale(0.7);
+    transform-origin: 0px 4px;
+    transition: opacity 420ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .az-sandcastle-stage.is-built { opacity: 1; transform: scale(1); }
+
+  /* Leuchtturm: dauerhaft sichtbar, mit vier Lichtzuständen, die sich
+     überlagern können. is-dusk ist das schwächste, rein atmosphärische
+     Glimmen ab dem Abend (syncLighthouseDusk), unabhängig vom Arbeits-
+     status. is-lit schaltet Kegel-Sweep und volle Lampenhelligkeit frei,
+     sobald die Sollzeit erreicht ist (paintLighthouse()) - das bleibt
+     danach dauerhaft an, ganz gleich wie der weitere Verlauf aussieht.
+     is-storm-warning legt darüber ein pulsierendes Rot-Orange auf Lampe
+     und Halo, synchron zur bestehenden Sturm-Eskalation (paintOvertime());
+     der Kegel-Sweep aus is-lit läuft dabei unverändert weiter, nur die
+     Lampenfarbe warnt. is-flash ist ein kurzes, unabhängiges Aufblitzen
+     bei Level-Up/Abzeichen (flashLighthouse()), das sich über jeden
+     anderen Zustand legt. Der Kegel liegt in einer eigenen inneren
+     Gruppe, damit die CSS-Rotation nicht das Positions-transform der
+     äußeren Gruppe überschreibt (gleiches Muster wie bei den Funken am
+     Wunsch-Marker). */
+
+  .az-lighthouse-lamp {
+    fill: #cfe0ea;
+    opacity: 0.6;
+    transition: opacity 500ms ease, fill 500ms ease;
+  }
+
+  .az-lighthouse-halo {
+    opacity: 0;
+    transition: opacity 600ms ease;
+  }
+
+  .az-lighthouse-beam {
+    opacity: 0;
+    transform-origin: 0px 0px;
+    transition: opacity 600ms ease;
+  }
+
+  #az-lighthouse.is-dusk:not(.is-lit) .az-lighthouse-lamp { opacity: 0.4; fill: #ffe3ad; }
+  #az-lighthouse.is-dusk:not(.is-lit) .az-lighthouse-halo { opacity: 0.18; }
+
+  #az-lighthouse.is-lit .az-lighthouse-lamp { opacity: 1; fill: #fff6d8; }
+  #az-lighthouse.is-lit .az-lighthouse-halo { opacity: 0.42; }
+
+  #az-lighthouse.is-lit .az-lighthouse-beam {
+    opacity: 0.55;
+    animation: az-lighthouse-sweep 4.2s ease-in-out infinite;
+  }
+
+  @keyframes az-lighthouse-sweep {
+    0%, 100% { transform: rotate(-24deg); }
+    50%      { transform: rotate(24deg); }
+  }
+
+  #az-lighthouse.is-storm-warning .az-lighthouse-lamp {
+    fill: #ff6a4d;
+    opacity: 1;
+    animation: az-lighthouse-alarm 1.6s ease-in-out infinite;
+  }
+
+  #az-lighthouse.is-storm-warning .az-lighthouse-halo {
+    fill: #ff6a4d;
+    opacity: 0.5;
+    animation: az-lighthouse-alarm 1.6s ease-in-out infinite;
+  }
+
+  #az-lighthouse.is-storm-warning.lvl-2 .az-lighthouse-lamp,
+  #az-lighthouse.is-storm-warning.lvl-2 .az-lighthouse-halo { animation-duration: 1.1s; }
+
+  #az-lighthouse.is-storm-warning.lvl-3 .az-lighthouse-lamp,
+  #az-lighthouse.is-storm-warning.lvl-3 .az-lighthouse-halo { animation-duration: 0.7s; }
+
+  @keyframes az-lighthouse-alarm {
+    0%, 100% { opacity: 0.5; }
+    50%      { opacity: 1; }
+  }
+
+  #az-lighthouse.is-flash .az-lighthouse-lamp { opacity: 1; fill: #ffffff; transition: opacity 90ms ease, fill 90ms ease; }
+  #az-lighthouse.is-flash .az-lighthouse-halo { opacity: 0.9; transition: opacity 90ms ease; }
+
+  /* .az-wrap * weiter oben nimmt Animation/Transition bereits generell
+     raus; dieser Block dokumentiert das für die betroffenen Elemente
+     und hält Leuchtturm-Kegel und Omat-Urteil dabei als statische
+     Statusträger lesbar, statt sie unbemerkt einzufrieren. */
+  @media (prefers-reduced-motion: reduce) {
+    #az-lighthouse.is-lit .az-lighthouse-beam { animation: none !important; }
+    #az-lighthouse.is-storm-warning .az-lighthouse-lamp,
+    #az-lighthouse.is-storm-warning .az-lighthouse-halo { animation: none !important; }
+    .az-sassomat-word.is-reveal { animation: none !important; }
+  }
+
   /* Sonnencreme-Pausen-Reminder: dezentes Icon unten links, wird
      dringlicher, je länger keine Pause erfasst wurde (siehe
      paintSuncream()). Kein Vollbild-Overlay wie die Hangry Hour.
@@ -2485,6 +2777,76 @@
   }
 
   .az-suncream-tip[hidden] { display: none; }
+
+  /* Mausig-Atzig-Fotzig-o-mat: Sprüche-Button in der HUD-Leiste neben dem
+     Sound-Schalter, öffnet das Omat-Modal (gleiches UX-Muster wie das
+     Muschel-Orakel: ein Wort rein, ein Urteil raus). Die Ergebnis-Anzeige
+     nutzt .az-oracle-eyebrow/.az-oracle-text, dieser Block ergänzt den
+     Slot-Cycle-Effekt beim Urteilen sowie die knuffige Korall-Variante
+     des Oracle-Bausteins - nur innerhalb des Sassomat-Buttons/-Modals
+     überschrieben, Glücksrad/Wunschmuschel/Shop behalten ihren Aqua-Look. */
+  .btn-sassomat {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    color: #ea5138;
+  }
+
+  .btn-sassomat:active { transform: scale(0.92); }
+
+  .az-sassomat-word.is-spin { opacity: 0.6; }
+
+  .az-sassomat-word.is-reveal { animation: az-sassomat-reveal 480ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  @keyframes az-sassomat-reveal {
+    0%   { opacity: 0; transform: scale(0.7); }
+    60%  { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  #az-sassomat-modal .az-modal-card {
+    border-radius: 30px;
+    background: linear-gradient(180deg, #fff8f4 0%, #ffe6dc 100%);
+  }
+
+  #az-sassomat-modal .az-modal-title { color: #ea5138; }
+
+  #az-sassomat-modal .az-badge {
+    background: linear-gradient(180deg, #ffb199 0%, #ff8064 52%, #ea5138 100%);
+  }
+
+  #az-sassomat-modal .az-oracle-eyebrow { color: #ff8064; }
+
+  #az-sassomat-modal .az-oracle-text { color: #ea5138; }
+
+  #az-sassomat-modal .az-oracle-ask input[type="text"] {
+    border-radius: 999px;
+    padding-left: 16px;
+    background: linear-gradient(180deg, #fffdfc, #fff1ec);
+    box-shadow: inset 0 2px 4px rgba(234, 81, 56, 0.12);
+  }
+
+  #az-sassomat-modal .az-oracle-ask input[type="text"]:focus-visible {
+    border-color: #ff8064;
+    box-shadow:
+      inset 0 2px 4px rgba(234, 81, 56, 0.12),
+      0 0 0 4px rgba(255, 122, 104, 0.35);
+  }
+
+  #az-sassomat-modal .btn-oracle {
+    background: linear-gradient(180deg, #ffab8f 0%, #ff7255 48%, #ea5138 52%, #d43a26 100%);
+    text-shadow: 0 1px 1px rgba(140, 30, 15, 0.35);
+  }
+
+  #az-sassomat-modal .az-oracle-hint {
+    color: #ea5138;
+    background: linear-gradient(180deg, #fffaf8, #ffe0d5);
+  }
 </style>
 
 <div class="az-wrap">
@@ -2557,6 +2919,11 @@
           <stop offset="1" stop-color="#b9c4cc"/>
         </linearGradient>
 
+        <linearGradient id="az-lighthouse-beam-grad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff6d8" stop-opacity="0.55"/>
+          <stop offset="1" stop-color="#fff6d8" stop-opacity="0"/>
+        </linearGradient>
+
         <linearGradient id="az-deep" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#2ab6e0"/>
           <stop offset="0.3" stop-color="#0f8ec6"/>
@@ -2621,6 +2988,10 @@
            ist. Rein dekorativ, kein Klick-Ziel. -->
       <g id="az-law-gull" opacity="0" aria-hidden="true"></g>
 
+      <!-- Möwenschwarm: fliegt gelegentlich in kleiner Gruppe vorbei,
+           anders als die Pflichtpausen-Möwe fangbar wie Krabbe/Delfin -->
+      <g id="az-gullflock" opacity="0"></g>
+
       <!-- blasse Spur: der noch offene Teil -->
       <use href="#az-bands" opacity="0.16" filter="url(#az-blur-soft)"/>
 
@@ -2668,6 +3039,14 @@
            Fenster ab 7h 45min Arbeitszeit anklickbar, einmalig pro
            Sitzung -->
       <g id="az-chest" opacity="0"></g>
+
+      <!-- Sandburg: dauerhaft sichtbar, wächst in fünf Stufen mit den
+           bestehenden MILESTONES mit, rein dekorativ -->
+      <g id="az-sandcastle" aria-hidden="true"></g>
+
+      <!-- Leuchtturm: dauerhaft sichtbar, Lichtkegel schaltet sich frei,
+           sobald die Sollzeit erreicht ist, rein dekorativ -->
+      <g id="az-lighthouse" aria-hidden="true"></g>
 
       <!-- Wasserstand-Markierung: Flutlinie, leuchtet bei 100% Sollzeit -->
       <g id="az-tidemark" aria-hidden="true"></g>
@@ -2770,6 +3149,12 @@
           </span>
         </div>
 
+        <div class="az-hud-note" id="az-hud-note">
+          <span class="az-hud-weather" id="az-real-weather" aria-live="polite"></span>
+          <button type="button" class="az-hud-tip" id="az-hud-tip" aria-label="Tipp für heute"></button>
+          <div class="az-hud-tip-bubble" id="az-hud-tip-bubble" hidden></div>
+        </div>
+
         <span class="az-shells" id="az-shells">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 21 C4 16.5 2.5 9.5 5 6 C7 3.2 10 4 12 6 C14 4 17 3.2 19 6 C21.5 9.5 20 16.5 12 21 Z"
@@ -2807,6 +3192,18 @@
             <path class="az-mute-wave" d="M15.4 8.6a5 5 0 0 1 0 6.8"/>
             <path class="az-mute-wave" d="M17.9 6.1a8.6 8.6 0 0 1 0 11.8"/>
             <path class="az-mute-x" d="M15.6 8.4l5 7.2M20.6 8.4l-5 7.2"/>
+          </svg>
+        </button>
+
+        <button type="button" class="btn-ghost btn-sassomat" id="az-sassomat-open"
+                aria-label="Mausig-Atzig-Fotzig-o-mat" title="Mausig-Atzig-Fotzig-o-mat">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3.6c4.6 0 8.3 3.9 8.3 9 0 3.6-4.1 6.1-8.3 6.1s-8.3-2.5-8.3-6.1c0-5.1 3.7-9 8.3-9Z"/>
+            <path d="M12 5.7c3.3 0 5.9 2.9 5.9 6.9" stroke-width="1.1" opacity=".5"/>
+            <circle cx="9" cy="12.2" r="1.15" fill="currentColor" stroke="none"/>
+            <path d="M14.2 11.1c.75-.55 1.8-.55 2.55 0" stroke-width="1.7"/>
+            <path d="M8.8 15.6c1.15 1.55 4.35 1.8 5.9-.1" stroke-width="1.7"/>
+            <path d="M12.9 15.7c.35.7.35 1.25 0 1.75" stroke-width="1.6"/>
           </svg>
         </button>
 
@@ -2905,6 +3302,7 @@
 
     <div class="az-readout">
       <div class="az-weather-report" id="az-weather-report" aria-live="polite"></div>
+      <div class="az-holiday-note" id="az-holiday-note" aria-live="polite"></div>
       <div class="az-eyebrow" id="eyebrow">Feierabend um</div>
       <div class="az-time-row">
         <div class="az-time" id="time">--:--<small>Uhr</small></div>
@@ -2916,7 +3314,13 @@
     <div class="az-footer" id="az-footer">
       <div class="az-recap" id="az-recap" hidden>
         <button type="button" class="az-recap-dismiss" id="az-recap-dismiss" aria-label="Tagesrückblick schließen">×</button>
-        <div class="az-recap-title">Tagesrückblick</div>
+        <div class="az-recap-head">
+          <span class="az-recap-icon" aria-hidden="true">🏆</span>
+          <div class="az-recap-head-text">
+            <div class="az-recap-title">Tagesrückblick</div>
+            <div class="az-recap-sub" id="az-recap-sub">Pünktlich Feierabend, sauber gemacht.</div>
+          </div>
+        </div>
         <div class="az-recap-rows" id="az-recap-rows"></div>
       </div>
       <div class="az-awards-wrap">
@@ -3031,6 +3435,42 @@
       </div>
 
       <p class="az-share-note">Die Muschel entscheidet zufällig. Bei Fragen zu Pause, Feierabend und Überstunden schaut sie vorher auf die Uhr.</p>
+    </div>
+  </div>
+
+  <div class="az-modal" id="az-sassomat-modal" role="dialog" aria-modal="true" aria-labelledby="az-sassomat-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3.6c4.6 0 8.3 3.9 8.3 9 0 3.6-4.1 6.1-8.3 6.1s-8.3-2.5-8.3-6.1c0-5.1 3.7-9 8.3-9Z"/>
+            <path d="M12 5.7c3.3 0 5.9 2.9 5.9 6.9" stroke-width="1.1" opacity=".5"/>
+            <circle cx="9" cy="12.2" r="1.15" fill="currentColor" stroke="none"/>
+            <path d="M14.2 11.1c.75-.55 1.8-.55 2.55 0" stroke-width="1.7"/>
+            <path d="M8.8 15.6c1.15 1.55 4.35 1.8 5.9-.1" stroke-width="1.7"/>
+            <path d="M12.9 15.7c.35.7.35 1.25 0 1.75" stroke-width="1.6"/>
+          </svg>
+        </span>
+        <span class="az-modal-title" id="az-sassomat-title">Mausig-Atzig-Fotzig-o-mat</span>
+        <button type="button" class="btn-close" id="az-sassomat-close" aria-label="Omat schließen">×</button>
+      </div>
+
+      <div class="az-oracle-answer" aria-live="polite">
+        <div class="az-oracle-eyebrow" id="az-sassomat-eyebrow">Bereit</div>
+        <div class="az-oracle-text az-sassomat-word" id="az-sassomat-word">Wort eintippen und urteilen lassen</div>
+      </div>
+
+      <div class="az-oracle-ask">
+        <label class="sr-only" for="az-sassomat-input">Wort für den Omat</label>
+        <input type="text" id="az-sassomat-input" maxlength="24" placeholder="ein Wort...">
+        <button type="button" class="btn-add btn-oracle" id="az-sassomat-ask">Urteilen</button>
+      </div>
+
+      <div class="az-oracle-hints" id="az-sassomat-hints">
+        <button type="button" class="az-oracle-hint">Montag</button>
+        <button type="button" class="az-oracle-hint">Deadline</button>
+        <button type="button" class="az-oracle-hint">Kaffee</button>
+      </div>
     </div>
   </div>
 
@@ -3248,6 +3688,7 @@
   var weatherReportEl = document.getElementById('az-weather-report');
   var suncreamEl  = document.getElementById('az-suncream');
   var suncreamTipEl = document.getElementById('az-suncream-tip');
+  var sassomatBtn    = document.getElementById('az-sassomat-open');
   var stormEl     = document.getElementById('az-storm');
   var catchesEl   = document.getElementById('az-catches');
   var fishEl      = document.getElementById('az-fish');
@@ -3255,6 +3696,9 @@
   var starEl      = document.getElementById('az-star');
   var rainbowEl   = document.getElementById('az-rainbow');
   var lawGullEl   = document.getElementById('az-law-gull');
+  var gullFlockEl = document.getElementById('az-gullflock');
+  var sandcastleEl = document.getElementById('az-sandcastle');
+  var lighthouseEl = document.getElementById('az-lighthouse');
   var markerEl    = document.getElementById('az-marker');
   var checksEl    = document.getElementById('az-checks');
   var wishMark    = document.getElementById('az-wish-mark');
@@ -3793,6 +4237,21 @@
     paintChecks(percent);
 
     setSunGlow(percent);
+    syncSandcastle(percent);
+  }
+
+  /* Sandburg-Baufortschritt: fünf vorab gezeichnete Stufen (Grundmauer,
+     Mauer, Türme, Zinnen, Fähnchen), die sich exakt mit MILESTONES decken -
+     dieselben Schwellen wie die Meilensteine auf dem Bogen, keine zweite
+     Schwellenlogik. Läuft mit paintProgress() mit, kein eigener Timer. */
+  function syncSandcastle(percent) {
+    if (!sandcastleEl) return;
+
+    var stages = sandcastleEl.querySelectorAll('.az-sandcastle-stage');
+    for (var i = 0; i < stages.length; i++) {
+      var need = MILESTONES[Number(stages[i].getAttribute('data-stage')) - 1];
+      stages[i].classList.toggle('is-built', percent >= need);
+    }
   }
 
   /* Meilensteine sitzen auf dem mittleren Band. Erreichte Marken
@@ -4258,6 +4717,174 @@
     });
   }
 
+  // ---- Möwenschwarm ----
+  // Anders als die Pflichtpausen-Möwe rein zeitgesteuert (eigener
+  // Scheduler am Dateiende) und fangbar wie Krabbe/Delfin/Flaschenpost.
+  // Formation wird bei jedem Spawn neu gezeichnet (1-3 Tiere), wie schon
+  // bei spawnFish() üblich, daher kein separates buildGullFlock().
+
+  var gullFlock = null;
+
+  function spawnGullFlock() {
+    if (calm.matches || document.hidden || !view) return;
+
+    var count = 1 + Math.floor(Math.random() * 3);
+    var out = '';
+    for (var i = 0; i < count; i++) {
+      var dx = i * 16 - (count - 1) * 8;
+      var dy = (i % 2) * 8;
+      out += '<path d="M' + (dx - 9) + ',' + dy + ' Q' + dx + ',' + (dy - 6) + ' ' + (dx + 9) + ',' + dy +
+        ' Q' + dx + ',' + (dy - 6) + ' ' + (dx - 9) + ',' + dy + '" fill="none" ' +
+        'stroke="url(#az-gull-grad)" stroke-width="2.2" stroke-linecap="round"/>';
+    }
+    gullFlockEl.innerHTML = out;
+
+    var y0 = view.height * (0.1 + Math.random() * 0.14);
+    var dir = Math.random() < 0.5 ? 1 : -1;
+    var x0 = dir > 0 ? -50 : view.width + 50;
+    var x1 = dir > 0 ? view.width + 50 : -50;
+    var t0 = performance.now();
+    var span = 7000 + Math.random() * 3000;
+
+    gullFlock = { x0: x0, x1: x1, y0: y0, t0: t0, span: span, dir: dir };
+    gullFlockEl.setAttribute('opacity', '0.92');
+
+    requestAnimationFrame(function step(now) {
+      if (!gullFlock) return;
+      var p = Math.min(1, (now - gullFlock.t0) / gullFlock.span);
+      var x = gullFlock.x0 + (gullFlock.x1 - gullFlock.x0) * p;
+      var bob = Math.sin(p * 9) * 5;
+      gullFlock.x = x;
+      gullFlock.y = gullFlock.y0 + bob;
+      gullFlockEl.setAttribute('transform',
+        'translate(' + x.toFixed(1) + ',' + gullFlock.y.toFixed(1) + ') scale(' + gullFlock.dir + ',1)');
+
+      if (p < 1) {
+        requestAnimationFrame(step);
+      } else {
+        gullFlock = null;
+        gullFlockEl.setAttribute('opacity', '0');
+      }
+    });
+  }
+
+  // ---- Sandburg ----
+  // Dauerhaft sichtbar, fünf Stufen (data-stage 1-5), Sichtbarkeit steuert
+  // syncSandcastle() über MILESTONES. Rein dekorativ, kein Klick-Ziel.
+
+  function buildSandcastle() {
+    sandcastleEl.innerHTML =
+      '<ellipse cx="0" cy="4" rx="26" ry="5" fill="#0a5580" opacity="0.12"/>' +
+      '<g class="az-sandcastle-stage" data-stage="1">' +
+        '<path d="M-20,2 Q0,-6 20,2 Z" fill="#e7c48a" stroke="#c99a5c" stroke-width="1"/>' +
+      '</g>' +
+      '<g class="az-sandcastle-stage" data-stage="2">' +
+        '<rect x="-18" y="-14" width="36" height="16" rx="1.5" fill="#e7c48a" stroke="#c99a5c" stroke-width="1.1"/>' +
+      '</g>' +
+      '<g class="az-sandcastle-stage" data-stage="3">' +
+        '<rect x="-22" y="-24" width="10" height="26" rx="1.5" fill="#dcb677" stroke="#c99a5c" stroke-width="1.1"/>' +
+        '<rect x="12" y="-24" width="10" height="26" rx="1.5" fill="#dcb677" stroke="#c99a5c" stroke-width="1.1"/>' +
+      '</g>' +
+      '<g class="az-sandcastle-stage" data-stage="4">' +
+        '<path d="M-22,-24 h3 v-4 h3 v4 h3 v-4 h1 v4" fill="#dcb677" stroke="#c99a5c" stroke-width="0.9"/>' +
+        '<path d="M12,-24 h3 v-4 h3 v4 h3 v-4 h1 v4" fill="#dcb677" stroke="#c99a5c" stroke-width="0.9"/>' +
+      '</g>' +
+      '<g class="az-sandcastle-stage" data-stage="5">' +
+        '<line x1="0" y1="-14" x2="0" y2="-30" stroke="#7a5a3a" stroke-width="1.6"/>' +
+        '<path d="M0,-30 L11,-26 L0,-22 Z" fill="#ff5a4d"/>' +
+      '</g>';
+  }
+
+  // ---- Leuchtturm ----
+  // Dauerhaft sichtbar, das Licht schaltet sich frei, sobald die Sollzeit
+  // erreicht ist (paintLighthouse()). Kein Klick-Ziel, kein Muschel-
+  // Gewinn - das übernimmt bereits die Feierabend-Truhe.
+
+  function buildLighthouse() {
+    lighthouseEl.innerHTML =
+      // Schatten und Felssockel, damit der Turm sichtbar auf dem Strand steht
+      '<ellipse cx="0" cy="4" rx="18" ry="4.5" fill="#0a5580" opacity="0.14"/>' +
+      '<path d="M-15,2 Q-17,-7 -9,-9 Q0,-11.5 9,-9 Q17,-7 15,2 Z" ' +
+        'fill="#9fb4bb" stroke="#5f7880" stroke-width="1.1"/>' +
+      '<path d="M-11,-1 Q-6,-5 0,-2 Q6,-6 11,-1" fill="none" stroke="#7f9aa1" stroke-width="1"/>' +
+      // Getünchter Turmkörper, leicht konisch
+      '<path d="M-10,0 L-6,-62 Q0,-66 6,-62 L10,0 Z" fill="#f4f1e8" stroke="#0a5a86" stroke-width="1.2"/>' +
+      // Zwei rote Ringe, klassische Leuchtturm-Ringelung
+      '<path d="M-9.1,-14 L-8.3,-26 L8.3,-26 L9.1,-14 Z" fill="#ff5a4d"/>' +
+      '<path d="M-7.55,-38 L-6.77,-50 L6.77,-50 L7.55,-38 Z" fill="#ff5a4d"/>' +
+      // Umlaufende Galerie unter der Laterne
+      '<rect x="-9.5" y="-64.5" width="19" height="5" rx="1.5" fill="#dfe6ea" stroke="#0a5a86" stroke-width="0.9"/>' +
+      '<path d="M-8,-64.5 v-3.2 M-4,-64.5 v-3.2 M0,-64.5 v-3.2 M4,-64.5 v-3.2 M8,-64.5 v-3.2" ' +
+        'stroke="#0a5a86" stroke-width="0.8"/>' +
+      // Laternenhaus mit Lampe und Kuppel
+      '<rect x="-6.6" y="-74" width="13.2" height="9.6" rx="1.3" fill="none" stroke="#0a5a86" stroke-width="1.2"/>' +
+      '<ellipse class="az-lighthouse-halo" cx="0" cy="-69.2" rx="7.6" ry="6.6" fill="#fff6d8"/>' +
+      '<circle class="az-lighthouse-lamp" cx="0" cy="-69.2" r="3.4"/>' +
+      '<path d="M-6.6,-74 a6.6,5.2 0 0 1 13.2 0 Z" fill="#c9302c"/>' +
+      '<circle cx="0" cy="-79.4" r="1.6" fill="#0a5a86"/>' +
+      '<g transform="translate(0,-69.2)">' +
+        '<g class="az-lighthouse-beam">' +
+          '<path d="M0,0 L130,-32 L130,32 Z" fill="url(#az-lighthouse-beam-grad)"/>' +
+        '</g>' +
+      '</g>';
+  }
+
+  var lighthouseLit = false;
+
+  /* Schaltet sich frei, sobald die Sollzeit erreicht ist, unabhängig vom
+     "pünktlich"-Bonus (celebratePunctualFinish/spawnRainbow), der nur bei
+     alarmlosem Verlauf greift - der Leuchtturm feiert das reine
+     Zielerreichen, ganz gleich wie der Weg dahin lief. Bleibt danach
+     dauerhaft an (siehe is-lit-CSS), auch wenn paintLighthouseStorm()
+     zusätzlich eine Warnfarbe darüberlegt. */
+  function paintLighthouse(isDone) {
+    if (!lighthouseEl) return;
+    lighthouseEl.classList.toggle('is-lit', isDone);
+
+    if (isDone && !lighthouseLit) {
+      lighthouseLit = true;
+      playCue('badge');
+    } else if (!isDone) {
+      lighthouseLit = false;
+    }
+  }
+
+  /* Sturm-Warnsignal: von paintOvertime() mit derselben Eskalationsstufe
+     (0-3) aufgerufen, die auch den Regen-Effekt steuert. step === null
+     löscht die Warnung wieder (Überstunden vorbei oder Ziel noch offen). */
+  function paintLighthouseStorm(step) {
+    if (!lighthouseEl) return;
+    if (step === null) {
+      lighthouseEl.classList.remove('is-storm-warning', 'lvl-1', 'lvl-2', 'lvl-3');
+      return;
+    }
+    lighthouseEl.classList.add('is-storm-warning');
+    lighthouseEl.classList.remove('lvl-1', 'lvl-2', 'lvl-3');
+    lighthouseEl.classList.add('lvl-' + Math.min(3, step + 1));
+  }
+
+  /* Abend-Wächter: rein atmosphärisches Glimmen, unabhängig vom
+     Arbeitsstatus, deckt sich mit dem vollen Nachtfenster des
+     Sternenfelds (STAR_PHASES: ab 19:00 bis 8:00 durchgehend Nacht). */
+  function syncLighthouseDusk(minutes) {
+    if (!lighthouseEl) return;
+    var m = ((minutes % 1440) + 1440) % 1440;
+    lighthouseEl.classList.toggle('is-dusk', m >= 1140 || m < 480);
+  }
+
+  /* Erfolgs-Blitz: kurzes Aufblitzen bei Level-Up/Abzeichen, unabhängig
+     vom sonstigen Lichtzustand. Entfällt bei reduced motion komplett,
+     statt als eingefrorenes Standbild hängen zu bleiben. */
+  var lighthouseFlashTimer = null;
+  function flashLighthouse() {
+    if (!lighthouseEl || calm.matches) return;
+    lighthouseEl.classList.add('is-flash');
+    clearTimeout(lighthouseFlashTimer);
+    lighthouseFlashTimer = setTimeout(function () {
+      lighthouseEl.classList.remove('is-flash');
+    }, 700);
+  }
+
   function spawnRainbow() {
     if (calm.matches || !view) return;
 
@@ -4394,6 +5021,10 @@
 
     markActivePreset(targetHours);
 
+    var remainingLabel = remaining > 0 ? 'Noch offen' : 'Über Soll';
+    var remainingValue = remaining > 0 ? toDuration(remaining) : toDuration(worked - targetMin);
+    var COPY_ICON_REMAINING = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
+
     document.getElementById('metrics').innerHTML =
       '<div class="az-metric">' +
         '<div class="az-metric-label">Gearbeitet</div>' +
@@ -4403,9 +5034,10 @@
         '<div class="az-metric-label">Pausen</div>' +
         '<div class="az-metric-value">' + toDuration(pauses.total) + '</div>' +
       '</div>' +
-      '<div class="az-metric">' +
-        '<div class="az-metric-label">' + (remaining > 0 ? 'Noch offen' : 'Über Soll') + '</div>' +
-        '<div class="az-metric-value">' + (remaining > 0 ? toDuration(remaining) : toDuration(worked - targetMin)) + '</div>' +
+      '<div class="az-metric az-metric-remaining">' +
+        '<div class="az-metric-label">' + remainingLabel + '</div>' +
+        '<div class="az-metric-value">' + remainingValue + '</div>' +
+        '<button type="button" class="btn-copy-remaining" data-copy="' + remainingLabel + ': ' + remainingValue + '" title="' + remainingLabel + ' kopieren" aria-label="' + remainingLabel + ' kopieren">' + COPY_ICON_REMAINING + '</button>' +
       '</div>';
 
     var eyebrow = document.getElementById('eyebrow');
@@ -4437,12 +5069,15 @@
     syncSun(now);
     syncTide(now);
     syncStarfield(now);
+    syncLighthouseDusk(now);
     syncTideLevel(percent);
     syncChest(worked);
     animateTo(percent);
     paintLunch();
     paintSuncream(now, startMin);
     weatherReport({ percent: percent, remaining: remaining, overMin: now - endMin, clock: feierabendClock });
+
+    paintLighthouse(remaining <= 0);
 
     paintWish({
       endsAt: startMin + pauses.total + targetMin,
@@ -4548,6 +5183,9 @@
     { id: 'bottle', label: 'Flaschensammler', hint: 'Flaschenpost gefangen',
       note: function () { return 'Sie treibt langsam über die Wasseroberfläche'; },
       d: '<path d="M10.4 2.6h3.2v2.8a1 1 0 0 0 .4.8c1.4 1.1 2.4 2.7 2.4 4.6v7.8a2.4 2.4 0 0 1-2.4 2.4h-4a2.4 2.4 0 0 1-2.4-2.4V10.8c0-1.9 1-3.5 2.4-4.6a1 1 0 0 0 .4-.8V2.6Z"/><path d="M9.6 12.6h4.8"/>' },
+    { id: 'gull', label: 'Möwenbeobachter', hint: 'Möwenschwarm entdeckt',
+      note: function () { return 'Fliegt gelegentlich in kleiner Gruppe vorbei'; },
+      d: '<path d="M3 14c2-4 4-4 6 0M9 14c2-4 4-4 6 0M15 14c2-4 4-4 6 0"/>' },
     { id: 'sun', label: 'Sonnenschieber', hint: 'Sonne über den Himmel gezogen',
       note: function () { return 'Sonne oben rechts greifen und ziehen'; },
       d: '<path d="M12 4v16M4 12h16M12 4l-2.6 2.8M12 4l2.6 2.8M12 20l-2.6-2.8M12 20l2.6-2.8M4 12l2.8-2.6M4 12l2.8 2.6M20 12l-2.8-2.6M20 12l-2.8 2.6"/>' },
@@ -4583,7 +5221,7 @@
     shells: 1,      // eine Startmuschel, damit das Rad sofort läuft
     awards: {},
     marks: {},
-    caught: { dolphin: 0, crab: 0, bottle: 0, treasure: 0, chest: 0 }
+    caught: { dolphin: 0, crab: 0, bottle: 0, treasure: 0, chest: 0, gull: 0 }
   };
 
   /* Muschel-Sammlung-Leiste: zeigt, welche Kreaturen in dieser Sitzung
@@ -4594,6 +5232,8 @@
       d: '<path d="M3 14.6c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0"/><path d="M3 9.4c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0" opacity="0.5"/>' },
     { id: 'crab', label: 'Krabbe',
       d: '<ellipse cx="12" cy="13" rx="6.4" ry="4.2"/><path d="M6.5 11c-2.4-2-4-1.4-4.4.4M17.5 11c2.4-2 4-1.4 4.4.4"/><path d="M9 16.4 7.6 20M11.3 16.9l-.8 3.4M12.7 16.9l.8 3.4M15 16.4l1.4 3.6"/>' },
+    { id: 'gull', label: 'Möwenschwarm',
+      d: '<path d="M3 14c2-4 4-4 6 0M9 14c2-4 4-4 6 0M15 14c2-4 4-4 6 0"/>' },
     { id: 'bottle', label: 'Flaschenpost',
       d: '<path d="M10.4 2.6h3.2v2.8a1 1 0 0 0 .4.8c1.4 1.1 2.4 2.7 2.4 4.6v7.8a2.4 2.4 0 0 1-2.4 2.4h-4a2.4 2.4 0 0 1-2.4-2.4V10.8c0-1.9 1-3.5 2.4-4.6a1 1 0 0 0 .4-.8V2.6Z"/><path d="M9.6 12.6h4.8"/>' },
     { id: 'treasure', label: 'Strandfund',
@@ -4868,6 +5508,7 @@
     toast('Abzeichen ' + a.label, '+1 Muschel');
     pulse(shellsEl);
     playCue('badge');
+    flashLighthouse();
 
     if (tipFor === id) showTip(id, tipSticky);
   }
@@ -4932,6 +5573,7 @@
       pulse(shellsEl);
       playCue('level');
       burstAtRing();
+      flashLighthouse();
     }
     game.level = lvl;
 
@@ -5046,6 +5688,27 @@
     playCue('catch');
     unlock('bottle');
     game.caught.bottle = (game.caught.bottle || 0) + 1;
+    renderCatches();
+    renderHud();
+  });
+
+  // ---- Möwenschwarm fangen ----
+
+  gullFlockEl.addEventListener('pointerdown', function (event) {
+    if (!gullFlock) return;
+    event.preventDefault();
+
+    var caught = gullFlock;
+    gullFlock = null;
+    game.shells += 1;
+    burstAt(caught.x || 0, caught.y || 0);
+    gullFlockEl.setAttribute('opacity', '0');
+
+    toast('Möwenschwarm entdeckt', '+1 Muschel');
+    pulse(shellsEl);
+    playCue('catch');
+    unlock('gull');
+    game.caught.gull = (game.caught.gull || 0) + 1;
     renderCatches();
     renderHud();
   });
@@ -5722,7 +6385,7 @@
     var button = this;
     var clock = document.getElementById('time').dataset.clock;
     if (!clock) return;
-    var text = 'Ich habe Feierabend um ' + clock + ' Uhr';
+    var text = 'Ich habe Feierabend um ' + clock + ' Uhr.';
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () {
@@ -5734,6 +6397,36 @@
     }
 
     flashLabel(button, 'Bitte selbst kopieren');
+  });
+
+  // ---- "Noch offen" / "Über Soll" kopieren ----
+  // Die Kachel wird bei jedem calculate()-Lauf neu aufgebaut, darum hier
+  // Event-Delegation statt eines Listeners direkt am Knopf.
+
+  document.getElementById('metrics').addEventListener('click', function (e) {
+    var button = e.target.closest('.btn-copy-remaining');
+    if (!button) return;
+    var text = button.dataset.copy;
+    if (!text) return;
+
+    var originalIcon = button.innerHTML;
+    var checkIcon = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>';
+
+    var flash = function (ok) {
+      button.innerHTML = ok ? checkIcon : originalIcon;
+      button.classList.toggle('is-copied', ok);
+      clearTimeout(button.dataset.timer);
+      button.dataset.timer = setTimeout(function () {
+        button.innerHTML = originalIcon;
+        button.classList.remove('is-copied');
+      }, 2200);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { flash(true); }, function () { flash(false); });
+      return;
+    }
+    flash(false);
   });
 
   // ============================================================
@@ -5882,6 +6575,7 @@
       overtimeEl.hidden = true;
       vignetteEl.hidden = true;
       stormEl.classList.remove('is-active');
+      paintLighthouseStorm(null);
       return;
     }
 
@@ -5892,6 +6586,7 @@
       overtimeEl.hidden = true;
       vignetteEl.hidden = true;
       stormEl.classList.remove('is-active');
+      paintLighthouseStorm(null);
       hangryWrap.style.setProperty('--az-ebbe-sat', '1');
       sawBeforeAlarm = true;
       return;
@@ -5904,6 +6599,7 @@
       overtimeEl.classList.add('is-warn');
       vignetteEl.hidden = true;
       stormEl.classList.remove('is-active');
+      paintLighthouseStorm(null);
       hangryWrap.style.setProperty('--az-ebbe-sat', '1');
       sawBeforeAlarm = true;
       setText(overtimeBadge, 'Gleich Feierabend');
@@ -5928,12 +6624,16 @@
 
       // Sturm-Effekt eskaliert in denselben drei Stufen wie das
       // Alarmtempo, ein Tick höher als step (0 bleibt ungenutzt, damit
-      // schon die erste Alarmminute sichtbar Regen bringt).
+      // schon die erste Alarmminute sichtbar Regen bringt). Der Leuchtturm
+      // bekommt dieselbe Stufe, unabhängig von calm.matches - die Warnfarbe
+      // bleibt als statischer Status sichtbar, nur das Pulsieren entfällt
+      // (per CSS-Media-Query), anders als der reine Bewegungseffekt Regen.
       if (calm.matches) {
         stormEl.classList.remove('is-active');
       } else {
         stormEl.className = 'az-storm is-active lvl-' + Math.min(3, step + 1);
       }
+      paintLighthouseStorm(step);
 
       // "Ebbe"-Effekt: verblasst über die erste Überstunden-Stunde,
       // gedeckelt, damit die Szene nicht komplett ausgraut.
@@ -5961,21 +6661,31 @@
 
     suncreamEl.classList.remove('is-visible', 'is-warn', 'is-urgent');
 
+    /* Echter UV-Index (falls geladen, siehe fetchRealWeather()) zieht die
+       Schwellen bei hohem Wert etwas vor und ergänzt den Text - ohne
+       Daten verhält sich das exakt wie vorher rein zeitbasiert. */
+    var uvMax = realWeather ? realWeather.uvMax : null;
+    var uvHigh = uvMax !== null && uvMax >= 6;
+    var uvHint = uvHigh ? (' UV-Index heute bis ' + Math.round(uvMax) + ' (hoch).') : '';
+    var t1 = uvHigh ? 90 : 120;
+    var t2 = uvHigh ? 150 : 180;
+    var t3 = uvHigh ? 210 : 240;
+
     var text;
     if (running) {
       text = 'Sonnencreme-Reminder: Pause läuft, gut so.';
     } else {
       var since = Math.max(0, now - lastEnd);
 
-      if (since >= 240) {
+      if (since >= t3) {
         suncreamEl.classList.add('is-urgent');
-        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause. Sonnencreme und kurz raus.';
-      } else if (since >= 180) {
+        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause. Sonnencreme und kurz raus.' + uvHint;
+      } else if (since >= t2) {
         suncreamEl.classList.add('is-warn');
-        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause.';
-      } else if (since >= 120) {
+        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause.' + uvHint;
+      } else if (since >= t1) {
         suncreamEl.classList.add('is-visible');
-        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause.';
+        text = 'Sonnencreme-Reminder: Seit ' + toDuration(since) + ' keine Pause.' + uvHint;
       } else {
         text = 'Sonnencreme-Reminder: Zeit für eine Pause?';
       }
@@ -6032,6 +6742,106 @@
   });
 
   suncreamEl.addEventListener('blur', hideSuncreamTip);
+
+  /* Mausig-Atzig-Fotzig-o-mat: gleiches UX-Muster wie das Muschel-Orakel
+     (Modal, ein Wort rein, ein Urteil raus), aber ohne Muschel-Kosten und
+     ohne Zufall - eine kleine Hash-Funktion bildet dasselbe Wort immer auf
+     dasselbe der drei Urteile ab, das ist der Witz am Sammeln. Der Slot-
+     Cycle vor der Antwort ist reine Zierde und entfällt bei reduced motion. */
+  var sassomatModal    = document.getElementById('az-sassomat-modal');
+  var sassomatClose    = document.getElementById('az-sassomat-close');
+  var sassomatInput    = document.getElementById('az-sassomat-input');
+  var sassomatAskBtn   = document.getElementById('az-sassomat-ask');
+  var sassomatEyebrow  = document.getElementById('az-sassomat-eyebrow');
+  var sassomatWord     = document.getElementById('az-sassomat-word');
+  var sassomatHintsEl  = document.getElementById('az-sassomat-hints');
+
+  var SASSOMAT_WORDS = ['mausig', 'atzig', 'fotzig'];
+  var sassomatSpinTimer = null;
+
+  function sassomatHash(word) {
+    var h = 5381;
+    for (var i = 0; i < word.length; i++) {
+      h = ((h << 5) + h + word.charCodeAt(i)) | 0;
+    }
+    return Math.abs(h);
+  }
+
+  function judgeSassomat() {
+    var raw = sassomatInput.value.trim().split(/\s+/)[0] || '';
+    clearInterval(sassomatSpinTimer);
+
+    if (!raw) {
+      sassomatEyebrow.textContent = 'Noch kein Wort';
+      sassomatWord.classList.remove('is-spin', 'is-reveal');
+      sassomatWord.textContent = 'Erst ein Wort eintippen.';
+      sassomatInput.focus();
+      return;
+    }
+
+    var verdict = SASSOMAT_WORDS[sassomatHash(raw.toLowerCase()) % 3];
+
+    if (calm.matches) {
+      sassomatEyebrow.textContent = 'Das Urteil';
+      sassomatWord.classList.remove('is-spin', 'is-reveal');
+      sassomatWord.textContent = verdict;
+      return;
+    }
+
+    sassomatEyebrow.textContent = 'Der Omat urteilt';
+    sassomatWord.classList.remove('is-reveal');
+    sassomatWord.classList.add('is-spin');
+
+    var ticks = 0;
+    var maxTicks = 9;
+    sassomatSpinTimer = setInterval(function () {
+      ticks++;
+      sassomatWord.textContent = SASSOMAT_WORDS[Math.floor(Math.random() * 3)];
+
+      if (ticks >= maxTicks) {
+        clearInterval(sassomatSpinTimer);
+        sassomatEyebrow.textContent = 'Das Urteil';
+        sassomatWord.classList.remove('is-spin');
+        sassomatWord.textContent = verdict;
+        void sassomatWord.offsetWidth;
+        sassomatWord.classList.add('is-reveal');
+      }
+    }, 70);
+  }
+
+  function openSassomat() {
+    sassomatModal.hidden = false;
+    sassomatInput.focus();
+  }
+
+  function closeSassomat() {
+    clearInterval(sassomatSpinTimer);
+    sassomatModal.hidden = true;
+    sassomatBtn.focus();
+  }
+
+  sassomatBtn.addEventListener('click', openSassomat);
+  sassomatClose.addEventListener('click', closeSassomat);
+  sassomatAskBtn.addEventListener('click', judgeSassomat);
+
+  sassomatInput.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') judgeSassomat();
+  });
+
+  sassomatHintsEl.addEventListener('click', function (event) {
+    var hint = event.target.closest('.az-oracle-hint');
+    if (!hint) return;
+    sassomatInput.value = hint.textContent;
+    judgeSassomat();
+  });
+
+  sassomatModal.addEventListener('click', function (event) {
+    if (event.target === sassomatModal) closeSassomat();
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !sassomatModal.hidden) closeSassomat();
+  });
 
   function secondsNow() {
     var d = new Date();
@@ -6460,6 +7270,15 @@
   //  Muntermacher-Otter: eigenständig, kostet keine Muschel.
   //  Ultra mausig und süß, bewusst ohne Druck oder
   //  Länger-Dranbleiben-Appelle.
+  //
+  //  Einzige Netzwerk-Abhängigkeit der ganzen Seite: mit OTTER_EXTERNAL_CHANCE
+  //  wird statt eines lokalen Spruchs versucht, live einen Satz von
+  //  https://api.adviceslip.com zu laden (kein Key, echter CORS-Header
+  //  verifiziert - affirmations.dev wurde zuerst probiert, sendet aber
+  //  keinen Access-Control-Allow-Origin-Header und wird vom Browser
+  //  blockiert). Englisch, unverändert übernommen, ohne Kennzeichnung -
+  //  bei Fehler/Timeout fällt showOtterQuote() transparent auf die
+  //  lokale Auswahl zurück.
   // ============================================================
 
   /* Nur die Sprüche mit einer Kosename-Anrede an Komma-Stelle bekommen ein
@@ -6485,7 +7304,19 @@
     { text: 'Frischer Wind, klarer Kopf, und du mittendrin. 🌬️🐚' },
     { text: 'Der Vormittag gehört dir, {n}. Genieß ihn in deinem Tempo. 🌤️', fallback: 'Herzchen' },
     { text: 'Ganz ruhig, ganz du. Der Tag läuft mit dir, nicht gegen dich. 🐌🌿' },
-    { text: 'Auch ein ruhiger Anfang ist ein guter Anfang, {n}. 🐚', fallback: 'mein Schatz' }
+    { text: 'Auch ein ruhiger Anfang ist ein guter Anfang, {n}. 🐚', fallback: 'mein Schatz' },
+    { text: 'Guten Morgen, {n}. Die Möwen sind wach, du auch, perfekter Start. 🐚', fallback: 'Schnuckelchen' },
+    { text: 'Ein Tag wie eine Sandburg: erst die Grundmauer, der Rest kommt von allein. 🏰' },
+    { text: 'Du bist heute schon niedlicher als ein Seepferdchen beim Frühstück. 🐠' },
+    { text: 'Kleine Wellen, großer Charme. Genau dein Tempo, {n}. 🌊', fallback: 'Mäuschen' },
+    { text: 'Noch ist der Kaffee warm und der Tag jung, beides schön, {n}. ☕🐚', fallback: 'Herzchen' },
+    { text: 'Dein erster Atemzug heute war schon ziemlich mutig. Weiter so, ganz ruhig. 🌤️' },
+    { text: 'Wie eine Krabbe im Morgenlicht: klein, flink, und genau richtig unterwegs. 🦀' },
+    { text: 'Guten Start, {n}. Der Ozean hat auch nie Eile. 🌊', fallback: 'kleiner Fisch' },
+    { text: 'Ein bisschen Sonnencreme, ein bisschen Mut, fertig ist der Vormittag. ☀️🧴' },
+    { text: 'Du duftest heute förmlich nach gutem Morgen, {n}. 🌸', fallback: 'Schatz' },
+    { text: 'Sachte reinfinden, {n}, die Flut wartet auf niemanden und auf dich erst recht nicht. 🌊', fallback: 'Mäuschen' },
+    { text: 'Frisch wie eine Muschel, die gerade erst angespült wurde. Schön, dich zu sehen. 🐚' }
   ];
 
   var MOTIVATION_QUOTES_LATE = [
@@ -6498,7 +7329,15 @@
     { text: 'Die Sonne wandert schon Richtung Feierabend, ganz wie du. ☀️🌊' },
     { text: 'Bald ist Zeit für die Füße hochlegen, {n}. Du hast dir das verdient. 🦶🧸', fallback: 'Herzchen' },
     { text: 'Ruhig ausklingen lassen, {n}. Der Rest kommt von allein. 🐚', fallback: 'kleiner Stern' },
-    { text: 'Ein schöner Tag geht auch schön zu Ende, {n}. 🌅', fallback: 'Schatz' }
+    { text: 'Ein schöner Tag geht auch schön zu Ende, {n}. 🌅', fallback: 'Schatz' },
+    { text: 'Der Nachmittag hat dich gut behandelt, {n}, das sieht man. 🌤️', fallback: 'Schatz' },
+    { text: 'Noch ein bisschen, dann gehört der Strand wieder dir allein. 🏖️' },
+    { text: 'Du glänzt heute mehr als die Nachmittagssonne auf dem Wasser. ✨' },
+    { text: 'Kleine Verschnaufpause, {n}, der Rest vom Tag läuft nebenher mit. 🦦', fallback: 'Mäuschen' },
+    { text: 'Das Licht wird golden, und du bist längst der schönste Teil vom Tag. 🌇' },
+    { text: 'Fast am Ufer, {n}. Lass die letzten Schritte ruhig sacht ausklingen. 🐚', fallback: 'kleiner Stern' },
+    { text: 'Der Otter streckt sich schon in Feierabend-Richtung, ganz entspannt. 🦦' },
+    { text: 'Ein guter Nachmittag braucht kein lautes Finale, {n}, nur ein sanftes. 🌊', fallback: 'Herzchen' }
   ];
 
   /* Extra für die Feierabend-Gratulation: kleiner, eigener Ton, weil es
@@ -6509,7 +7348,10 @@
     { text: 'Sollzeit erreicht, {n}! Der Otter macht heute für dich ein Fläschchen auf. 🦦🍾', fallback: 'Schnuckelchen' },
     { text: 'So sieht ein rundum gelungener Tag aus, {n}. Zeit, die Pfoten hochzulegen. 🦦💤', fallback: 'Herzchen' },
     { text: 'Du hast dein Soll erreicht, {n}, ganz ohne Extrarunden. Wunderbar gemacht. 🌊💛', fallback: 'kleiner Stern' },
-    { text: 'Klappe zu, {n}, Tag vorbei. Der Otter klatscht mit den Flossen. 🦦👏', fallback: 'Schatz' }
+    { text: 'Klappe zu, {n}, Tag vorbei. Der Otter klatscht mit den Flossen. 🦦👏', fallback: 'Schatz' },
+    { text: 'Punktlandung, {n}! Der Otter reserviert dir schon einen Liegestuhl. 🦦🏖️', fallback: 'du Schlaufuchs' },
+    { text: 'Sollzeit im Kasten, {n}, ganz ohne Extrameter. Sauber gemacht. 🎯', fallback: 'Mäuschen' },
+    { text: 'Feierabend, {n}! Selbst die Möwen applaudieren gerade. 🐦👏', fallback: 'Herzchen' }
   ];
 
   var otterModal = document.getElementById('az-otter-modal');
@@ -6520,6 +7362,8 @@
   var otterNameInput = document.getElementById('az-otter-name-input');
   var otterName  = '';
   var otterLastIndex = -1;
+  var otterFetchToken = null;
+  var OTTER_EXTERNAL_CHANCE = 0.2;
 
   function fillName(entry) {
     var name = (otterName.trim() || entry.fallback || '').trim();
@@ -6531,7 +7375,7 @@
     return late ? MOTIVATION_QUOTES_LATE : MOTIVATION_QUOTES_EARLY;
   }
 
-  function showOtterQuote() {
+  function showLocalOtterQuote() {
     var pool = currentQuotePool();
     var i = Math.floor(Math.random() * pool.length);
     if (pool.length > 1) {
@@ -6539,6 +7383,45 @@
     }
     otterLastIndex = i;
     otterQuote.textContent = fillName(pool[i]);
+  }
+
+  /* Versucht einen Satz von api.adviceslip.com zu laden. Löst bei Erfolg mit
+     dem Text auf, sonst mit null - nie mit einem ungefangenen Fehler. */
+  function fetchExternalAffirmation() {
+    if (typeof fetch !== 'function') return Promise.resolve(null);
+    var controller = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = controller && setTimeout(function () { controller.abort(); }, 3000);
+    return fetch('https://api.adviceslip.com/advice', controller ? { signal: controller.signal } : {})
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        if (timer) clearTimeout(timer);
+        var text = data && data.slip && typeof data.slip.advice === 'string' ? data.slip.advice.trim() : '';
+        return text || null;
+      })
+      .catch(function () {
+        if (timer) clearTimeout(timer);
+        return null;
+      });
+  }
+
+  function showOtterQuote() {
+    var myToken = {};
+    otterFetchToken = myToken;
+
+    if (Math.random() >= OTTER_EXTERNAL_CHANCE) {
+      showLocalOtterQuote();
+      return;
+    }
+
+    otterQuote.textContent = '…';
+    fetchExternalAffirmation().then(function (text) {
+      if (otterFetchToken !== myToken) return; // ein neuerer Klick hat gewonnen
+      if (text) {
+        otterQuote.textContent = text;
+      } else {
+        showLocalOtterQuote();
+      }
+    });
   }
 
   function openOtter() {
@@ -6575,6 +7458,244 @@
     if (event.key === 'Escape' && !otterModal.hidden) closeOtter();
   });
 
+  // ============================================================
+  //  Echtes Wetter & Feiertage für Eberbach (Baden-Württemberg)
+  //  Zweite und dritte Netzwerk-Abhängigkeit der Seite, kein Key, CORS
+  //  offen. Beide Requests dürfen jederzeit scheitern - dann bleiben
+  //  #az-real-weather / #az-holiday-note leer statt etwas Falsches zu
+  //  zeigen. Fester Standort statt Geolocation, damit kein
+  //  Berechtigungs-Dialog nötig ist.
+  // ============================================================
+
+  var REAL_WEATHER_LAT = 49.4675;
+  var REAL_WEATHER_LON = 8.9895;
+  var REAL_WEATHER_REFRESH_MS = 45 * 60 * 1000;
+  var realWeather = null; // { tempC, code, windKmh, uvMax, fetchedAt }
+
+  var realWeatherEl = document.getElementById('az-real-weather');
+  var holidayNoteEl = document.getElementById('az-holiday-note');
+
+  function fetchJson(url, timeoutMs) {
+    if (typeof fetch !== 'function') return Promise.resolve(null);
+    var controller = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = controller && setTimeout(function () { controller.abort(); }, timeoutMs);
+    return fetch(url, controller ? { signal: controller.signal } : {})
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        if (timer) clearTimeout(timer);
+        return data;
+      })
+      .catch(function () {
+        if (timer) clearTimeout(timer);
+        return null;
+      });
+  }
+
+  /* Grobe Bucket-Übersetzung der Open-Meteo WMO-Wettercodes in kurze
+     deutsche Strand-Begriffe statt roher API-Texte (die kommen bei
+     Open-Meteo ohnehin nur als Zahlencode, nicht als Text). */
+  function describeWeatherCode(code) {
+    if (code === 0) return { emoji: '☀️', text: 'klarer Himmel' };
+    if (code <= 3) return { emoji: '⛅', text: 'wechselnd bewölkt' };
+    if (code <= 48) return { emoji: '🌫️', text: 'neblig' };
+    if (code <= 57) return { emoji: '🌦️', text: 'Niesel' };
+    if (code <= 67) return { emoji: '🌧️', text: 'Regen' };
+    if (code <= 77) return { emoji: '🌨️', text: 'Schnee' };
+    if (code <= 82) return { emoji: '🌦️', text: 'Regenschauer' };
+    if (code <= 86) return { emoji: '🌨️', text: 'Schneeschauer' };
+    return { emoji: '⛈️', text: 'Gewitter' };
+  }
+
+  function loadCachedRealWeather() {
+    try {
+      var raw = localStorage.getItem('az-real-weather');
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || typeof data.fetchedAt !== 'number') return null;
+      if (Date.now() - data.fetchedAt > REAL_WEATHER_REFRESH_MS) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveRealWeather(data) {
+    try { localStorage.setItem('az-real-weather', JSON.stringify(data)); } catch (e) {}
+  }
+
+  function paintRealWeather() {
+    if (!realWeather) return;
+    var desc = describeWeatherCode(realWeather.code);
+    setText(realWeatherEl, 'Gerade in Eberbach: ' + Math.round(realWeather.tempC) + '°C, ' + desc.text + ' ' + desc.emoji);
+  }
+
+  function fetchRealWeather() {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + REAL_WEATHER_LAT +
+      '&longitude=' + REAL_WEATHER_LON +
+      '&current=temperature_2m,weather_code,wind_speed_10m&daily=uv_index_max&timezone=Europe%2FBerlin';
+    fetchJson(url, 4000).then(function (data) {
+      if (!data || !data.current) return;
+      realWeather = {
+        tempC: data.current.temperature_2m,
+        code: data.current.weather_code,
+        windKmh: data.current.wind_speed_10m,
+        uvMax: data.daily && data.daily.uv_index_max ? data.daily.uv_index_max[0] : null,
+        fetchedAt: Date.now()
+      };
+      saveRealWeather(realWeather);
+      paintRealWeather();
+    });
+  }
+
+  function initRealWeather() {
+    var cached = loadCachedRealWeather();
+    if (cached) {
+      realWeather = cached;
+      paintRealWeather();
+    } else {
+      fetchRealWeather();
+    }
+  }
+
+  var REAL_HOLIDAY_STATE = 'DE-BW';
+  var holidayTomorrow = null; // Name des Feiertags oder null
+
+  function appliesToBW(entry) {
+    return entry.global || (Array.isArray(entry.counties) && entry.counties.indexOf(REAL_HOLIDAY_STATE) !== -1);
+  }
+
+  function loadCachedHolidays(year) {
+    try {
+      var raw = localStorage.getItem('az-holidays-' + year);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveHolidays(year, list) {
+    try { localStorage.setItem('az-holidays-' + year, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function paintHolidayNote() {
+    setText(holidayNoteEl, holidayTomorrow ? ('Morgen ist Feiertag: ' + holidayTomorrow + ' 🎉') : '');
+  }
+
+  function applyHolidayList(list, tomorrowStr) {
+    if (!Array.isArray(list)) {
+      holidayTomorrow = null;
+      paintHolidayNote();
+      return;
+    }
+    var hit = list.filter(appliesToBW).find(function (h) { return h.date === tomorrowStr; });
+    holidayTomorrow = hit ? hit.localName : null;
+    paintHolidayNote();
+  }
+
+  function refreshHolidayNote() {
+    var tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    var year = tomorrow.getFullYear();
+    var tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+    var cached = loadCachedHolidays(year);
+    if (cached) {
+      applyHolidayList(cached, tomorrowStr);
+      return;
+    }
+
+    fetchJson('https://date.nager.at/api/v3/PublicHolidays/' + year + '/DE', 4000).then(function (list) {
+      if (Array.isArray(list)) saveHolidays(year, list);
+      applyHolidayList(list, tomorrowStr);
+    });
+  }
+
+  initRealWeather();
+  setInterval(fetchRealWeather, REAL_WEATHER_REFRESH_MS);
+
+  refreshHolidayNote();
+  setInterval(refreshHolidayNote, 60 * 60 * 1000);
+
+  // ---- Tipp des Tages, direkt neben dem Profil ----
+  // Rein lokal, kein Netzwerk-Call. Wechselt einmal pro Kalendertag
+  // (Index über den Tag im Jahr), nicht bei jedem Seitenaufruf neu.
+
+  var hudTipEl     = document.getElementById('az-hud-tip');
+  var hudTipBubble = document.getElementById('az-hud-tip-bubble');
+
+  var DAY_TIPS = [
+    { text: 'Kurz aufstehen und strecken, {n}. Dein Rücken sagt danke. 🧘', fallback: 'Schnuckelchen' },
+    { text: 'Ein Glas Wasser jetzt, bevor der Nachmittag kommt. 💧' },
+    { text: 'Schultern lockern, tief durchatmen, weiter geht’s. 🌬️' },
+    { text: 'Kurz aus dem Fenster gucken und den Himmel checken, {n}. 🪟☁️', fallback: 'Mäuschen' },
+    { text: 'Zwei Minuten frische Luft schnappen tut immer gut. 🌤️' },
+    { text: 'Nacken kreisen lassen, wie eine Möwe im Wind. 🐦' },
+    { text: 'Gönn dir einen kleinen Snack, {n}. Du hast ihn verdient. 🍓', fallback: 'Herzchen' },
+    { text: 'Sitzhaltung kurz checken, dein Rücken merkt jeden Tag. 🪑' },
+    { text: 'Wasserflasche nachfüllen, der Ozean wird schließlich auch nie leer. 🫙🌊' },
+    { text: 'Augen kurz vom Bildschirm nehmen und in die Ferne schauen. 👀' },
+    { text: 'Wenn die Sonne gerade scheint, schnapp dir zwei Minuten davon. ☀️' },
+    { text: 'Kurzer Weg zur Kaffeemaschine zählt auch als Bewegung, {n}. ☕🚶', fallback: 'kleiner Stern' },
+    { text: 'Handgelenke kurz kreisen lassen, bevor sie meckern. 🤲' },
+    { text: 'Ein Lächeln kostet nichts und wirkt trotzdem wie Muschelmusik. 🐚😊' }
+  ];
+
+  function dayTipIndex() {
+    var now = new Date();
+    var startOfYear = new Date(now.getFullYear(), 0, 0);
+    var dayOfYear = Math.floor((now - startOfYear) / 86400000);
+    return ((dayOfYear % DAY_TIPS.length) + DAY_TIPS.length) % DAY_TIPS.length;
+  }
+
+  function paintDayTip() {
+    var text = fillName(DAY_TIPS[dayTipIndex()]);
+    hudTipEl.textContent = '💡';
+    hudTipEl.title = text;
+    hudTipEl.setAttribute('aria-label', 'Tipp für heute: ' + text);
+    setText(hudTipBubble, text);
+  }
+
+  paintDayTip();
+  setInterval(paintDayTip, 60 * 60 * 1000);
+
+  /* Sprechblase zum Tipp-Icon: dasselbe Klick/Hover/Fokus-Muster wie beim
+     Sonnencreme-Reminder (.az-suncream-tip) - Touch-Geräte bekommen per
+     Antippen eine feste (sticky) Blase, Maus zeigt sie beim Hover kurz
+     an, Enter/Leertaste funktionieren nativ über den <button>. */
+  var hudTipSticky = false;
+
+  function showHudTip(sticky) {
+    hudTipBubble.hidden = false;
+    hudTipSticky = hudTipSticky || sticky;
+  }
+
+  function hideHudTip() {
+    hudTipBubble.hidden = true;
+    hudTipSticky = false;
+  }
+
+  function toggleHudTip() {
+    if (hudTipSticky) hideHudTip();
+    else showHudTip(true);
+  }
+
+  hudTipEl.addEventListener('click', toggleHudTip);
+
+  document.addEventListener('click', function (event) {
+    if (hudTipSticky && event.target !== hudTipEl) hideHudTip();
+  });
+
+  hudTipEl.addEventListener('pointerover', function (event) {
+    if (event.pointerType !== 'mouse' || hudTipSticky) return;
+    showHudTip(false);
+  });
+
+  hudTipEl.addEventListener('pointerleave', function (event) {
+    if (event.pointerType === 'mouse' && !hudTipSticky) hideHudTip();
+  });
+
+  hudTipEl.addEventListener('blur', hideHudTip);
+
   /* Feiert einmalig, wenn die Sollzeit ohne vorheriges Beobachten von
      Überstunden erreicht wird (siehe sawBeforeAlarm/celebratedPunctual in
      paintOvertime). Bewusst kein Modal, um nicht zu unterbrechen. */
@@ -6591,16 +7712,25 @@
   var recapRowsEl = document.getElementById('az-recap-rows');
   var recapDismiss = document.getElementById('az-recap-dismiss');
 
+  function recapStat(icon, label, value, note) {
+    return '<div class="az-recap-stat">' +
+      '<span class="az-recap-stat-icon" aria-hidden="true">' + icon + '</span>' +
+      '<span class="az-recap-stat-label">' + label + '</span>' +
+      '<span class="az-recap-stat-value">' + value + '</span>' +
+      (note ? '<span class="az-recap-stat-note">' + note + '</span>' : '') +
+      '</div>';
+  }
+
   function showRecapCard() {
     var s = lastState;
     var lawDone = s.lawNeed === 0 || s.pauseTotal >= s.lawNeed;
+    var clock = document.getElementById('time').dataset.clock || '--:--';
 
     recapRowsEl.innerHTML =
-      '<span>Pausen: <strong>' + toDuration(s.pauseTotal) +
-        (lawDone ? ', Pflicht erfüllt' : '') + '</strong></span>' +
-      '<span>Pünktlich: <strong>ja</strong></span>' +
-      '<span>Stufe: <strong>' + (game.level + 1) + ', ' + LEVELS[game.level].name + '</strong></span>' +
-      '<span>Muscheln: <strong>' + game.shells + '</strong></span>';
+      recapStat('⏰', 'Feierabend', clock + ' Uhr') +
+      recapStat('🏖️', 'Pause', toDuration(s.pauseTotal), lawDone ? 'Pflicht erfüllt' : '') +
+      recapStat('🏅', 'Stufe', (game.level + 1) + ' · ' + LEVELS[game.level].name) +
+      recapStat('🐚', 'Muscheln', game.shells);
 
     recapEl.hidden = false;
   }
@@ -7064,6 +8194,18 @@
       'translate(' + Math.round(view.width - clamp(view.width * 0.06, 34, 78)) + ',' +
       Math.round(view.waterY - 15) + ')');
 
+    // Leuchtturm und Sandburg sind feste Strandobjekte, mit fester
+    // Breiten-Fraktion zwischen Muschel-Orakel (0.06) und Otter (0.94)
+    // platziert. 0.56 lag genau hinter der zentralen Feierabend-Anzeige
+    // (Uhrzeit + "Kopieren"-Button) und war dahinter unsichtbar, darum
+    // sitzt die Sandburg jetzt rechts davon.
+    lighthouseEl.setAttribute('transform',
+      'translate(' + Math.round(clamp(view.width * 0.22, 60, view.width - 60)) + ',' +
+      Math.round(view.waterY) + ')');
+    sandcastleEl.setAttribute('transform',
+      'translate(' + Math.round(clamp(view.width * 0.78, 60, view.width - 60)) + ',' +
+      Math.round(view.waterY) + ')');
+
     syncSun(minutesNow());
   }
 
@@ -7077,6 +8219,8 @@
   buildTreasure();
   buildChest();
   buildLawGull();
+  buildSandcastle();
+  buildLighthouse();
   applyCrabColor(cosmetics.crabColor);
   renderAwards();
   renderCatches();
@@ -7154,6 +8298,14 @@
       launchBottle();
       nextBottle();
     }, 22000 + Math.random() * 18000);
+  })();
+
+  // Möwenschwarm fliegt unabhängig von der Flaschenpost gelegentlich vorbei
+  (function nextGullFlock() {
+    setTimeout(function () {
+      spawnGullFlock();
+      nextGullFlock();
+    }, 20000 + Math.random() * 15000);
   })();
 
   // Wetterereignis alle 25 bis 45s, still übersprungen, wenn Tageszeit
