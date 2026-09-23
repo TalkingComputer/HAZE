@@ -2037,6 +2037,22 @@
 
   .az-wish-line[hidden] { display: none; }
 
+  .az-wish-countdown {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--az-headline);
+  }
+
+  .az-wish-countdown strong {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .az-wish-countdown.is-paused { color: var(--az-muted); }
+
+  .az-wish-countdown[hidden] { display: none; }
+
+  .az-wish-countdown:not([hidden]) + .az-wish-gap { margin-top: 2px; }
+
   @media (max-width: 640px) {
     .az-wish-label { width: 100%; }
   }
@@ -3308,7 +3324,10 @@
         <div class="az-time" id="time">--:--<small>Uhr</small></div>
         <button type="button" class="btn-ghost btn-copy-time" id="az-time-copy" title="Feierabend-Uhrzeit kopieren" aria-label="Feierabend-Uhrzeit kopieren">Kopieren</button>
       </div>
-      <div class="az-wish-line" id="wish-line" hidden></div>
+      <div class="az-wish-line" id="wish-line" hidden>
+        <div class="az-wish-countdown" id="wish-countdown" aria-live="off"></div>
+        <div class="az-wish-gap" id="wish-gap"></div>
+      </div>
     </div>
 
     <div class="az-footer" id="az-footer">
@@ -6439,6 +6458,9 @@
   var wishClear = document.getElementById('wish-clear');
   var wishNote  = document.getElementById('wish-note');
   var wishLine  = document.getElementById('wish-line');
+  var wishGap   = document.getElementById('wish-gap');
+  var wishCount = document.getElementById('wish-countdown');
+  var lunchShowsWish = false;
   var lastPlan  = null;
 
   function paintWish(plan) {
@@ -6462,15 +6484,15 @@
 
     if (gap === 0) {
       note = 'Deckt sich mit dem berechneten Feierabend.';
-      wishLine.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, genau im Plan';
+      wishGap.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, genau im Plan';
     } else if (gap < 0) {
       note = toDuration(-gap) + ' früher als ' + toClock(plan.endsAt) + ' Uhr, das ergibt ' +
              toDuration(-gap) + ' Minus.';
-      wishLine.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, ' + toDuration(-gap) + ' früher';
+      wishGap.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, ' + toDuration(-gap) + ' früher';
     } else {
       note = toDuration(gap) + ' später als ' + toClock(plan.endsAt) + ' Uhr, das ergibt ' +
              toDuration(gap) + ' Plus.';
-      wishLine.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, ' + toDuration(gap) + ' später';
+      wishGap.textContent = 'Wunsch ' + toClock(wish) + ' Uhr, ' + toDuration(gap) + ' später';
     }
 
     // Stille Hinweise, ohne Warnfarbe im Vordergrund
@@ -6485,6 +6507,7 @@
       (flags.length ? ' <span class="az-wish-flag">' + escapeText(flags.join(' ')) + '</span>' : '');
 
     wishLine.hidden = false;
+    paintWishCountdown();
 
     // Dünne Marke auf dem Bogen, an der Stelle der Wunschzeit
     if (!bandLength || plan.targetMin <= 0) {
@@ -6503,6 +6526,68 @@
       'translate(' + point.x.toFixed(1) + ',' + point.y.toFixed(1) + ') rotate(' + tilt.toFixed(1) + ')');
     wishMark.setAttribute('opacity', '1');
   }
+
+  /* Restliche Arbeitszeit bis zum Wunschfeierabend, sekundengenau.
+     Geplante Pausen zwischen jetzt und Wunschzeit zählen nicht als
+     Arbeitszeit. Läuft eine offene Pause, steht der Countdown still. */
+  function wishRemaining() {
+    var wish = toMinutes(wishEl.value);
+    if (wish === null) return null;
+
+    var wishSec = wish * 60;
+    var now = secondsNow();
+    var from = now;
+    var paused = false;
+    var pauseSec = 0;
+    var ranges = [];
+
+    document.querySelectorAll('#pauses .az-pause-entry').forEach(function (entry) {
+      var fields = entry.querySelectorAll('input[type="time"]');
+      var a = toMinutes(fields[0].value);
+      var b = toMinutes(fields[1].value);
+      if (a === null) return;
+      a *= 60;
+      if (b === null) {
+        // Offene Pause: die Arbeit ruht seit Pausenbeginn
+        if (a <= now) { paused = true; from = Math.min(from, a); }
+        return;
+      }
+      b *= 60;
+      if (b > a) ranges.push([a, b]);
+    });
+
+    ranges.forEach(function (r) {
+      if (r[0] <= now && r[1] > now) paused = true;
+      pauseSec += Math.max(0, Math.min(r[1], wishSec) - Math.max(r[0], from));
+    });
+
+    return { wish: wish, rest: wishSec - from - pauseSec, paused: paused };
+  }
+
+  function paintWishCountdown() {
+    var w = wishRemaining();
+    if (!w || wishLine.hidden) return;
+
+    // Zeigt die Pausenkachel oben schon den Countdown, bleibt er hier weg
+    wishCount.hidden = lunchShowsWish;
+    if (lunchShowsWish) return;
+
+    var wish = w.wish;
+    var rest = w.rest;
+    var paused = w.paused;
+
+    wishCount.classList.toggle('is-paused', paused && rest > 0);
+
+    if (rest <= 0) {
+      wishCount.textContent = 'Wunschfeierabend ' + toClock(wish) + ' Uhr erreicht';
+      return;
+    }
+
+    wishCount.innerHTML = 'Noch <strong>' + toCountdown(rest) + '</strong> bis ' + toClock(wish) + ' Uhr' +
+      (paused ? ', Pause läuft' : '');
+  }
+
+  setInterval(paintWishCountdown, 1000);
 
   wishClear.addEventListener('click', function () {
     wishEl.value = '';
@@ -6942,12 +7027,27 @@
       setLunchRing(0);
 
     } else if (info.state === 'done') {
+      var w = wishRemaining();
       lunchEl.classList.add('is-done');
-      setText(lunchBrow, 'Mittagspause');
-      setText(lunchClock, 'erledigt');
-      setText(lunchLine, 'Pause sitzt. Jetzt zählt nur noch der Feierabend.');
-      setText(lunchMeta, '');
       setLunchRing(1);
+
+      if (w && w.rest > 0) {
+        // Kein Pausen-Counter mehr aktiv, also übernimmt der Wunschfeierabend
+        setText(lunchBrow, 'Wunschfeierabend in');
+        setText(lunchClock, toCountdown(w.rest));
+        setText(lunchLine, 'Pause sitzt. Jetzt zählt nur noch der Feierabend.');
+        setText(lunchMeta, 'Wunsch ' + toClock(w.wish) + ' Uhr');
+      } else if (w) {
+        setText(lunchBrow, 'Wunschfeierabend');
+        setText(lunchClock, 'erreicht');
+        setText(lunchLine, 'Ab jetzt ist alles Bonuszeit.');
+        setText(lunchMeta, 'Wunsch ' + toClock(w.wish) + ' Uhr');
+      } else {
+        setText(lunchBrow, 'Mittagspause');
+        setText(lunchClock, 'erledigt');
+        setText(lunchLine, 'Pause sitzt. Jetzt zählt nur noch der Feierabend.');
+        setText(lunchMeta, '');
+      }
 
     } else if (info.state === 'now') {
       var slot = info.slot;
@@ -6994,6 +7094,12 @@
     }
 
     lunchWatch = info.state;
+
+    var showsWish = info.state === 'done' && wishRemaining() !== null;
+    if (showsWish !== lunchShowsWish) {
+      lunchShowsWish = showsWish;
+      paintWishCountdown();
+    }
   }
 
   /* Trägt eine halbe Stunde Mittagspause ein, ab 12 Uhr oder ab der
