@@ -633,17 +633,65 @@
     left: 0;
     z-index: 1;
     transform: translate(-50%, -50%);
-    font-size: 32px;
+    /* Größe wächst mit jeder Fütterungsstufe (siehe renderPetStage()).
+       font-size statt transform, weil die Wipp-Animation transform belegt. */
+    font-size: var(--az-pet-size, 32px);
     line-height: 1;
     cursor: pointer;
     /* .az-footer lässt Klicks sonst zur Sonne durch (pointer-events: none) -
        hier explizit wieder anschalten, sonst reagiert der Antipp-Effekt nicht. */
     pointer-events: auto;
     filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4));
-    transition: left 500ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: left 500ms cubic-bezier(0.22, 1, 0.36, 1),
+                font-size 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .az-progress-pet:empty { display: none; cursor: default; }
+
+  /* Aura ab Stufe 3 von 4 (data-stage 2), stärker auf der letzten Stufe.
+     Folgt über --az-bright dem Farbthema aus dem Shop. */
+  .az-progress-pet[data-stage="2"] {
+    filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4)) drop-shadow(0 0 6px var(--az-bright));
+  }
+  .az-progress-pet[data-stage="3"] {
+    filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4)) drop-shadow(0 0 6px var(--az-bright))
+            drop-shadow(0 0 14px var(--az-bright));
+  }
+
+  /* Formwechsel: weiße Silhouette, siehe evolvePet() */
+  .az-progress-pet.is-evolve {
+    filter: brightness(0) invert(1) drop-shadow(0 0 10px #fff) drop-shadow(0 0 18px var(--az-bright));
+  }
+
+  /* Spur der letzten Stufe: läuft vom Balkenanfang bis unters Tier, Breite
+     setzt calculate() im selben Takt wie left des Tiers. Motiv je Tier
+     über --az-trail (siehe trailUrl()), links ausgeblendet. */
+  .az-pet-trail {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0;
+    height: 22px;
+    transform: translateY(-50%);
+    background: var(--az-trail, none) repeat-x left center;
+    opacity: 0;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%, #000 calc(100% - 18px), transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 45%, #000 calc(100% - 18px), transparent);
+    transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms ease;
+  }
+  .az-pet-trail.is-on { opacity: 0.8; }
+
+  /* Krönchen für das ausgewachsene Tier */
+  .az-progress-pet[data-stage="3"]::after {
+    content: '👑';
+    position: absolute;
+    left: 50%;
+    top: -0.32em;
+    transform: translateX(-50%);
+    font-size: 0.4em;
+    pointer-events: none;
+  }
 
   .az-progress-pet:focus-visible {
     outline: none;
@@ -652,7 +700,112 @@
 
   .az-progress-pet.is-bob { animation: az-progress-pet-bob 900ms ease-in-out infinite; }
 
-  .az-progress-pet.is-poked { animation: az-progress-pet-poke 480ms ease; }
+  /* Launen (data-mood, siehe paintPetMood()): Symbol oben rechts plus
+     eigene Dauerbewegung statt des Wippens. Reaktionen und Antippen stehen
+     weiter unten mit gleicher Spezifität und gewinnen dadurch kurzzeitig. */
+  .az-progress-pet[data-mood]::before {
+    position: absolute;
+    right: -0.45em;
+    top: -0.35em;
+    font-size: 0.42em;
+    pointer-events: none;
+  }
+  .az-progress-pet[data-mood="sleep"]::before { content: '💤'; animation: az-pet-zz 2.4s ease-in-out infinite; }
+  .az-progress-pet[data-mood="cheer"]::before { content: '🎉'; }
+  .az-progress-pet[data-mood="sweat"]::before { content: '💦'; }
+  .az-progress-pet[data-mood="bored"]::before { content: '💭'; }
+
+  .az-progress-pet.is-bob[data-mood="sleep"] { animation: az-pet-sleep 3.2s ease-in-out infinite; }
+  .az-progress-pet.is-bob[data-mood="cheer"] { animation: az-pet-hop 1.4s ease-in-out infinite; }
+  .az-progress-pet.is-bob[data-mood="sweat"] { animation: az-progress-pet-bob 520ms ease-in-out infinite; }
+  .az-progress-pet.is-bob[data-mood="bored"] { animation: az-pet-sleep 4.8s ease-in-out infinite; }
+
+  .az-progress-pet.is-bob.is-poked { animation: az-progress-pet-poke 480ms ease; }
+  .az-progress-pet.is-bob.is-chomp { animation: az-pet-chomp 420ms ease; }
+  .az-progress-pet.is-bob.is-react-wag { animation: az-pet-wag 640ms ease-in-out; }
+  .az-progress-pet.is-bob.is-react-purr { animation: az-pet-purr 900ms ease-in-out; }
+  .az-progress-pet.is-bob.is-react-roll { animation: az-pet-roll 900ms cubic-bezier(0.45, 0, 0.55, 1); }
+  .az-progress-pet.is-bob.is-react-hop { animation: az-pet-hop 700ms ease-out 2; }
+  .az-progress-pet.is-bob.is-react-snub { animation: az-pet-snub 1400ms ease; }
+
+  @keyframes az-pet-chomp {
+    0%, 100% { transform: translate(-50%, -50%) scale(1, 1); }
+    30%      { transform: translate(-50%, -50%) scale(1.18, 0.82); }
+    60%      { transform: translate(-50%, -50%) scale(0.92, 1.1); }
+  }
+  @keyframes az-pet-wag {
+    0%, 100%      { transform: translate(-50%, -50%) rotate(0); }
+    20%, 60%      { transform: translate(-50%, -50%) rotate(-16deg); }
+    40%, 80%      { transform: translate(-50%, -50%) rotate(16deg); }
+  }
+  @keyframes az-pet-purr {
+    0%, 100%      { transform: translate(-50%, -50%) scale(1); }
+    25%, 75%      { transform: translate(-50%, -50%) scale(1.08, 0.95); }
+    50%           { transform: translate(-50%, -50%) scale(0.97, 1.04); }
+  }
+  @keyframes az-pet-roll {
+    0%   { transform: translate(-50%, -50%) rotate(0); }
+    35%, 65% { transform: translate(-50%, -50%) rotate(180deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  @keyframes az-pet-hop {
+    0%, 100% { transform: translate(-50%, -50%); }
+    40%      { transform: translate(-50%, -95%) rotate(-6deg); }
+    70%      { transform: translate(-50%, -45%) scale(1.06, 0.94); }
+  }
+  @keyframes az-pet-snub {
+    0%, 100% { transform: translate(-50%, -50%) scaleX(1); }
+    15%, 85% { transform: translate(-50%, -50%) scaleX(-1); }
+  }
+  @keyframes az-pet-sleep {
+    0%, 100% { transform: translate(-50%, -50%) rotate(-4deg) scale(1); }
+    50%      { transform: translate(-50%, -50%) rotate(-4deg) scale(1.05, 0.97); }
+  }
+  @keyframes az-pet-zz {
+    0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+    50%      { transform: translate(3px, -5px); opacity: 1; }
+  }
+
+  /* Partikel an der Tierposition (siehe petFx()) und fliegende Muschel
+     (siehe flyShell()) */
+  .az-pet-fx {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    line-height: 1;
+    pointer-events: none;
+    animation-fill-mode: both;
+  }
+  .az-pet-crumb {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #f3d08a;
+    box-shadow: 0 0 0 1px rgba(168, 120, 26, 0.5);
+    animation: az-pet-crumb 700ms ease-in;
+  }
+  .az-pet-spark {
+    font-size: 12px;
+    animation: az-pet-spark 1100ms ease-out;
+  }
+  @keyframes az-pet-crumb {
+    from { transform: translate(-50%, 0); opacity: 1; }
+    to   { transform: translate(calc(-50% + var(--dx)), var(--dy)); opacity: 0; }
+  }
+  @keyframes az-pet-spark {
+    from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    to   { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.4); opacity: 0; }
+  }
+  .az-pet-flyer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 99;
+    font-size: 20px;
+    line-height: 1;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 3px rgba(4, 52, 82, 0.4));
+  }
 
   @keyframes az-progress-pet-poke {
     0%   { filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4)) brightness(1); }
@@ -1795,6 +1948,15 @@
       0 0 0 4px var(--az-ring);
   }
 
+  .az-pet-name { margin: 10px 0 0; }
+
+  .az-pet-hint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    text-align: center;
+    opacity: 0.75;
+  }
+
   .az-otter-actions {
     display: flex;
     justify-content: center;
@@ -2859,6 +3021,10 @@
     text-shadow: 0 1px 1px rgba(140, 30, 15, 0.35);
   }
 
+  .btn-sassomat-copy { margin-top: 8px; }
+
+  .btn-sassomat-copy[hidden] { display: none; }
+
   #az-sassomat-modal .az-oracle-hint {
     color: #ea5138;
     background: linear-gradient(180deg, #fffaf8, #ffe0d5);
@@ -3352,6 +3518,7 @@
         <div class="az-progress-track">
           <div class="az-progress-fill" id="progress-fill"></div>
         </div>
+        <span class="az-pet-trail" id="az-pet-trail" aria-hidden="true"></span>
         <span class="az-progress-pet" id="az-progress-pet"></span>
       </div>
       <span class="sr-only" id="status" aria-live="polite"></span>
@@ -3477,6 +3644,7 @@
       <div class="az-oracle-answer" aria-live="polite">
         <div class="az-oracle-eyebrow" id="az-sassomat-eyebrow">Bereit</div>
         <div class="az-oracle-text az-sassomat-word" id="az-sassomat-word">Wort eintippen und urteilen lassen</div>
+        <button type="button" class="btn-ghost btn-sassomat-copy" id="az-sassomat-copy" title="Urteil kopieren" aria-label="Urteil kopieren" hidden>Kopieren</button>
       </div>
 
       <div class="az-oracle-ask">
@@ -3649,6 +3817,11 @@
       <div class="az-shop-section">
         <h3 class="az-shop-heading">Zeitleisten-Tier</h3>
         <div class="az-shop-grid" id="az-shop-pets"></div>
+        <div class="az-otter-name az-pet-name" id="az-pet-name-wrap" hidden>
+          <label class="sr-only" for="az-pet-name">Name für dein Tier</label>
+          <input type="text" id="az-pet-name" maxlength="16" autocomplete="off" placeholder="Name für dein Tier">
+        </div>
+        <p class="az-pet-hint">Antippen füttert für 1 Muschel. Ausgewachsen findet das Tier selbst welche.</p>
       </div>
     </div>
   </div>
@@ -5081,6 +5254,7 @@
 
     document.getElementById('progress-fill').style.width = percent.toFixed(1) + '%';
     progressPetEl.style.left = percent.toFixed(1) + '%';
+    petTrailEl.style.width = percent.toFixed(1) + '%';
     progressBar.setAttribute('aria-valuenow', String(Math.round(percent)));
     document.getElementById('status').textContent =
       Math.round(percent) + ' Prozent der Sollzeit erreicht, gearbeitet ' + toDuration(worked);
@@ -5097,6 +5271,7 @@
     weatherReport({ percent: percent, remaining: remaining, overMin: now - endMin, clock: feierabendClock });
 
     paintLighthouse(remaining <= 0);
+    syncPet({ pauseRunning: pauses.running, remaining: remaining, overMin: now - endMin });
 
     paintWish({
       endsAt: startMin + pauses.total + targetMin,
@@ -5841,19 +6016,51 @@
   /* Zeitleisten-Tier: reitet auf dem rechten Rand des Fortschrittsbalkens
      mit (siehe .az-progress-pet, Kind von #progress-fill), Nyan-Cat-Art
      ohne eigene Positions-Logik. Rein kosmetisch wie die übrigen
-     Shop-Kategorien, eigener ID-Präfix wie bei der Krabbenfarbe. */
+     Shop-Kategorien, eigener ID-Präfix wie bei der Krabbenfarbe.
+     react: eigene Animation beim Füttern (siehe .is-react-*), feed: Meldung
+     beim Fressen, find: Meldung, wenn das ausgewachsene Tier selbst eine
+     Muschel findet (siehe syncPet()). forms: Kopf-Emoji je Fütterungsstufe,
+     nur Köpfe, damit das Tier auf dem Balken erkennbar bleibt. trail: Spur
+     der höchsten Stufe auf dem Balken (siehe trailUrl()). */
   var SHOP_PETS = [
     { id: 'pet-none', label: 'Ohne', cost: 0, color: 'rgba(255,255,255,0.5)', emoji: '' },
-    { id: 'pet-dog', label: 'Hund', cost: 3, color: '#ffe3b8', emoji: '🐶', sound: 'Wuff wuff!' },
-    { id: 'pet-cat', label: 'Katze', cost: 3, color: '#f6f2ff', emoji: '🐱', sound: 'Miau!' },
-    { id: 'pet-otter', label: 'Seeotter', cost: 4, color: '#baffef', emoji: '🦦', sound: 'Fiep fiep!' },
-    { id: 'pet-unicorn', label: 'Einhorn', cost: 5, color: '#ffd6f6', emoji: '🦄', sound: 'Glitzerwiehern! ✨' }
+    { id: 'pet-dog', label: 'Hund', cost: 3, color: '#ffe3b8', emoji: '🐶', sound: 'Wuff wuff!',
+      forms: ['🐺', '🐺', '🐶', '🐶'], trail: { glyph: '🐾', size: 14, gap: 26 },
+      acc: 'den Hund', react: 'wag', feed: 'wedelt und schlingt', find: 'bringt ein Stöckchen mit Muschel dran' },
+    { id: 'pet-cat', label: 'Katze', cost: 3, color: '#f6f2ff', emoji: '🐱', sound: 'Miau!',
+      forms: ['🐱', '🐱', '🐯', '🦁'], trail: { glyph: '🐾', size: 11, gap: 34, stagger: true },
+      acc: 'die Katze', react: 'purr', feed: 'schnurrt zufrieden', find: 'legt dir eine Muschel vor die Füße' },
+    { id: 'pet-otter', label: 'Seeotter', cost: 4, color: '#baffef', emoji: '🦦', sound: 'Fiep fiep!',
+      forms: ['🦦', '🦦', '🦦', '🦦'], trail: { bubbles: true, gap: 28 },
+      acc: 'den Seeotter', react: 'roll', feed: 'knackt die Muschel auf dem Bauch', find: 'taucht mit einer Muschel auf' },
+    { id: 'pet-unicorn', label: 'Einhorn', cost: 5, color: '#ffd6f6', emoji: '🦄', sound: 'Glitzerwiehern! ✨',
+      forms: ['🐴', '🐴', '🦄', '🦄'], trail: { glyph: '✨', size: 13, gap: 26 },
+      acc: 'das Einhorn', react: 'hop', feed: 'glitzert vor Freude', find: 'zaubert eine Muschel herbei' }
+  ];
+
+  /* Fütterungsstufen des Zeitleisten-Tiers: jede Muschel zählt, nichts
+     verfällt, kein Hunger. Ausgewachsene Tiere fressen nicht mehr, damit
+     niemand Muscheln verschwendet (siehe pokePet()). */
+  var PET_STAGES = [
+    { min: 0, label: 'Klein', size: 32 },
+    { min: 1, label: 'Jung', size: 36 },
+    { min: 3, label: 'Groß', size: 40 },
+    { min: 6, label: 'Prachtexemplar', size: 44 }
   ];
 
   var cosmetics = {
     pet: 'pet-none',
-    crabColor: 'crab-auto'
+    crabColor: 'crab-auto',
+    fed: {},        // Fütterungen pro Tier-ID, ein Tierwechsel behält den Stand
+    names: {}       // selbst gewählte Namen pro Tier-ID, siehe Shop
   };
+
+  function petStage(id) {
+    var fed = cosmetics.fed[id] || 0;
+    var stage = 0;
+    for (var i = 0; i < PET_STAGES.length; i++) if (fed >= PET_STAGES[i].min) stage = i;
+    return stage;
+  }
 
   var shop = {
     owned: new Set(['ocean', 'classic', 'crab-auto', 'crab-classic', 'pet-none']),
@@ -5990,6 +6197,64 @@
     });
   }
 
+  var petNameWrap  = document.getElementById('az-pet-name-wrap');
+  var petTrailEl   = document.getElementById('az-pet-trail');
+  var petNameInput = document.getElementById('az-pet-name');
+
+  var PET_FIND_MS  = 60 * 60 * 1000;  // ausgewachsenes Tier findet stündlich eine Muschel
+  var PET_IDLE_MS  = 20 * 60 * 1000;  // ohne Eingabe wird das Tier gelangweilt
+  var PET_WAKE_MS  = 2 * 60 * 1000;   // so lange bleibt es nach dem Wecken in der Pause wach
+  var PET_REACTS   = ['is-chomp', 'is-react-wag', 'is-react-purr', 'is-react-roll', 'is-react-hop', 'is-react-snub'];
+
+  var petState = {
+    last: null,        // letzter Stand aus calculate(), für Launen ohne Neuberechnung
+    lastInput: Date.now(),
+    awakeUntil: 0,
+    findAt: 0,         // 0 = Timer läuft noch nicht
+    pokes: [],         // Zeitpunkte der letzten Antipper, für die eigensinnige Katze
+    snubUntil: 0,      // bis dahin ignoriert die Katze jedes Antippen
+    snubs: 0,
+    evolving: false,   // Formwechsel läuft, renderPetStage() lässt den Inhalt in Ruhe
+    evolveTimer: 0
+  };
+
+  function petName(pet) {
+    return (cosmetics.names[pet.id] || '').trim() || pet.label;
+  }
+
+  function petGrown(id) {
+    return petStage(id) === PET_STAGES.length - 1;
+  }
+
+  function petEmoji(pet) {
+    return (pet.forms && pet.forms[petStage(pet.id)]) || pet.emoji || '';
+  }
+
+  /* Spur als kachelbares SVG. Emojis rendert der Browser auch in einem
+     SVG-Hintergrund, die Luftblasen des Otters sind echte Kreise. */
+  function trailUrl(pet) {
+    var t = pet.trail;
+    if (!t) return 'none';
+    var h = 22;
+    var svg;
+    if (t.bubbles) {
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + t.gap + '" height="' + h + '">' +
+        '<g fill="rgba(255,255,255,0.35)" stroke="#fff" stroke-width="1">' +
+        '<circle cx="6" cy="13" r="4.2"/><circle cx="15" cy="7" r="2.6"/><circle cx="21" cy="15" r="1.8"/></g></svg>';
+    } else {
+      var glyph = '<text x="' + (t.gap / 2) + '" y="' + (h / 2) + '" font-size="' + t.size +
+        '" text-anchor="middle" dominant-baseline="central">' + t.glyph + '</text>';
+      if (t.stagger) {
+        glyph = '<text x="' + (t.gap / 4) + '" y="' + (h / 2 - 3) + '" font-size="' + t.size +
+          '" text-anchor="middle" dominant-baseline="central">' + t.glyph + '</text>' +
+          '<text x="' + (t.gap * 3 / 4) + '" y="' + (h / 2 + 3) + '" font-size="' + t.size +
+          '" text-anchor="middle" dominant-baseline="central">' + t.glyph + '</text>';
+      }
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + t.gap + '" height="' + h + '">' + glyph + '</svg>';
+    }
+    return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+  }
+
   /* Setzt Emoji + Wippanimation des Zeitleisten-Tiers. Die Position selbst
      kommt gratis von der bestehenden width-Transition des Elternelements
      (#progress-fill), hier wird nur der Inhalt getauscht. Ohne Tier bleibt
@@ -5997,43 +6262,289 @@
      mit Tier wird es zum antippbaren Button (siehe pokePet()). */
   function applyPet(id) {
     cosmetics.pet = id;
+    petState.pokes = [];
+    petState.snubUntil = 0;
+    clearTimeout(petState.evolveTimer);
+    petState.evolving = false;
+    progressPetEl.classList.remove('is-evolve');
     var pet = findShopItem(SHOP_PETS, id);
-    progressPetEl.textContent = pet.emoji || '';
+    progressPetEl.textContent = petEmoji(pet);
     progressPetEl.classList.toggle('is-bob', !!pet.emoji);
 
     if (pet.emoji) {
       progressPetEl.setAttribute('role', 'button');
       progressPetEl.setAttribute('tabindex', '0');
-      progressPetEl.setAttribute('aria-label', pet.label + ', zum Spaß antippen');
     } else {
       progressPetEl.removeAttribute('role');
       progressPetEl.removeAttribute('tabindex');
       progressPetEl.removeAttribute('aria-label');
     }
+    if (petGrown(id) && !petState.findAt) petState.findAt = Date.now() + PET_FIND_MS;
+    renderPetStage();
+    paintPetMood();
   }
+
+  /* Form, Größe, Aura und Krönchen (data-stage, siehe CSS), Spur und
+     Beschriftung passend zur Fütterungsstufe des aktiven Tiers. */
+  function renderPetStage() {
+    var pet = findShopItem(SHOP_PETS, cosmetics.pet);
+    if (!pet.emoji) {
+      progressPetEl.removeAttribute('data-stage');
+      progressPetEl.style.removeProperty('--az-pet-size');
+      petTrailEl.classList.remove('is-on');
+      return;
+    }
+
+    var stage = petStage(pet.id);
+    var grown = stage === PET_STAGES.length - 1;
+    if (!petState.evolving) progressPetEl.textContent = petEmoji(pet);
+    petTrailEl.classList.toggle('is-on', grown);
+    if (grown) petTrailEl.style.setProperty('--az-trail', trailUrl(pet));
+    progressPetEl.setAttribute('data-stage', String(stage));
+    progressPetEl.style.setProperty('--az-pet-size', PET_STAGES[stage].size + 'px');
+    progressPetEl.setAttribute('aria-label', petName(pet) + ', ' + pet.label + ', ' + PET_STAGES[stage].label +
+      ' (Stufe ' + (stage + 1) + ' von ' + PET_STAGES.length + '), ' +
+      (grown ? 'ausgewachsen, zum Spaß antippen' : 'antippen zum Füttern für 1 Muschel'));
+  }
+
+  // ---- Launen: folgen dem Arbeitstag, verlangen aber nichts ----
+
+  /* Reihenfolge = Vorrang. Pause schlägt alles, danach Langeweile ohne
+     Eingabe, dann Überstunden, dann Feierabend. */
+  function petMood() {
+    var s = petState.last;
+    if (!s) return '';
+    var now = Date.now();
+    if (s.pauseRunning && now > petState.awakeUntil) return 'sleep';
+    if (now - petState.lastInput >= PET_IDLE_MS) return 'bored';
+    if (s.overMin >= 30) return 'sweat';
+    if (s.remaining <= 0) return 'cheer';
+    return '';
+  }
+
+  function paintPetMood() {
+    var pet = findShopItem(SHOP_PETS, cosmetics.pet);
+    var mood = pet.emoji ? petMood() : '';
+    if (mood) progressPetEl.setAttribute('data-mood', mood);
+    else progressPetEl.removeAttribute('data-mood');
+  }
+
+  /* Läuft mit calculate() alle 15 Sekunden: Launen auffrischen und das
+     ausgewachsene Tier stündlich selbst eine Muschel finden lassen.
+     Im Schlaf sucht es nicht, der Fund wartet bis nach der Pause. */
+  function syncPet(s) {
+    petState.last = s;
+    paintPetMood();
+
+    var pet = findShopItem(SHOP_PETS, cosmetics.pet);
+    if (!pet.emoji || !petGrown(pet.id) || !petState.findAt) return;
+    if (Date.now() < petState.findAt || petMood() === 'sleep') return;
+
+    petState.findAt = Date.now() + PET_FIND_MS;
+    flyShell(progressPetEl, shellsEl, function () {
+      game.shells += 1;
+      pulse(shellsEl);
+      renderHud();
+    });
+    petAnim('is-react-' + pet.react);
+    toast(petEmoji(pet) + ' ' + petName(pet) + ' ' + pet.find, '+1 Muschel');
+    playCue('badge');
+  }
+
+  /* Jede Eingabe zählt als Aktivität. Nur ein Zeitstempel, die Laune
+     springt aber sofort zurück, statt bis zum nächsten calculate() zu warten. */
+  ['pointerdown', 'keydown', 'wheel'].forEach(function (type) {
+    document.addEventListener(type, function () {
+      petState.lastInput = Date.now();
+      if (progressPetEl.getAttribute('data-mood') === 'bored') paintPetMood();
+    }, { passive: true });
+  });
+
+  // ---- Effekte ----
+
+  function petAnim(cls) {
+    PET_REACTS.forEach(function (c) { progressPetEl.classList.remove(c); });
+    progressPetEl.classList.remove('is-poked');
+    void progressPetEl.offsetWidth;
+    progressPetEl.classList.add(cls);
+  }
+
+  /* Eine Muschel fliegt im Bogen von einem Element zum anderen. Ohne
+     Bewegung (prefers-reduced-motion) oder ohne Web Animations API
+     landet sie sofort. */
+  function flyShell(fromEl, toEl, done) {
+    if (calm.matches || game.quiet || !document.body.animate) { done(); return; }
+
+    var a = fromEl.getBoundingClientRect();
+    var b = toEl.getBoundingClientRect();
+    var x0 = a.left + a.width / 2, y0 = a.top + a.height / 2;
+    var x1 = b.left + b.width / 2, y1 = b.top + b.height / 2;
+    var lift = Math.min(y0, y1) - 60 - Math.abs(x1 - x0) * 0.12;
+
+    var el = document.createElement('span');
+    el.className = 'az-pet-flyer';
+    el.textContent = '🐚';
+    el.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(el);
+
+    function at(x, y, r) { return { transform: 'translate(' + x + 'px,' + y + 'px) translate(-50%,-50%) rotate(' + r + 'deg)' }; }
+
+    var anim = el.animate([
+      at(x0, y0, 0),
+      at((x0 + x1) / 2, lift, 200),
+      at(x1, y1, 400)
+    ], { duration: 650, easing: 'cubic-bezier(0.45, 0, 0.55, 1)' });
+
+    anim.onfinish = function () { el.remove(); done(); };
+  }
+
+  // Kleine Partikel direkt an der Position des Tiers auf dem Balken
+  function petFx(cls, text, count, spread) {
+    if (calm.matches) return;
+    var host = progressPetEl.parentNode;
+    var left = progressPetEl.style.left || '0%';
+    for (var i = 0; i < count; i++) {
+      var fx = document.createElement('span');
+      fx.className = 'az-pet-fx ' + cls;
+      fx.textContent = text;
+      fx.setAttribute('aria-hidden', 'true');
+      fx.style.left = left;
+      fx.style.setProperty('--dx', (spread.x[0] + Math.random() * (spread.x[1] - spread.x[0])).toFixed(0) + 'px');
+      fx.style.setProperty('--dy', (spread.y[0] + Math.random() * (spread.y[1] - spread.y[0])).toFixed(0) + 'px');
+      fx.style.animationDelay = (i * 60) + 'ms';
+      fx.addEventListener('animationend', function () { this.remove(); });
+      host.appendChild(fx);
+    }
+  }
+
+  // ---- Antippen und Füttern ----
 
   /* Konfetti von burstAt() braucht SVG-Koordinaten der Szene, das Tier
      sitzt aber als HTML-Element im Footer außerhalb des SVGs. Da das SVG
      exakt deckungsgleich mit .az-stage liegt und dessen viewBox 1:1 in
      CSS-Pixeln gesetzt wird (siehe layout()/measure()), reicht die
      Differenz der Bounding-Rects ohne weitere Skalierung. */
+  function petBurst() {
+    if (!view) return;
+    var stageRect = stage.getBoundingClientRect();
+    var petRect = progressPetEl.getBoundingClientRect();
+    burstAt(petRect.left + petRect.width / 2 - stageRect.left,
+            petRect.top + petRect.height / 2 - stageRect.top);
+  }
+
+  function justPoke(pet, note) {
+    toast(petEmoji(pet) + ' ' + pet.sound, note);
+    playCue('catch');
+    petBurst();
+    petAnim('is-poked');
+  }
+
+  var SNUB_LINES = ['ignoriert dich', 'dreht dir den Rücken zu', 'tut so, als wäre nichts', 'putzt sich demonstrativ'];
+
+  function snubPet(pet, name, now) {
+    var left = Math.max(1, Math.ceil((petState.snubUntil - now) / 1000));
+    toast(progressPetEl.textContent + ' ' + name + ' ' + SNUB_LINES[petState.snubs++ % SNUB_LINES.length],
+      'Wieder ansprechbar in ' + left + ' s');
+    petAnim('is-react-snub');
+  }
+
   function pokePet() {
     var pet = findShopItem(SHOP_PETS, cosmetics.pet);
     if (!pet.emoji) return;
+    var name = petName(pet);
+    var now = Date.now();
 
-    toast(pet.emoji + ' ' + pet.sound, pet.label);
-    playCue('catch');
-
-    if (view) {
-      var stageRect = stage.getBoundingClientRect();
-      var petRect = progressPetEl.getBoundingClientRect();
-      burstAt(petRect.left + petRect.width / 2 - stageRect.left,
-              petRect.top + petRect.height / 2 - stageRect.top);
+    // Schläft in der Pause: erst wecken, dann füttern
+    if (petMood() === 'sleep') {
+      petState.awakeUntil = now + PET_WAKE_MS;
+      paintPetMood();
+      toast(petEmoji(pet) + ' ' + name + ' blinzelt verschlafen', 'Noch mal antippen zum Füttern');
+      petAnim('is-poked');
+      return;
     }
 
-    progressPetEl.classList.remove('is-poked');
-    void progressPetEl.offsetWidth;
-    progressPetEl.classList.add('is-poked');
+    /* Die Katze lässt sich nicht ständig antippen: mehr als drei Antipper
+       in 20 Sekunden, dann ignoriert sie 15 Sekunden lang alles. Jeder
+       Versuch bekommt eine Meldung mit Restzeit, damit klar ist, warum
+       nichts passiert. Weiteres Antippen verlängert die Sperre nicht. */
+    if (pet.react === 'purr') {
+      if (now < petState.snubUntil) { snubPet(pet, name, now); return; }
+      petState.pokes = petState.pokes.filter(function (t) { return now - t < 20000; });
+      petState.pokes.push(now);
+      if (petState.pokes.length > 3) {
+        petState.snubUntil = now + 15000;
+        petState.pokes = [];
+        snubPet(pet, name, now);
+        return;
+      }
+    }
+
+    if (petGrown(pet.id)) { justPoke(pet, name + ' ist ausgewachsen'); return; }
+    if (game.shells < 1) { justPoke(pet, 'Keine Muschel zum Füttern'); return; }
+
+    // Muschel sofort abziehen, damit schnelles Klicken nicht überfüttert
+    var before = petStage(pet.id);
+    game.shells -= 1;
+    cosmetics.fed[pet.id] = (cosmetics.fed[pet.id] || 0) + 1;
+    var after = petStage(pet.id);
+    renderHud();
+    if (after === PET_STAGES.length - 1) petState.findAt = now + PET_FIND_MS;
+
+    // Formen beim Klick festhalten: bei mehreren Muscheln in der Luft
+    // zählt jede Landung für ihre eigene Stufe, nicht für den Endstand
+    var fromForm = (pet.forms && pet.forms[before]) || pet.emoji;
+    var toForm = (pet.forms && pet.forms[after]) || pet.emoji;
+
+    flyShell(shellsEl, progressPetEl, function () {
+      petFx('az-pet-crumb', '', 4, { x: [-14, 14], y: [14, 24] });
+
+      if (after === before) {
+        renderPetStage();
+        petAnim('is-chomp');
+        if (pet.react === 'hop') petFx('az-pet-spark', '✨', 5, { x: [-90, -30], y: [-18, 10] });
+        playCue('catch');
+        toast(toForm + ' ' + name + ' ' + pet.feed, '-1 Muschel');
+        if (!shopModal.hidden) renderShop();
+        return;
+      }
+
+      evolvePet(fromForm, toForm, function () {
+        renderPetStage();
+        petAnim('is-react-' + pet.react);
+        if (pet.react === 'hop') petFx('az-pet-spark', '✨', 5, { x: [-90, -30], y: [-18, 10] });
+        playCue('level');
+        petBurst();
+        toast(toForm + ' ' + name + (toForm !== fromForm ? ' entwickelt sich' : ' wächst'),
+          PET_STAGES[after].label + (after === PET_STAGES.length - 1 ? ', findet ab jetzt selbst Muscheln' : ''));
+        if (!shopModal.hidden) renderShop();
+      });
+    });
+  }
+
+  /* Formwechsel wie bei einer Entwicklung: weiße Silhouette, die immer
+     schneller zwischen alter und neuer Form springt und dann aufleuchtet.
+     Ohne neue Form, ohne Bewegung oder bei schon laufendem Wechsel geht
+     es direkt weiter. */
+  function evolvePet(fromForm, toForm, done) {
+    if (fromForm === toForm || calm.matches || petState.evolving) { done(); return; }
+
+    var steps = [toForm, fromForm, toForm, fromForm, toForm];
+    var delays = [210, 170, 130, 100, 260];
+    var i = 0;
+    petState.evolving = true;
+    progressPetEl.classList.add('is-evolve');
+
+    (function tick() {
+      if (i < steps.length) {
+        progressPetEl.textContent = steps[i];
+        petState.evolveTimer = setTimeout(tick, delays[i]);
+        i++;
+        return;
+      }
+      petState.evolving = false;
+      progressPetEl.classList.remove('is-evolve');
+      done();
+    })();
   }
 
   progressPetEl.addEventListener('click', pokePet);
@@ -6045,7 +6556,26 @@
   });
 
   progressPetEl.addEventListener('animationend', function (event) {
+    if (event.target !== progressPetEl) return;
     if (event.animationName === 'az-progress-pet-poke') progressPetEl.classList.remove('is-poked');
+    if (event.animationName.indexOf('az-pet-') === 0) {
+      PET_REACTS.forEach(function (c) { progressPetEl.classList.remove(c); });
+    }
+  });
+
+  // ---- Name, im Shop unter der Tierauswahl ----
+
+  function renderPetName() {
+    var pet = findShopItem(SHOP_PETS, cosmetics.pet);
+    petNameWrap.hidden = !pet.emoji;
+    if (!pet.emoji) return;
+    petNameInput.placeholder = 'Name für ' + pet.acc;
+    if (document.activeElement !== petNameInput) petNameInput.value = cosmetics.names[pet.id] || '';
+  }
+
+  petNameInput.addEventListener('input', function () {
+    cosmetics.names[cosmetics.pet] = petNameInput.value;
+    renderPetStage();
   });
 
   function renderShopGrid(el, items, activeId, kind) {
@@ -6059,14 +6589,17 @@
         : item.color;
       var price = owned ? (active ? 'Aktiv' : 'Besitzt') : item.cost + ' Muscheln';
       var locked = !owned && game.shells < item.cost;
+      var label = kind === 'pet' && cosmetics.fed[item.id]
+        ? petName(item) + ' · ' + PET_STAGES[petStage(item.id)].label
+        : item.label;
 
       return '<button type="button" class="az-shop-item' + (active ? ' is-active' : '') +
         (owned ? ' is-owned' : '') + '"' + (locked ? ' disabled' : '') +
         ' data-shop-kind="' + kind + '" data-shop-id="' + item.id +
         '" data-shop-cost="' + item.cost + '">' +
         '<span class="az-shop-swatch' + (isEmoji ? ' az-shop-swatch-emoji' : '') +
-        '" style="background:' + swatch + '">' + (isEmoji ? escapeText(item.emoji) : '') + '</span>' +
-        '<span class="az-shop-label">' + escapeText(item.label) + '</span>' +
+        '" style="background:' + swatch + '">' + (isEmoji ? escapeText(petEmoji(item)) : '') + '</span>' +
+        '<span class="az-shop-label">' + escapeText(label) + '</span>' +
         '<span class="az-shop-price">' + price + '</span>' +
         '</button>';
     }).join('');
@@ -6077,6 +6610,7 @@
     renderShopGrid(shopSkinsEl, SHOP_SKINS, shop.skin, 'skin');
     renderShopGrid(shopCrabColorsEl, SHOP_CRAB_COLORS, cosmetics.crabColor, 'crabColor');
     renderShopGrid(shopPetsEl, SHOP_PETS, cosmetics.pet, 'pet');
+    renderPetName();
   }
 
   function buyShopItem(kind, id, cost) {
@@ -6841,8 +7375,11 @@
   var sassomatWord     = document.getElementById('az-sassomat-word');
   var sassomatHintsEl  = document.getElementById('az-sassomat-hints');
 
+  var sassomatCopyBtn  = document.getElementById('az-sassomat-copy');
+
   var SASSOMAT_WORDS = ['mausig', 'atzig', 'fotzig'];
   var sassomatSpinTimer = null;
+  var sassomatVerdict = null;
 
   function sassomatHash(word) {
     var h = 5381;
@@ -6855,6 +7392,8 @@
   function judgeSassomat() {
     var raw = sassomatInput.value.trim().split(/\s+/)[0] || '';
     clearInterval(sassomatSpinTimer);
+    sassomatCopyBtn.hidden = true;
+    sassomatVerdict = null;
 
     if (!raw) {
       sassomatEyebrow.textContent = 'Noch kein Wort';
@@ -6866,10 +7405,16 @@
 
     var verdict = SASSOMAT_WORDS[sassomatHash(raw.toLowerCase()) % 3];
 
+    function showCopy() {
+      sassomatVerdict = raw + ' ist ' + verdict + '.';
+      sassomatCopyBtn.hidden = false;
+    }
+
     if (calm.matches) {
       sassomatEyebrow.textContent = 'Das Urteil';
       sassomatWord.classList.remove('is-spin', 'is-reveal');
       sassomatWord.textContent = verdict;
+      showCopy();
       return;
     }
 
@@ -6890,6 +7435,7 @@
         sassomatWord.textContent = verdict;
         void sassomatWord.offsetWidth;
         sassomatWord.classList.add('is-reveal');
+        showCopy();
       }
     }, 70);
   }
@@ -6908,6 +7454,23 @@
   sassomatBtn.addEventListener('click', openSassomat);
   sassomatClose.addEventListener('click', closeSassomat);
   sassomatAskBtn.addEventListener('click', judgeSassomat);
+
+  // ---- Omat-Urteil kopieren, etwa "Montag ist mausig." ----
+  sassomatCopyBtn.addEventListener('click', function () {
+    var button = this;
+    if (!sassomatVerdict) return;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(sassomatVerdict).then(function () {
+        flashLabel(button, 'Kopiert');
+      }, function () {
+        flashLabel(button, 'Bitte selbst kopieren');
+      });
+      return;
+    }
+
+    flashLabel(button, 'Bitte selbst kopieren');
+  });
 
   sassomatInput.addEventListener('keydown', function (event) {
     if (event.key === 'Enter') judgeSassomat();
