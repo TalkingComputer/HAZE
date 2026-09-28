@@ -693,6 +693,31 @@
     pointer-events: none;
   }
 
+  /* Saison-Accessoire (siehe SEASON_EVENTS): ersetzt während eines Anlasses
+     das Krönchen. Motiv kommt als SVG über --az-pet-hat, font-size 1em
+     hebt die 0.4em des Krönchens wieder auf, damit die Mütze mit der
+     Fütterungsstufe mitwächst. */
+  .az-progress-pet[data-season]::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -0.34em;
+    width: 0.66em;
+    height: 0.54em;
+    font-size: 1em;
+    transform: translateX(-50%) rotate(-10deg);
+    background: var(--az-pet-hat, none) center / contain no-repeat;
+    pointer-events: none;
+  }
+
+  /* Sonnenbrille sitzt auf den Augen statt auf dem Kopf */
+  .az-progress-pet[data-acc="eyes"]::after {
+    top: 0.37em;
+    width: 0.62em;
+    height: 0.5em;
+    transform: translateX(-50%);
+  }
+
   .az-progress-pet:focus-visible {
     outline: none;
     filter: drop-shadow(0 2px 4px rgba(4, 52, 82, 0.4)) drop-shadow(0 0 0 3px var(--az-ring));
@@ -1641,6 +1666,74 @@
     color: var(--az-muted);
   }
 
+  /* ---------- Adventskalender ----------
+     Countdown-Pille sitzt klein neben Wetter und Tagestipp, der Punkt
+     zeigt ein noch geschlossenes Türchen für heute. */
+  .az-advent-pill {
+    flex: none;
+    position: relative;
+    padding: 3px 9px;
+    font-family: inherit;
+    font-size: 11.5px;
+    line-height: 1.3;
+    white-space: nowrap;
+    color: #1c6b3c;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(220, 255, 232, 0.7));
+  }
+  .az-advent-pill:hover { filter: brightness(1.05); }
+  .az-advent-pill:focus-visible { outline: 2px solid var(--az-ring); outline-offset: 2px; }
+  .az-advent-pill.has-door::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e0262e;
+    box-shadow: 0 0 0 2px #ffffff;
+  }
+
+  .az-advent-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 7px;
+  }
+  @media (max-width: 420px) {
+    .az-advent-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .az-advent-door {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    cursor: pointer;
+    border: 1px dashed rgba(255, 255, 255, 0.75);
+    border-radius: 10px;
+    background: linear-gradient(160deg, #d93a3a, #a82424);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+  .az-advent-door:nth-child(3n+2) { background: linear-gradient(160deg, #2f9e5b, #1c6b3c); }
+  .az-advent-door:nth-child(4n+3) { background: linear-gradient(160deg, #e0a52f, #a8781a); }
+  .az-advent-door:hover:not(:disabled) { filter: brightness(1.1); }
+  .az-advent-door:focus-visible { outline: 2px solid var(--az-ring); outline-offset: 2px; }
+  .az-advent-door:disabled { cursor: default; opacity: 0.45; }
+  .az-advent-door.is-today { box-shadow: 0 0 0 2px #ffd24a, 0 0 12px #ffd24a; }
+  .az-advent-door.is-open {
+    font-size: 20px;
+    border-style: solid;
+    border-color: rgba(10, 90, 134, 0.18);
+    background: #fffdf4;
+    opacity: 1;
+  }
+
   /* ---------- Muschel-Shop ---------- */
 
   .az-shop-section + .az-shop-section { margin-top: 14px; }
@@ -2524,6 +2617,120 @@
     .az-star-dot { opacity: 0.7; }
   }
 
+  /* ---------- Saison-Deko (siehe drawEvent()) ----------
+     Fallende Teilchen, Fledermäuse und Feuerwerk. Strecken kommen als
+     CSS-Variablen pro Element aus dem Skript. Die globale Regel für
+     prefers-reduced-motion oben hält alles an, drawEvent() verteilt die
+     Teilchen dann ruhend über den Himmel. */
+  /* Schneehauben auf den Kacheln zu Weihnachten */
+  .az-wrap[data-event~="xmas"] .az-block::before,
+  .az-wrap[data-event~="xmas"] .az-metric::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: -7px;
+    height: 16px;
+    z-index: 2;
+    background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20240%2016%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%2C9%20Q0%2C1%2010%2C1%20H230%20Q240%2C1%20240%2C9%20Q236%2C13%20230%2C10%20Q224%2C15%20216%2C11%20Q206%2C14%20198%2C10%20Q190%2C16%20180%2C11%20Q170%2C13%20162%2C10%20Q152%2C15%20142%2C11%20Q132%2C13%20124%2C10%20Q114%2C16%20104%2C11%20Q94%2C13%2086%2C10%20Q76%2C15%2066%2C11%20Q56%2C13%2048%2C10%20Q38%2C16%2028%2C11%20Q18%2C13%2010%2C10%20Q4%2C13%200%2C9%20Z%22%20fill%3D%22%23ffffff%22/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+    filter: drop-shadow(0 2px 2px rgba(10, 90, 134, 0.18));
+    pointer-events: none;
+  }
+  .az-wrap[data-event~="xmas"] .az-metric::before { top: -6px; height: 13px; }
+
+  /* Wimpelkette weiß-blau auf den Kacheln zum Oktoberfest */
+  .az-wrap[data-event~="oktoberfest"] .az-block::before,
+  .az-wrap[data-event~="oktoberfest"] .az-metric::before {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: -3px;
+    height: 16px;
+    z-index: 2;
+    background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2236%22%20height%3D%2216%22%20viewBox%3D%220%200%2036%2016%22%3E%3Cpath%20d%3D%22M0%2C2%20Q9%2C4%2018%2C2%20Q27%2C4%2036%2C2%22%20fill%3D%22none%22%20stroke%3D%22%238a6a4a%22%20stroke-width%3D%220.8%22/%3E%3Cpath%20d%3D%22M2%2C2.6%20L16%2C2.6%20L9%2C14%20Z%22%20fill%3D%22%233a86d6%22/%3E%3Cpath%20d%3D%22M20%2C2.6%20L34%2C2.6%20L27%2C14%20Z%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23c9dcef%22%20stroke-width%3D%220.6%22/%3E%3C/svg%3E") left top / 36px 16px repeat-x;
+    filter: drop-shadow(0 2px 2px rgba(10, 90, 134, 0.18));
+    pointer-events: none;
+  }
+
+  /* Anklickbare Fundstücke (Ostereier, Nikolausstiefel) */
+  .az-event-pick { pointer-events: all; cursor: pointer; }
+  .az-event-pick:hover { filter: brightness(1.08) drop-shadow(0 0 3px #ffffff); }
+
+  /* Saures an Halloween: Seite wackelt kurz und verfärbt sich */
+  .az-wrap.is-trick { animation: az-trick 1600ms ease-in-out; }
+  @keyframes az-trick {
+    0%, 100% { transform: none; filter: none; }
+    15% { transform: rotate(-1deg) skewX(2deg); filter: hue-rotate(90deg); }
+    35% { transform: rotate(1deg) skewX(-2deg); filter: hue-rotate(200deg) saturate(1.4); }
+    55% { transform: rotate(-0.6deg); filter: hue-rotate(280deg); }
+    75% { transform: rotate(0.4deg); filter: hue-rotate(330deg); }
+  }
+
+  /* Kürbis-Sonne zu Halloween: Schnitzgesicht flackert wie Kerzenlicht */
+  .az-sun-flicker { animation: az-sun-flicker 2.6s ease-in-out infinite; }
+  @keyframes az-sun-flicker {
+    0%, 100% { opacity: 1; }
+    18% { opacity: 0.82; }
+    22% { opacity: 0.96; }
+    48% { opacity: 0.76; }
+    54% { opacity: 1; }
+    80% { opacity: 0.88; }
+  }
+
+  .az-event-glow { opacity: calc(0.3 + var(--az-night, 0) * 0.7); }
+
+  .az-event-fall {
+    animation: az-event-fall var(--dur, 12s) linear infinite;
+    animation-delay: var(--delay, 0s);
+  }
+  .az-event-spin {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: az-event-spin var(--spin, 2s) linear infinite;
+  }
+  @keyframes az-event-fall {
+    from { transform: translate(0, 0); }
+    to { transform: translate(var(--sway, 0px), var(--fall, 400px)); }
+  }
+  @keyframes az-event-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .az-event-drift {
+    animation: az-event-drift var(--dur, 20s) linear infinite;
+    animation-delay: var(--delay, 0s);
+  }
+  .az-event-flap {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: az-event-flap 380ms ease-in-out infinite alternate;
+  }
+  @keyframes az-event-drift {
+    0% { transform: translate(0, 0); }
+    50% { transform: translate(calc(var(--dx, 600px) / 2), -14px); }
+    100% { transform: translate(var(--dx, 600px), 0); }
+  }
+  @keyframes az-event-flap {
+    to { transform: scaleY(0.35); }
+  }
+
+  .az-event-twinkle { animation: az-event-twinkle 1.6s ease-in-out infinite alternate; }
+  @keyframes az-event-twinkle {
+    to { opacity: 0.35; }
+  }
+
+  .az-event-burst {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: az-event-burst 1400ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  }
+  @keyframes az-event-burst {
+    0% { transform: scale(0.15); opacity: 1; }
+    70% { opacity: 0.9; }
+    100% { transform: scale(1.15); opacity: 0; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .az-overtime, .az-overtime-badge, .az-overtime-vignette {
       animation: none !important;
@@ -3233,6 +3440,13 @@
       <!-- Wasserstand-Markierung: Flutlinie, leuchtet bei 100% Sollzeit -->
       <g id="az-tidemark" aria-hidden="true"></g>
 
+      <!-- Anlass-Deko: Kürbisse, Schnee, Feuerwerk, Ostereier, Konfetti
+           je nach Datum, siehe SEASON_EVENTS und drawEvent(). Liegt über
+           Leuchtturm und Sandburg, damit Lichterkette und Luftschlangen
+           am Turm sichtbar bleiben. -->
+      <g id="az-event" aria-hidden="true"></g>
+      <g id="az-event-sky" aria-hidden="true"></g>
+
       <g id="az-sun"></g>
 
       <g id="az-marker" transform="translate(-200,-200)">
@@ -3335,6 +3549,7 @@
           <span class="az-hud-weather" id="az-real-weather" aria-live="polite"></span>
           <button type="button" class="az-hud-tip" id="az-hud-tip" aria-label="Tipp für heute"></button>
           <div class="az-hud-tip-bubble" id="az-hud-tip-bubble" hidden></div>
+          <button type="button" class="az-advent-pill" id="az-advent-open" hidden></button>
         </div>
 
         <span class="az-shells" id="az-shells">
@@ -3784,6 +3999,18 @@
     </div>
   </div>
 
+  <div class="az-modal" id="az-advent-modal" role="dialog" aria-modal="true" aria-labelledby="az-advent-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge" aria-hidden="true">🎄</span>
+        <span class="az-modal-title" id="az-advent-title">Adventskalender</span>
+        <button type="button" class="btn-close" id="az-advent-close" aria-label="Adventskalender schließen">×</button>
+      </div>
+      <p class="az-modal-sub" id="az-advent-sub"></p>
+      <div class="az-advent-grid" id="az-advent-grid"></div>
+    </div>
+  </div>
+
   <div class="az-modal" id="az-shop-modal" role="dialog" aria-modal="true" aria-labelledby="az-shop-title" hidden>
     <div class="az-modal-card">
       <div class="az-modal-head">
@@ -3877,6 +4104,8 @@
   var chestEl     = document.getElementById('az-chest');
   var tidemarkEl  = document.getElementById('az-tidemark');
   var seasonEl    = document.getElementById('az-season');
+  var eventEl     = document.getElementById('az-event');
+  var eventSkyEl  = document.getElementById('az-event-sky');
   var weatherReportEl = document.getElementById('az-weather-report');
   var suncreamEl  = document.getElementById('az-suncream');
   var suncreamTipEl = document.getElementById('az-suncream-tip');
@@ -4072,7 +4301,7 @@
      nach Kalendermonat. Rein aus dem Datum berechnet, kein eigener
      Zustand, ändert sich also von allein über das Jahr. */
   function drawSeason() {
-    var month = new Date().getMonth(); // 0 = Januar
+    var month = today().getMonth(); // 0 = Januar
     var spots = [0.08, 0.24, 0.4, 0.58, 0.74, 0.9];
     var out = '';
 
@@ -4106,6 +4335,605 @@
     // drawShine() reicht als saisonaler Akzent.
 
     seasonEl.innerHTML = out;
+  }
+
+  // ---- Anlässe: Halloween, Weihnachten, Silvester, Ostern, Fasching ----
+  // Rein aus dem Datum berechnet, wie die Saisondeko. Zum Testen lässt
+  // sich das Datum per ?haze-date=2026-12-24 festlegen.
+
+  var DATE_OVERRIDE = (function () {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(new URLSearchParams(location.search).get('haze-date') || '');
+    return m ? [+m[1], +m[2] - 1, +m[3]] : null;
+  })();
+
+  function today() {
+    var now = new Date();
+    if (DATE_OVERRIDE) now.setFullYear(DATE_OVERRIDE[0], DATE_OVERRIDE[1], DATE_OVERRIDE[2]);
+    return now;
+  }
+
+  function dayOf(y, m, d) { return new Date(y, m, d); }
+
+  function addDays(date, n) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
+  }
+
+  // Anonymer Gregorianischer Algorithmus (Meeus/Jones/Butcher)
+  function easterSunday(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100;
+    var d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+    var g = Math.floor((b - f + 1) / 3);
+    var h = (19 * a + b - d - g + 15) % 30;
+    var i = Math.floor(c / 4), k = c % 4;
+    var l = (32 + 2 * e + 2 * i - h - k) % 7;
+    var m = Math.floor((a + 11 * h + 22 * l) / 451);
+    var month = Math.floor((h + l - 7 * m + 114) / 31);
+    var day = ((h + l - 7 * m + 114) % 31) + 1;
+    return dayOf(y, month - 1, day);
+  }
+
+  // 1. Advent: vierter Sonntag vor dem 25.12.
+  function firstAdvent(y) {
+    var xmas = dayOf(y, 11, 25);
+    return addDays(xmas, -(xmas.getDay() || 7) - 21);
+  }
+
+  /* Oktoberfest: endet am ersten Sonntag im Oktober, frühestens am 3.10.
+     Anstich ist der Samstag 15 Tage vor diesem Sonntag. */
+  function oktoberfest(y) {
+    var oct1 = dayOf(y, 9, 1);
+    var sunday = addDays(oct1, (7 - oct1.getDay()) % 7);
+    var end = sunday.getDate() < 3 ? dayOf(y, 9, 3) : sunday;
+    return [addDays(sunday, -15), end];
+  }
+
+  function inRange(date, from, to) {
+    return date >= from && date <= to;
+  }
+
+  /* Reihenfolge = Vorrang: das erste Element bestimmt Tier-Accessoire und
+     Farbthema, gezeichnet werden alle. Silvester liegt deshalb vor
+     Weihnachten. */
+  function activeEvents(now) {
+    var y = now.getFullYear();
+    var date = dayOf(y, now.getMonth(), now.getDate());
+    var easter = easterSunday(y);
+    var list = [];
+    if (date >= dayOf(y, 11, 31) || date <= dayOf(y, 0, 12)) list.push('newyear');
+    if (now.getMonth() === 11 && now.getDate() === 6) list.push('nikolaus');
+    if (date >= firstAdvent(y) || date <= dayOf(y, 0, 6)) list.push('xmas');
+    if (inRange(date, dayOf(y, 10, 9), dayOf(y, 10, 12))) list.push('martin');
+    var wiesn = oktoberfest(y);
+    if (inRange(date, wiesn[0], wiesn[1])) list.push('oktoberfest');
+    if (inRange(date, dayOf(y, 9, 15), dayOf(y, 9, 31))) list.push('halloween');
+    if (inRange(date, addDays(easter, -7), addDays(easter, 1))) list.push('easter');
+    if (inRange(date, addDays(easter, -52), addDays(easter, -47))) list.push('fasching');
+    return list;
+  }
+
+  /* Wetter-Accessoires fürs Zeitleisten-Tier, aus dem echten Wetter in
+     Eberbach (realWeather, siehe Wetterblock). Ein Anlass hat Vorrang. */
+  var WEATHER_ACCESSORIES = {
+    rain: { label: 'mit Regenschirm',
+      svg: '<path d="M20,4 C9,4 3,11 3,17 Q6,14.5 9,17 Q12,14.5 15,17 Q17.5,14.5 20,17 Q22.5,14.5 25,17 Q28,14.5 31,17 Q34,14.5 37,17 C37,11 31,4 20,4 Z" fill="#45a0e0" stroke="#1f6fa8" stroke-width="1"/>' +
+           '<path d="M20,4 Q14,10 15,17 M20,4 Q26,10 25,17" fill="none" stroke="#1f6fa8" stroke-width="0.8"/>' +
+           '<path d="M20,17 V28 q0,3 -3,3 q-3,0 -3,-3" fill="none" stroke="#5c3a1e" stroke-width="1.8" stroke-linecap="round"/>' +
+           '<circle cx="20" cy="3" r="1.4" fill="#1f6fa8"/>' },
+    snow: { label: 'mit Bommelmütze',
+      svg: '<path d="M5,24 Q5,8 20,8 Q35,8 35,24 Z" fill="#d93a3a"/>' +
+           '<path d="M9,16 h22 M7,20 h26" stroke="#ffffff" stroke-width="1.6" stroke-dasharray="2.4 2"/>' +
+           '<rect x="3" y="22" width="34" height="7" rx="3.5" fill="#ffffff" stroke="#d6dde2" stroke-width="0.8"/>' +
+           '<circle cx="20" cy="6" r="5" fill="#ffffff" stroke="#d6dde2" stroke-width="0.8"/>' },
+    heat: { label: 'mit Sonnenbrille', slot: 'eyes',
+      svg: '<path d="M2,10 H38" stroke="#1d1d1f" stroke-width="2"/>' +
+           '<path d="M4,9 H18 Q18,22 11,22 Q4,22 4,9 Z M22,9 H36 Q36,22 29,22 Q22,22 22,9 Z" fill="#1d1d1f"/>' +
+           '<path d="M7,12 l4,0 M25,12 l4,0" stroke="#6e8bff" stroke-width="1.6" stroke-linecap="round"/>' }
+  };
+
+  function weatherAccessory() {
+    if (!realWeather) return null;
+    var c = realWeather.code;
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86) return 'snow';
+    if ((c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95) return 'rain';
+    if (realWeather.tempC >= 28) return 'heat';
+    return null;
+  }
+
+  function petAccessory() {
+    var hit = eventWith('hat');
+    if (hit) return { id: hit.id, svg: hit.ev.hat, label: hit.ev.hatLabel };
+    var w = weatherAccessory();
+    if (!w) return null;
+    var acc = WEATHER_ACCESSORIES[w];
+    return { id: 'weather-' + w, svg: acc.svg, label: acc.label, slot: acc.slot };
+  }
+
+  function hatUrl(svg) {
+    return 'url("data:image/svg+xml,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 32">' + svg + '</svg>') + '")';
+  }
+
+  function rand(min, max) { return min + Math.random() * (max - min); }
+
+  // Freier Himmel zwischen Kacheln und Wasserlinie, f von 0 (oben) bis 1
+  function skyBandY(f) {
+    var top = view.formBottom + 14, bottom = view.waterY - 40;
+    return bottom > top ? top + (bottom - top) * f : view.waterY - 40;
+  }
+
+  // Strandobjekte teilen sich diese Breiten-Fraktionen mit layout()
+  function beachX(frac) {
+    return Math.round(clamp(view.width * frac, 60, view.width - 60));
+  }
+
+  /* Teilchen, die vom oberen Rand bis zur Wasserlinie rieseln. Ohne
+     Bewegung (calm) liegen sie ruhend über den Himmel verteilt. */
+  function fallers(count, shape) {
+    var out = '';
+    for (var i = 0; i < count; i++) {
+      var x = (view.width * (i + Math.random() * 0.8)) / count;
+      var still = calm.matches;
+      var y = still ? rand(10, view.waterY - 20) : -12;
+      var dur = rand(9, 16);
+      out += '<g class="az-event-fall" style="--dur:' + dur.toFixed(1) + 's;--delay:-' +
+        rand(0, dur).toFixed(1) + 's;--fall:' + (view.waterY + 12) + 'px;--sway:' +
+        rand(-40, 40).toFixed(0) + 'px">' + shape(x.toFixed(0), y.toFixed(0), i) + '</g>';
+    }
+    return out;
+  }
+
+  function pumpkin(x, y, s) {
+    return '<g transform="translate(' + x + ',' + y + ') scale(' + s + ')">' +
+      '<ellipse cx="0" cy="1.5" rx="15" ry="3" fill="#0a5580" opacity="0.14"/>' +
+      '<ellipse cx="-5.5" cy="-8" rx="7" ry="8" fill="#d9661a"/>' +
+      '<ellipse cx="5.5" cy="-8" rx="7" ry="8" fill="#d9661a"/>' +
+      '<ellipse cx="0" cy="-8" rx="7" ry="8.6" fill="#ff8a1d" stroke="#b3530a" stroke-width="0.8"/>' +
+      '<path d="M0,-16 q1,-5 4,-6" fill="none" stroke="#4d7a2a" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<g class="az-event-glow" fill="#ffe27a">' +
+        '<path d="M-7,-9 l2.6,-4 l2.6,4 Z"/><path d="M1.8,-9 l2.6,-4 l2.6,4 Z"/>' +
+        '<path d="M-7,-5.5 q7,6 14,0 l-2.4,1.2 l-1.6,-1.2 l-1.8,1.4 l-1.6,-1.4 l-1.8,1.4 l-1.6,-1.2 Z"/>' +
+      '</g></g>';
+  }
+
+  function bat(y, i) {
+    var dur = rand(16, 24);
+    return '<g transform="translate(-30,' + y.toFixed(0) + ')">' +
+      '<g class="az-event-drift" style="--dx:' + (view.width + 60) + 'px;--dur:' + dur.toFixed(1) +
+        's;--delay:-' + (dur * i / 3).toFixed(1) + 's">' +
+      '<g class="az-event-flap"><path d="M0,-1 C-3,-5 -8,-5 -12,-2 C-9,-2 -8,0 -8,2 C-6,0 -4,0 -2,2 L0,1 ' +
+        'L2,2 C4,0 6,0 8,2 C8,0 9,-2 12,-2 C8,-5 3,-5 0,-1 Z" fill="#2b1d3d" opacity="0.85"/></g>' +
+      '</g></g>';
+  }
+
+  function tree(x, y) {
+    var balls = [[-6, -9, '#ff5a4d'], [5, -12, '#ffd24a'], [-3, -19, '#ffd24a'], [4, -24, '#ff5a4d']];
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<ellipse cx="0" cy="2" rx="14" ry="3" fill="#0a5580" opacity="0.14"/>' +
+      '<rect x="-2" y="-5" width="4" height="7" fill="#7a5233"/>' +
+      '<path d="M-13,-4 L0,-18 L13,-4 Z M-10,-13 L0,-26 L10,-13 Z M-7,-21 L0,-33 L7,-21 Z" fill="#1f7a44" stroke="#15562f" stroke-width="0.8"/>' +
+      balls.map(function (b, i) {
+        return '<circle class="az-event-twinkle" style="animation-delay:' + (i * 0.4) +
+          's" cx="' + b[0] + '" cy="' + b[1] + '" r="1.8" fill="' + b[2] + '"/>';
+      }).join('') +
+      '<path d="M0,-38 l1.4,3 l3.2,0.3 l-2.4,2.1 l0.8,3.1 l-3,-1.7 l-3,1.7 l0.8,-3.1 l-2.4,-2.1 l3.2,-0.3 Z" fill="#ffd24a"/>' +
+      '</g>';
+  }
+
+  // Lichterkette um den Turm zwischen den beiden roten Ringen
+  function lighthouseLights(x, y) {
+    var colors = ['#ff5a4d', '#ffd24a', '#4fdd7e', '#45d0ff'];
+    var out = '<g transform="translate(' + x + ',' + y + ')">' +
+      '<path d="M-8.3,-35 Q0,-29 8.3,-35" fill="none" stroke="#15562f" stroke-width="0.7"/>';
+    [-6, -3, 0, 3, 6].forEach(function (dx, i) {
+      out += '<circle class="az-event-twinkle" style="animation-delay:' + (i * 0.3) + 's" cx="' + dx +
+        '" cy="' + (-32 + Math.abs(dx) * 0.34 - 1).toFixed(1) + '" r="1.7" fill="' + colors[i % colors.length] + '"/>';
+    });
+    return out + '</g>';
+  }
+
+  // Schneehaube auf Kuppel, Galerie und Felssockel des Leuchtturms
+  function lighthouseSnow(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ')" fill="#ffffff">' +
+      '<path d="M-7.4,-73.6 a7.4,6.2 0 0 1 14.8,0 q-1.8,1.8 -3.4,0.4 q-1.8,2 -3.8,0.2 q-2,1.8 -3.8,0 q-1.8,1.6 -3.8,-0.6 Z"/>' +
+      '<path d="M-10.4,-64.6 h20.8 q0.6,2 -1.6,2.2 q-2,1.8 -3.6,0.2 q-2.2,1.6 -4,0 q-2,1.8 -4,0.2 q-2,1.6 -3.6,-0.2 q-2.4,0 -4,-2.4 Z"/>' +
+      '<path d="M-14.6,-5 Q-15,-8.4 -9,-9.2 Q0,-11.4 9,-9.2 Q15,-8.4 14.6,-5 q-2,1.4 -4,0 q-3,1.6 -5.4,0 q-2.6,1.8 -5.2,0 q-2.6,1.6 -5.2,0 q-2.4,1.6 -5,0 q-2,1.6 -4.8,0 Z"/>' +
+      '</g>';
+  }
+
+  function pretzel(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<ellipse cx="0" cy="1.5" rx="11" ry="2.4" fill="#0a5580" opacity="0.14"/>' +
+      '<path d="M-8,0 C-14,-7 -10,-15 -3.5,-12.5 C1,-10.5 1,-5 -1.5,-2.5 M8,0 C14,-7 10,-15 3.5,-12.5 ' +
+        'C-1,-10.5 -1,-5 1.5,-2.5 M-8,0 Q0,-6 8,0" fill="none" stroke="#a0622d" stroke-width="3.4" stroke-linecap="round"/>' +
+      '<g fill="#ffffff"><circle cx="-9" cy="-9" r="0.7"/><circle cx="8" cy="-10" r="0.7"/><circle cx="0" cy="-4.2" r="0.7"/><circle cx="-4" cy="-12" r="0.6"/></g>' +
+      '</g>';
+  }
+
+  function gingerHeart(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ') rotate(-8)">' +
+      '<path d="M0,0 C-12,-8 -12,-20 -5,-20 C-2,-20 0,-17 0,-16 C0,-17 2,-20 5,-20 C12,-20 12,-8 0,0 Z" fill="#a0622d" stroke="#6b3d17" stroke-width="0.8"/>' +
+      '<path d="M0,-3.4 C-9,-9.6 -9,-17.4 -4.8,-17.4 C-2.4,-17.4 0,-15 0,-13.4 C0,-15 2.4,-17.4 4.8,-17.4 C9,-17.4 9,-9.6 0,-3.4 Z" fill="none" stroke="#ffffff" stroke-width="0.9" stroke-dasharray="1.6 1.2"/>' +
+      '<path d="M-6,-12 q6,-2 12,0" fill="none" stroke="#ff8fc4" stroke-width="1.4" stroke-linecap="round"/>' +
+      '<path d="M-5,-20 Q0,-26 5,-20" fill="none" stroke="#3a86d6" stroke-width="1.2"/>' +
+      '</g>';
+  }
+
+  // Riesenrad am Horizont, Rad dreht sich langsam
+  function ferrisWheel(x, y) {
+    var r = 22, spokes = '', cabins = '';
+    var colors = ['#ff5a4d', '#ffd24a', '#45d0ff', '#4fdd7e', '#ff8fc4', '#b77bff', '#ff9a3c', '#3a86d6'];
+    for (var i = 0; i < 8; i++) {
+      var a = (Math.PI * 2 * i) / 8;
+      var cx = (Math.cos(a) * r).toFixed(1), cy = (Math.sin(a) * r).toFixed(1);
+      spokes += '<line x1="0" y1="0" x2="' + cx + '" y2="' + cy + '"/>';
+      cabins += '<circle cx="' + cx + '" cy="' + cy + '" r="2.8" fill="' + colors[i] + '" stroke="#ffffff" stroke-width="0.6"/>';
+    }
+    return '<g transform="translate(' + x + ',' + y + ')" opacity="0.9">' +
+      '<path d="M-14,0 L0,-28 L14,0" fill="none" stroke="#5f7880" stroke-width="2"/>' +
+      '<g transform="translate(0,-28)">' +
+        '<g class="az-event-spin" style="--spin:40s">' +
+          '<circle r="' + r + '" fill="none" stroke="#5f7880" stroke-width="1.6"/>' +
+          '<g stroke="#8fa3b8" stroke-width="0.8">' + spokes + '</g>' + cabins +
+        '</g>' +
+        '<circle r="2.4" fill="#5f7880"/>' +
+      '</g></g>';
+  }
+
+  // Nikolausstiefel, voll oder schon geleert (siehe pickEventItem())
+  function boot(x, y, full) {
+    return '<g transform="translate(' + x + ',' + y + ')"' +
+      (full ? ' class="az-event-pick" data-pick="nikolaus" data-x="' + x + '" data-y="' + (y - 14) + '"' : '') + '>' +
+      '<ellipse cx="2" cy="1.5" rx="12" ry="2.6" fill="#0a5580" opacity="0.14"/>' +
+      (full ? '<circle cx="-3" cy="-23" r="3.4" fill="#d93a3a"/><path d="M-3,-26.4 q1,-2 2.6,-2.4" stroke="#4d7a2a" stroke-width="1" fill="none"/>' +
+              '<circle cx="2.4" cy="-22" r="2.6" fill="#a0622d"/>' +
+              '<path d="M5.5,-19 v-8 q0,-3 3,-3 q3,0 3,3" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>' +
+              '<path d="M5.5,-19 v-8 q0,-3 3,-3 q3,0 3,3" fill="none" stroke="#e0262e" stroke-width="2" stroke-dasharray="1.6 1.6" stroke-linecap="round"/>' : '') +
+      '<path d="M-7,-18 H5 V-6 Q14,-6 15,0 H-7 Z" fill="#d93a3a" stroke="#8a1c1c" stroke-width="1"/>' +
+      '<rect x="-8.5" y="-21" width="15" height="4.6" rx="2.3" fill="#ffffff" stroke="#d6dde2" stroke-width="0.6"/>' +
+      '</g>';
+  }
+
+  // Laterne an einem Stab, leuchtet ganztägig
+  function lantern(x, y, color) {
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<path d="M0,1 L0,-30 Q0,-34 7,-34 V-29" fill="none" stroke="#7a5233" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<ellipse cx="7" cy="-22" rx="9" ry="9" fill="#ffd24a" filter="url(#az-bloom)" opacity="0.8"/>' +
+      '<g class="az-sun-flicker">' +
+        '<rect x="3" y="-29.5" width="8" height="2" rx="0.8" fill="#5c3a1e"/>' +
+        '<ellipse cx="7" cy="-22" rx="5.4" ry="6.4" fill="' + color + '" stroke="#c85a2b" stroke-width="0.8"/>' +
+        '<path d="M5,-24 q2,-2 4,0 q-2,3 -4,0 Z" fill="#fff3b0"/>' +
+        '<rect x="3.6" y="-16.4" width="6.8" height="1.8" rx="0.8" fill="#5c3a1e"/>' +
+      '</g></g>';
+  }
+
+  // Laternenumzug: kleine Lichter ziehen über die Wasserlinie
+  function procession(y, delayFrac) {
+    var dur = 80, lights = '';
+    for (var i = 0; i < 8; i++) {
+      lights += '<circle cx="' + (-i * 13) + '" cy="' + (i % 2 ? -1.5 : 0) + '" r="5" fill="#ffd24a" opacity="0.35"/>' +
+        '<circle cx="' + (-i * 13) + '" cy="' + (i % 2 ? -1.5 : 0) + '" r="2" fill="' + (i % 3 ? '#ffb347' : '#ff8a3c') + '"/>';
+    }
+    return '<g transform="translate(-20,' + y + ')">' +
+      '<g class="az-event-drift" style="--dx:' + (view.width + 140) + 'px;--dur:' + dur + 's;--delay:-' + (dur * delayFrac).toFixed(0) + 's">' +
+      '<g class="az-sun-flicker">' + lights + '</g></g></g>';
+  }
+
+  function egg(n, x, y, fill, band, tilt) {
+    if (eggsFound.has(n)) return '';
+    return '<g class="az-event-pick" data-pick="egg-' + n + '" data-x="' + x + '" data-y="' + (y - 8) + '" ' +
+      'transform="translate(' + x + ',' + y + ') rotate(' + tilt + ') scale(1.4)">' +
+      '<ellipse cx="0" cy="-5.5" rx="4.4" ry="6" fill="' + fill + '" stroke="rgba(10,90,134,0.35)" stroke-width="0.6"/>' +
+      '<path d="M-4.2,-5 l1.4,-1.4 l1.4,1.4 l1.4,-1.4 l1.4,1.4 l1.4,-1.4 l1.4,1.4" fill="none" stroke="' + band + '" stroke-width="1.1"/>' +
+      '</g>';
+  }
+
+  function streamers(x, y) {
+    var colors = ['#ff5a4d', '#ffe04a', '#45d0ff', '#e8409a'];
+    return '<g transform="translate(' + x + ',' + y + ')" fill="none" stroke-width="1.3" stroke-linecap="round">' +
+      colors.map(function (c, i) {
+        var sx = -7 + i * 4.6;
+        return '<path d="M' + sx + ',-54 q-4,5 0,10 q4,5 0,10 q-4,5 0,9" stroke="' + c + '"/>';
+      }).join('') + '</g>';
+  }
+
+  var CONFETTI_COLORS = ['#ff5a4d', '#ffe04a', '#4fdd7e', '#45d0ff', '#e8409a', '#b77bff'];
+  var FIREWORK_COLORS = ['#ffd24a', '#ff8fc4', '#45d0ff', '#4fdd7e', '#ff5a4d', '#ffffff'];
+
+  /* Ein Eintrag pro Anlass. hat: SVG-Accessoire fürs Zeitleisten-Tier,
+     scene: statische Deko am Strand und im Himmel, theme: Gratis-Farbthema
+     im Shop, greet: Gruß beim ersten Laden des Tages. */
+  var SEASON_EVENTS = {
+    halloween: {
+      label: 'Halloween', hatLabel: 'mit Hexenhut',
+      hat: '<ellipse cx="20" cy="27" rx="19" ry="4" fill="#2b1d3d"/>' +
+           '<path d="M11,27 L21,2 Q24,5 29,27 Z" fill="#3b2656"/>' +
+           '<rect x="11.5" y="21" width="17" height="4" fill="#ff8a1d"/>',
+      scene: function () {
+        var castle = beachX(0.78), tower = beachX(0.22);
+        return pumpkin(castle + 36, view.waterY, 1) + pumpkin(castle + 55, view.waterY, 0.7) +
+          pumpkin(tower + 30, view.waterY, 0.85) +
+          [0.2, 0.55, 0.38].map(function (f, i) { return bat(skyBandY(f), i); }).join('');
+      },
+      theme: { '--az-cyan': '#ff8a1d', '--az-cyan-deep': '#b3530a', '--az-tint': 'rgba(255,226,200,0.3)',
+               '--az-bright': '#ffd9a8', '--az-ring': 'rgba(255,138,29,0.45)',
+               '--az-rainbow': 'linear-gradient(90deg, #ff8a1d, #ffb347, #9a6bdb, #6b3fa8, #7ed957, #ff8a1d, #b77bff)' },
+      greet: function () { return ['Happy Halloween 🎃', 'Tipp dein Tier an: Süßes oder Saures?']; },
+      // Sonne wird zum leuchtenden Kürbis. az-sun-core bleibt für setSunGlow().
+      sunRays: '#ff9a3c',
+      sunFace: (function () {
+        var carve = '<path d="M-23,-6 l9,-14 l9,14 Z M5,-6 l9,-14 l9,14 Z M-3.5,4 l3.5,-6 l3.5,6 Z ' +
+          'M-25,9 q25,24 50,0 l-6,3 l-4,-4 l-5,5 l-5,-5 l-5,5 l-5,-5 l-5,5 l-5,-5 l-4,4 Z"/>';
+        return '<ellipse cx="-17" cy="3" rx="21" ry="32" fill="#d9661a"/>' +
+          '<ellipse cx="17" cy="3" rx="21" ry="32" fill="#d9661a"/>' +
+          '<ellipse cx="0" cy="3" rx="21" ry="34" fill="#ff8a1d" stroke="#b3530a" stroke-width="1.4"/>' +
+          '<path d="M-1,-30 q2,-11 11,-13" fill="none" stroke="#4d7a2a" stroke-width="6" stroke-linecap="round"/>' +
+          '<circle id="az-sun-core" r="30" fill="#ffe27a" opacity="0.08"/>' +
+          '<g class="az-sun-flicker">' +
+            '<g fill="#ffd24a" filter="url(#az-bloom)" opacity="0.95">' + carve + '</g>' +
+            '<g fill="#fff3b0">' + carve + '</g>' +
+          '</g>';
+      })(),
+      // Krabbe wird zur Fledermaus, die im Bogen über den Strand flattert
+      crab: {
+        label: 'Fledermaus', fly: true,
+        markup: '<g class="az-event-flap">' +
+          '<path d="M0,-2 C-5,-10 -14,-11 -22,-5 C-17,-5 -15,-1 -15,3 C-12,0 -8,0 -5,4 L0,2 L5,4 ' +
+            'C8,0 12,0 15,3 C15,-1 17,-5 22,-5 C14,-11 5,-10 0,-2 Z" fill="#2b1d3d" stroke="#ffffff" stroke-width="0.9"/>' +
+          '</g>' +
+          '<ellipse cx="0" cy="0" rx="4.6" ry="5.6" fill="#3b2656" stroke="#ffffff" stroke-width="0.9"/>' +
+          '<path d="M-3.4,-4 l0.8,-4 l1.8,3 M3.4,-4 l-0.8,-4 l-1.8,3" fill="#3b2656" stroke="#ffffff" stroke-width="0.7"/>' +
+          '<circle cx="-1.7" cy="-1.2" r="1" fill="#ffd24a"/><circle cx="1.7" cy="-1.2" r="1" fill="#ffd24a"/>'
+      }
+    },
+    xmas: {
+      label: 'Weihnachten', hatLabel: 'mit Weihnachtsmütze',
+      hat: '<path d="M6,24 Q12,3 33,7 Q30,15 34,24 Z" fill="#e0262e"/>' +
+           '<circle cx="33" cy="8" r="4.5" fill="#ffffff"/>' +
+           '<rect x="3" y="21" width="34" height="8" rx="4" fill="#ffffff"/>',
+      scene: function () {
+        return tree(beachX(0.22) + 34, view.waterY) + lighthouseLights(beachX(0.22), view.waterY) +
+          lighthouseSnow(beachX(0.22), view.waterY) +
+          fallers(28, function (x, y, i) {
+            return '<circle cx="' + x + '" cy="' + y + '" r="' + (1.6 + (i % 3) * 0.8) + '" fill="#ffffff" stroke="rgba(10,90,134,0.25)" stroke-width="0.6"/>';
+          });
+      },
+      theme: { '--az-cyan': '#2f9e5b', '--az-cyan-deep': '#1c6b3c', '--az-tint': 'rgba(220,255,232,0.3)',
+               '--az-bright': '#d8ffe6', '--az-ring': 'rgba(47,158,91,0.45)',
+               '--az-rainbow': 'linear-gradient(90deg, #d93a3a, #ff8a80, #ffd24a, #2f9e5b, #1c6b3c, #d93a3a, #ffd24a)' },
+      greet: function (now) {
+        var d = now.getDate(), m = now.getMonth();
+        if (m === 11 && d >= 24 && d <= 26) return ['Frohe Weihnachten 🎄', 'Schnee am Strand und Lichter am Leuchtturm.'];
+        if (m === 0) return ['Heilige Drei Könige naht 👑', 'Der Weihnachtsbaum bleibt bis zum 6. Januar stehen.'];
+        return ['Schöne Adventszeit 🎄', 'Schnee am Strand und Lichter am Leuchtturm.'];
+      },
+      sunHat: '<path d="M6,24 Q12,3 33,7 Q30,15 34,24 Z" fill="#e0262e"/>' +
+              '<circle cx="33" cy="8" r="4.5" fill="#ffffff"/>' +
+              '<rect x="3" y="21" width="34" height="8" rx="4" fill="#ffffff"/>',
+      // Krabbe mit Rentiergeweih und roter Nase
+      crabExtra: '<path d="M-4,-6 l-2,-7 M-5.4,-10.6 l-3.4,-1.6 M-5.8,-12 l0.6,-3.4 ' +
+                   'M4,-6 l2,-7 M5.4,-10.6 l3.4,-1.6 M5.8,-12 l-0.6,-3.4" fill="none" stroke="#7a5233" stroke-width="1.5" stroke-linecap="round"/>' +
+                 '<circle cx="0" cy="1.2" r="1.9" fill="#ff2a2a" stroke="#ffffff" stroke-width="0.5"/>',
+      // Feierabend-Truhe wird zum Geschenk
+      chest: '<rect x="-13" y="-5" width="26" height="13" rx="1.6" fill="#d93a3a" stroke="#8a1c1c" stroke-width="1.1"/>' +
+             '<rect x="-14.5" y="-9" width="29" height="5" rx="1.4" fill="#e8504a" stroke="#8a1c1c" stroke-width="1.1"/>' +
+             '<rect x="-2.2" y="-9" width="4.4" height="17" fill="#ffd24a"/>' +
+             '<path d="M0,-9 C-4,-16 -11,-14 -7,-10 Z M0,-9 C4,-16 11,-14 7,-10 Z" fill="#ffd24a" stroke="#b58a1a" stroke-width="0.8"/>',
+      // Sandburg wird zum Schneemann, Stufen wie bei syncSandcastle()
+      castle: '<ellipse cx="0" cy="4" rx="24" ry="5" fill="#0a5580" opacity="0.12"/>' +
+        '<g class="az-sandcastle-stage" data-stage="1">' +
+          '<path d="M-20,2 Q0,-6 20,2 Z" fill="#ffffff" stroke="#b9d3e2" stroke-width="1"/>' +
+        '</g>' +
+        '<g class="az-sandcastle-stage" data-stage="2">' +
+          '<circle cx="0" cy="-8" r="10.5" fill="#ffffff" stroke="#b9d3e2" stroke-width="1"/>' +
+        '</g>' +
+        '<g class="az-sandcastle-stage" data-stage="3">' +
+          '<circle cx="0" cy="-24" r="7.5" fill="#ffffff" stroke="#b9d3e2" stroke-width="1"/>' +
+          '<path d="M-7,-25 l-9,-6 M-13,-29 l-1,-3 M7,-25 l9,-6 M13,-29 l1,-3" fill="none" stroke="#7a5233" stroke-width="1.3" stroke-linecap="round"/>' +
+          '<g fill="#2a3440"><circle cx="0" cy="-26" r="1"/><circle cx="0" cy="-22" r="1"/><circle cx="0" cy="-10" r="1.1"/></g>' +
+        '</g>' +
+        '<g class="az-sandcastle-stage" data-stage="4">' +
+          '<circle cx="0" cy="-36.5" r="5.8" fill="#ffffff" stroke="#b9d3e2" stroke-width="1"/>' +
+          '<g fill="#2a3440"><circle cx="-2" cy="-37.6" r="0.9"/><circle cx="2" cy="-37.6" r="0.9"/></g>' +
+          '<path d="M0,-36 l6,1.2 l-6,1.2 Z" fill="#ff8a1d"/>' +
+        '</g>' +
+        '<g class="az-sandcastle-stage" data-stage="5">' +
+          '<path d="M-6.5,-31 q6.5,3 13,0 l0,2.4 q-6.5,3 -13,0 Z M3,-29.5 l2.5,7 l2.4,-0.8 l-2,-6.8 Z" fill="#d93a3a"/>' +
+          '<rect x="-6" y="-43.5" width="12" height="2" rx="1" fill="#2a3440"/>' +
+          '<rect x="-4" y="-50" width="8" height="7" rx="1" fill="#2a3440"/>' +
+          '<rect x="-4" y="-45.5" width="8" height="1.6" fill="#d93a3a"/>' +
+        '</g>'
+    },
+    newyear: {
+      label: 'Silvester', hatLabel: 'mit Partyhut',
+      hat: '<path d="M11,30 L20,2 L29,30 Z" fill="#ffd24a"/>' +
+           '<path d="M14.5,19 L25.5,19 M13,24.5 L27,24.5 M16.5,13 L23.5,13" stroke="#6e7bff" stroke-width="2.2"/>' +
+           '<circle cx="20" cy="3" r="3.2" fill="#ff5a4d"/>',
+      scene: function () { return ''; },   // Feuerwerk kommt zeitgesteuert, siehe launchFirework()
+      theme: { '--az-cyan': '#3d47b3', '--az-cyan-deep': '#232a7a', '--az-tint': 'rgba(226,228,255,0.28)',
+               '--az-bright': '#ffe9a8', '--az-ring': 'rgba(61,71,179,0.45)',
+               '--az-rainbow': 'linear-gradient(90deg, #ffd24a, #ffe9a8, #6e7bff, #b77bff, #ff8fc4, #ffd24a, #45d0ff)' },
+      greet: function (now) {
+        return now.getMonth() === 11 ? ['Guten Rutsch 🎆', 'Heute Abend knallt es über dem Wasser.']
+                                     : ['Frohes neues Jahr 🎆', 'Das Feuerwerk läuft noch bis zum 12. Januar.'];
+      }
+    },
+    easter: {
+      label: 'Ostern', hatLabel: 'mit Hasenohren',
+      hat: '<ellipse cx="13" cy="15" rx="5" ry="13" transform="rotate(-14 13 15)" fill="#ffffff" stroke="#e8b8c8" stroke-width="1"/>' +
+           '<ellipse cx="13" cy="16" rx="2.3" ry="9" transform="rotate(-14 13 16)" fill="#ffc2d6"/>' +
+           '<ellipse cx="27" cy="15" rx="5" ry="13" transform="rotate(14 27 15)" fill="#ffffff" stroke="#e8b8c8" stroke-width="1"/>' +
+           '<ellipse cx="27" cy="16" rx="2.3" ry="9" transform="rotate(14 27 16)" fill="#ffc2d6"/>',
+      scene: function () {
+        var castle = beachX(0.78), tower = beachX(0.22), y = view.waterY + 1;
+        return egg(1, tower - 28, y, '#ffb3c7', '#ffffff', -12) + egg(2, tower - 40, y, '#caffbf', '#6fc27a', 8) +
+          egg(3, castle + 34, y, '#9bf6ff', '#6e8bff', 10) + egg(4, castle + 46, y, '#fdffb6', '#ff9a3c', -6) +
+          egg(5, castle - 34, y, '#bdb2ff', '#ffffff', 14);
+      },
+      theme: { '--az-cyan': '#6fc27a', '--az-cyan-deep': '#3f8f4c', '--az-tint': 'rgba(234,255,216,0.32)',
+               '--az-bright': '#eaffd8', '--az-ring': 'rgba(111,194,122,0.45)',
+               '--az-rainbow': 'linear-gradient(90deg, #ffb3c7, #ffd6a5, #fdffb6, #caffbf, #9bf6ff, #a0c4ff, #bdb2ff)' },
+      greet: function () { return ['Frohe Ostern 🐣', 'Am Strand liegen 5 bunte Eier. Findest du alle?']; }
+    },
+    nikolaus: {
+      scene: function () {
+        return boot(beachX(0.78) - 36, view.waterY + 1, !nikolausTaken());
+      },
+      greet: function () { return ['Der Nikolaus war da 🥾', 'Am Strand steht ein gefüllter Stiefel.']; }
+    },
+    martin: {
+      label: 'Sankt Martin', hatLabel: 'mit Laterne',
+      hat: '<path d="M3,31 Q5,6 27,3" fill="none" stroke="#7a5233" stroke-width="2" stroke-linecap="round"/>' +
+           '<path d="M27,3 V9" stroke="#5c3a1e" stroke-width="1"/>' +
+           '<circle cx="27" cy="17" r="10" fill="#ffd24a" opacity="0.35"/>' +
+           '<rect x="22" y="8.5" width="10" height="2.4" rx="1" fill="#5c3a1e"/>' +
+           '<ellipse cx="27" cy="17" rx="7" ry="7.6" fill="#ffb347" stroke="#c85a2b" stroke-width="1"/>' +
+           '<path d="M24,15 q3,-3 6,0 q-3,4 -6,0 Z" fill="#fff3b0"/>' +
+           '<rect x="22.5" y="23.6" width="9" height="2.2" rx="1" fill="#5c3a1e"/>',
+      scene: function () {
+        var castle = beachX(0.78), tower = beachX(0.22);
+        return lantern(tower + 26, view.waterY, '#ffb347') + lantern(castle + 34, view.waterY, '#ff8a3c') +
+          lantern(castle - 42, view.waterY, '#ffd24a') +
+          procession(view.waterY - 6, 0.1) + procession(view.waterY - 6, 0.6);
+      },
+      crab: {
+        label: 'Martinsgans',
+        markup: '<path d="M-12,-2 l-5,-3.4 l1.4,5.6 Z" fill="#ffffff" stroke="#b9c4cc" stroke-width="0.8"/>' +
+          '<ellipse cx="-2" cy="0" rx="10.5" ry="6.6" fill="#ffffff" stroke="#b9c4cc" stroke-width="0.9"/>' +
+          '<path d="M-7,-1 q5,4 10,0" fill="none" stroke="#d6dde2" stroke-width="1"/>' +
+          '<path d="M6,-2 Q10,-7 8,-14" fill="none" stroke="#ffffff" stroke-width="4.6" stroke-linecap="round"/>' +
+          '<circle cx="8.4" cy="-15" r="3.4" fill="#ffffff" stroke="#b9c4cc" stroke-width="0.6"/>' +
+          '<path d="M11.2,-16 l5,1.2 l-5,1.4 Z" fill="#ff9a3c"/>' +
+          '<circle cx="9.4" cy="-16" r="0.8" fill="#2a3440"/>' +
+          '<path d="M-5,6 v5 l-2,0.6 M1,6 v5 l2,0.6" fill="none" stroke="#ff9a3c" stroke-width="1.4" stroke-linecap="round"/>'
+      },
+      theme: { '--az-cyan': '#e08a1d', '--az-cyan-deep': '#9a560a', '--az-tint': 'rgba(255,236,206,0.3)',
+               '--az-bright': '#ffe3a8', '--az-ring': 'rgba(224,138,29,0.45)',
+               '--az-rainbow': 'linear-gradient(90deg, #ffd24a, #ffb347, #ff8a3c, #ff5a4d, #c85a2b, #ffd24a, #ffe9a8)' },
+      greet: function (now) {
+        return now.getDate() === 11 ? ['Sankt Martin 🏮', 'Heute zieht der Laternenumzug über den Strand.']
+                                    : ['Bald ist Sankt Martin 🏮', 'Die Laternen leuchten schon den ganzen Tag.'];
+      }
+    },
+    oktoberfest: {
+      label: 'Oktoberfest', hatLabel: 'mit Tirolerhut',
+      hat: '<path d="M28,19 Q37,4 31,0 Q32,10 25,19 Z" fill="#6b8f3a" stroke="#3f5a22" stroke-width="0.6"/>' +
+           '<path d="M7,24 Q8,10 20,9 Q32,10 33,24 Z" fill="#3f6b3a"/>' +
+           '<path d="M1,25 Q20,19 39,25 Q20,31 1,25 Z" fill="#2f5230"/>' +
+           '<path d="M7.6,20.5 Q20,17 32.4,20.5 V23 Q20,19.6 7.6,23 Z" fill="#c9302c"/>',
+      sunHat: '<path d="M28,19 Q37,4 31,0 Q32,10 25,19 Z" fill="#6b8f3a" stroke="#3f5a22" stroke-width="0.6"/>' +
+              '<path d="M7,24 Q8,10 20,9 Q32,10 33,24 Z" fill="#3f6b3a"/>' +
+              '<path d="M1,25 Q20,19 39,25 Q20,31 1,25 Z" fill="#2f5230"/>' +
+              '<path d="M7.6,20.5 Q20,17 32.4,20.5 V23 Q20,19.6 7.6,23 Z" fill="#c9302c"/>',
+      scene: function () {
+        var castle = beachX(0.78), tower = beachX(0.22);
+        return ferrisWheel(Math.round(clamp(view.width * 0.87, 60, view.width - 90)), view.waterY) +
+          pretzel(tower + 30, view.waterY - 1) + pretzel(castle - 36, view.waterY - 1) +
+          gingerHeart(castle + 36, view.waterY + 1);
+      },
+      theme: { '--az-cyan': '#3a86d6', '--az-cyan-deep': '#1f5a9e', '--az-tint': 'rgba(226,240,255,0.32)',
+               '--az-bright': '#d6ebff', '--az-ring': 'rgba(58,134,214,0.45)',
+               '--az-rainbow': 'linear-gradient(90deg, #3a86d6, #ffffff, #6fb2f0, #ffffff, #1f5a9e, #d6ebff, #3a86d6)' },
+      greet: function () { return ["O'zapft is! 🥨", 'Wiesn-Zeit am Strand mit Riesenrad und Brezn.']; }
+    },
+    fasching: {
+      label: 'Fasching', hatLabel: 'mit Narrenkappe',
+      hat: '<path d="M6,26 Q5,12 2,6 Q12,9 15,19 Q17,6 20,1 L20,26 Z" fill="#e0262e"/>' +
+           '<path d="M34,26 Q35,12 38,6 Q28,9 25,19 Q23,6 20,1 L20,26 Z" fill="#2f9e5b"/>' +
+           '<rect x="5" y="23" width="30" height="6" rx="3" fill="#ffd24a"/>' +
+           '<g fill="#ffd24a"><circle cx="3" cy="6" r="2.6"/><circle cx="20" cy="2.4" r="2.6"/><circle cx="37" cy="6" r="2.6"/></g>',
+      scene: function () {
+        return streamers(beachX(0.22), view.waterY) +
+          fallers(30, function (x, y, i) {
+            return '<rect class="az-event-spin" style="--spin:' + (1.2 + (i % 4) * 0.5) + 's" x="' + x + '" y="' + y +
+              '" width="4" height="2.4" fill="' + CONFETTI_COLORS[i % CONFETTI_COLORS.length] + '"/>';
+          });
+      },
+      theme: { '--az-cyan': '#e8409a', '--az-cyan-deep': '#a8246a', '--az-tint': 'rgba(255,214,239,0.3)',
+               '--az-bright': '#ffd6ef', '--az-ring': 'rgba(232,64,154,0.45)',
+               '--az-rainbow': 'linear-gradient(90deg, #ff5a4d, #ffe04a, #4fdd7e, #45d0ff, #e8409a, #ff9a3c, #b77bff)' },
+      greet: function () { return ['Helau! 🎭', 'Konfetti rieselt über dem Wasser.']; }
+    }
+  };
+
+  var currentEvents = activeEvents(today());
+  var eggsFound = new Set();   // Ostereiersuche, gilt wie die Muscheln nur für diese Sitzung
+  var EGG_COUNT = 5;
+
+  function storedFlag(key) {
+    try { return localStorage.getItem(key) === '1'; } catch (e) { return false; }
+  }
+  function storeFlag(key) {
+    try { localStorage.setItem(key, '1'); } catch (e) {}
+  }
+
+  // Stiefel nur einmal pro Jahr leeren, auch über ein Neuladen hinweg
+  function nikolausTaken() {
+    return storedFlag('az-nikolaus-' + today().getFullYear());
+  }
+
+  // Erstes aktives Ereignis, das dieses Szenen-Teil ersetzt (siehe
+  // buildSun(), buildCrab(), buildChest(), buildSandcastle())
+  function eventPart(key) {
+    for (var i = 0; i < currentEvents.length; i++) {
+      var part = SEASON_EVENTS[currentEvents[i]][key];
+      if (part) return part;
+    }
+    return null;
+  }
+
+  // Erstes aktives Ereignis mit diesem Feld, samt ID (siehe Vorrang in
+  // activeEvents()). Nikolaus hat etwa keine eigene Mütze, Weihnachten schon.
+  function eventWith(key) {
+    for (var i = 0; i < currentEvents.length; i++) {
+      var ev = SEASON_EVENTS[currentEvents[i]];
+      if (ev[key]) return { id: currentEvents[i], ev: ev };
+    }
+    return null;
+  }
+
+  /* Setzt data-event an .az-wrap (Schneehauben auf den Kacheln, siehe CSS)
+     und baut die Szenen-Teile neu, die ein Anlass ersetzt. */
+  function applyEventDecor() {
+    document.querySelector('.az-wrap').setAttribute('data-event', currentEvents.join(' '));
+    buildSun();
+    buildCrab();
+    buildChest();
+    buildSandcastle();
+    if (view) { syncSun(minutesNow()); calculate(); }
+  }
+
+  function drawEvent() {
+    eventEl.innerHTML = currentEvents.map(function (id) { return SEASON_EVENTS[id].scene(); }).join('');
+  }
+
+  // Feuerwerk an Silvester: einzelne Raketen, abends dichter getaktet
+  function launchFirework() {
+    if (!view || calm.matches || document.hidden || currentEvents.indexOf('newyear') === -1) return;
+    // Links und rechts neben den Kacheln ist der ganze Himmel frei,
+    // darüber nur der Streifen unter den Kacheln
+    var left = form.offsetLeft, right = form.offsetLeft + form.offsetWidth;
+    var gutter = Math.min(left, view.width - right);
+    var x, y;
+    if (gutter > 60 && Math.random() < 0.6) {
+      x = Math.random() < 0.5 ? rand(24, left - 24) : rand(right + 24, view.width - 24);
+      y = rand(0.12, 0.8) * view.waterY;
+    } else {
+      x = rand(0.08, 0.92) * view.width;
+      y = skyBandY(Math.random());
+    }
+    var color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+    var rays = '';
+    for (var i = 0; i < 12; i++) {
+      var a = (Math.PI * 2 * i) / 12;
+      rays += '<line x1="' + (Math.cos(a) * 4).toFixed(1) + '" y1="' + (Math.sin(a) * 4).toFixed(1) +
+        '" x2="' + (Math.cos(a) * 22).toFixed(1) + '" y2="' + (Math.sin(a) * 22).toFixed(1) + '"/>';
+    }
+    var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform', 'translate(' + x.toFixed(0) + ',' + y.toFixed(0) + ')');
+    g.innerHTML = '<g class="az-event-burst" stroke="' + color + '" stroke-width="1.8" stroke-linecap="round">' +
+      rays + '<circle r="2.4" fill="' + color + '" stroke="none"/></g>';
+    eventSkyEl.appendChild(g);
+    setTimeout(function () { if (g.parentNode) g.parentNode.removeChild(g); }, 1500);
   }
 
   function star(x, y, size) {
@@ -4181,9 +5009,11 @@
   var sunParts = {};
 
   function buildSun() {
+    var face = eventPart('sunFace');
+    var hat = eventPart('sunHat');
     var rays = '';
     for (var i = 0; i < 12; i++) {
-      rays += '<rect x="-2.6" y="-62" width="5.2" height="17" rx="2.6" fill="#ffd45c" ' +
+      rays += '<rect x="-2.6" y="-62" width="5.2" height="17" rx="2.6" fill="' + (eventPart('sunRays') || '#ffd45c') + '" ' +
               'transform="rotate(' + i * 30 + ')"/>';
     }
 
@@ -4203,6 +5033,7 @@
       '<g id="az-sun-rays-g" opacity="0.6">' +
         '<g class="az-sun-rays" style="transform-box: fill-box; transform-origin: center;">' + rays + '</g>' +
       '</g>' +
+      (face ? face :
       '<circle r="37" fill="url(#az-sun-face)"/>' +
       '<circle id="az-sun-core" r="37" fill="#fffdf2" opacity="0.08"/>' +
       '<ellipse cx="-22" cy="9" rx="6.8" ry="4.4" fill="#ff9166" opacity="0.42"/>' +
@@ -4212,7 +5043,8 @@
       '<ellipse cx="-13" cy="-12.5" rx="1.5" ry="1.8" fill="#ffffff" opacity="0.85"/>' +
       '<ellipse cx="16" cy="-12.5" rx="1.5" ry="1.8" fill="#ffffff" opacity="0.85"/>' +
       '<path d="M-14.5,7 Q0,22 14.5,7" fill="none" stroke="#b4661a" stroke-width="4.4" stroke-linecap="round"/>' +
-      '<ellipse cx="-13" cy="-24" rx="13" ry="7" fill="#ffffff" opacity="0.3" transform="rotate(-22 -13 -24)"/>';
+      '<ellipse cx="-13" cy="-24" rx="13" ry="7" fill="#ffffff" opacity="0.3" transform="rotate(-22 -13 -24)"/>') +
+      (hat ? '<g transform="translate(6,-40) rotate(18) scale(1.9) translate(-20,-16)">' + hat + '</g>' : '');
 
     sunParts.bloom = document.getElementById('az-sun-bloom-g');
     sunParts.shafts = document.getElementById('az-sun-shafts-g');
@@ -4404,7 +5236,10 @@
     var span = b.at - a.at;
     var t = span > 0 ? clamp((m - a.at) / span, 0, 1) : 0;
 
-    starfieldEl.style.opacity = (a.op + (b.op - a.op) * t).toFixed(2);
+    var night = (a.op + (b.op - a.op) * t).toFixed(2);
+    starfieldEl.style.opacity = night;
+    // Kürbisgesichter und Lichterketten glühen mit dem Sternenhimmel auf
+    eventEl.style.setProperty('--az-night', night);
   }
 
   // ---- Fortschritt ----
@@ -4603,6 +5438,8 @@
   }
 
   function buildCrab() {
+    var critter = eventPart('crab');
+    if (critter) { crabEl.innerHTML = critter.markup; return; }
     crabEl.innerHTML =
       '<ellipse cx="0" cy="0" rx="11" ry="7.5" fill="url(#az-crab-grad)" stroke="#ffffff" stroke-width="1.1"/>' +
       '<path d="M-9,-4 C-15,-9 -19,-7 -20,-2" fill="none" stroke="url(#az-crab-grad)" stroke-width="2.4" stroke-linecap="round"/>' +
@@ -4611,7 +5448,7 @@
       '<circle cx="20" cy="-2" r="2.6" fill="url(#az-crab-grad)" stroke="#ffffff" stroke-width="0.9"/>' +
       '<path d="M-6,4 l-3,5M-2,5.5 l-1.4,5.6M2,5.5 l1.4,5.6M6,4 l3,5" fill="none" stroke="#b8442a" stroke-width="1.6" stroke-linecap="round"/>' +
       '<circle cx="-3.2" cy="-2" r="1" fill="#2a1208"/>' +
-      '<circle cx="3.2" cy="-2" r="1" fill="#2a1208"/>';
+      '<circle cx="3.2" cy="-2" r="1" fill="#2a1208"/>' + (eventPart('crabExtra') || '');
   }
 
   var crawl = null;
@@ -4646,6 +5483,9 @@
 
     var x = crawl.x0 + crawl.span * p;
     var wobble = Math.sin(p * 26) * 1.6;
+    // Fliegende Ersatzfigur (Halloween-Fledermaus) hebt im Bogen ab
+    var critter = eventPart('crab');
+    if (critter && critter.fly) wobble = Math.sin(p * 18) * 4 - Math.sin(p * Math.PI) * 46 - 14;
     crawl.x = x;
     crawl.y2 = crawl.y + wobble;
 
@@ -4766,6 +5606,8 @@
   var CHEST_OPEN_WINDOW_MIN = 30;
 
   function buildChest() {
+    var gift = eventPart('chest');
+    if (gift) { chestEl.innerHTML = gift; return; }
     chestEl.innerHTML =
       '<rect x="-13" y="-6" width="26" height="14" rx="2" fill="#a9764a" stroke="#5c3a1e" stroke-width="1.2"/>' +
       '<path d="M-13,-6 a13,7 0 0 1 26,0 Z" fill="#c48a54" stroke="#5c3a1e" stroke-width="1.2"/>' +
@@ -4965,6 +5807,8 @@
   // syncSandcastle() über MILESTONES. Rein dekorativ, kein Klick-Ziel.
 
   function buildSandcastle() {
+    var castle = eventPart('castle');
+    if (castle) { sandcastleEl.innerHTML = castle; return; }
     sandcastleEl.innerHTML =
       '<ellipse cx="0" cy="4" rx="26" ry="5" fill="#0a5580" opacity="0.12"/>' +
       '<g class="az-sandcastle-stage" data-stage="1">' +
@@ -5855,7 +6699,7 @@
     burstAt(caught.x || 0, caught.y2 || 0);
     crabEl.setAttribute('opacity', '0');
 
-    toast('Krabbe erwischt', '+1 Muschel');
+    toast(((eventPart('crab') || {}).label || 'Krabbe') + ' erwischt', '+1 Muschel');
     pulse(shellsEl);
     playCue('catch');
     unlock('crab');
@@ -5924,6 +6768,44 @@
     playCue('catch');
     game.caught.treasure = (game.caught.treasure || 0) + 1;
     renderCatches();
+    renderHud();
+  });
+
+  // ---- Anlass-Fundstücke: Ostereier, Nikolausstiefel ----
+
+  eventEl.addEventListener('pointerdown', function (event) {
+    var item = event.target.closest('[data-pick]');
+    if (!item) return;
+    event.preventDefault();
+    var pick = item.getAttribute('data-pick');
+    var x = Number(item.getAttribute('data-x')), y = Number(item.getAttribute('data-y'));
+    var gain = 1, title, note;
+
+    if (pick === 'nikolaus') {
+      if (nikolausTaken()) return;
+      storeFlag('az-nikolaus-' + today().getFullYear());
+      gain = 2;
+      title = 'Stiefel geleert 🍎';
+      note = '+2 Muscheln vom Nikolaus';
+    } else {
+      var n = Number(pick.slice(4));
+      if (eggsFound.has(n)) return;
+      eggsFound.add(n);
+      title = 'Osterei gefunden (' + eggsFound.size + ' von ' + EGG_COUNT + ')';
+      note = '+1 Muschel';
+      if (eggsFound.size === EGG_COUNT) {
+        gain += 3;
+        title = 'Alle Eier gefunden 🐣';
+        note = '+4 Muscheln';
+      }
+    }
+
+    game.shells += gain;
+    burstAt(x, y);
+    drawEvent();
+    toast(title, note);
+    pulse(shellsEl);
+    playCue('catch');
     renderHud();
   });
 
@@ -6179,6 +7061,153 @@
     return list[0];
   }
 
+  /* Anlass-Farbthema: steht während des Zeitraums gratis im Shop und
+     zieht automatisch an, solange das Standard-Thema aktiv ist. Eine
+     eigene Wahl im Shop bleibt unangetastet. Nach dem Zeitraum fällt ein
+     noch aktives Anlass-Thema auf den Ozean zurück. */
+  function syncEventTheme() {
+    var hit = eventWith('theme');
+    var event = hit && hit.ev;
+    var id = hit ? 'event-' + hit.id : null;
+    var wasEvent = shop.theme.indexOf('event-') === 0;
+
+    for (var i = SHOP_THEMES.length - 1; i >= 0; i--) {
+      if (SHOP_THEMES[i].id.indexOf('event-') === 0 && SHOP_THEMES[i].id !== id) SHOP_THEMES.splice(i, 1);
+    }
+    if (id && SHOP_THEMES.every(function (t) { return t.id !== id; })) {
+      SHOP_THEMES.push({ id: id, label: event.label, cost: 0, vars: event.theme });
+      shop.owned.add(id);
+    }
+
+    if (id && (shop.theme === 'ocean' || (wasEvent && shop.theme !== id))) applyShopTheme(id);
+    else if (!id && wasEvent) applyShopTheme('ocean');
+  }
+
+  /* Prüft einmal pro Minute, ob ein Anlass beginnt oder endet, und zieht
+     Szene, Tier und Farben nach. */
+  function refreshEvents() {
+    paintAdventPill();
+    var next = activeEvents(today());
+    if (next.join() === currentEvents.join()) return;
+    currentEvents = next;
+    applyEventDecor();
+    if (view) drawEvent();
+    syncEventTheme();
+    renderPetStage();
+    greetEvent();
+  }
+
+  // ---- Adventskalender mit Countdown bis Heiligabend ----
+
+  var ADVENT_GIFTS = ['⭐', '🍪', '🕯️', '❄️', '🍊', '🥾', '🦌', '🔔', '🧦', '☕', '🎁', '⛄',
+                      '🍫', '🌰', '🎶', '🧣', '🥨', '🍎', '✨', '🌟', '🛷', '🧤', '🎀', '🎄'];
+  // Feste, gemischte Reihenfolge der Türchen im Raster
+  var ADVENT_ORDER = [7, 15, 2, 21, 11, 18, 4, 23, 9, 1, 14, 20, 5, 12, 24, 17, 3, 10, 22, 8, 16, 6, 19, 13];
+
+  var adventPill  = document.getElementById('az-advent-open');
+  var adventModal = document.getElementById('az-advent-modal');
+  var adventGrid  = document.getElementById('az-advent-grid');
+  var adventSub   = document.getElementById('az-advent-sub');
+
+  function adventKey() { return 'az-advent-' + today().getFullYear(); }
+
+  function adventOpened() {
+    try { return JSON.parse(localStorage.getItem(adventKey()) || '[]'); } catch (e) { return []; }
+  }
+
+  function adventState() {
+    var now = today();
+    var y = now.getFullYear();
+    var date = dayOf(y, now.getMonth(), now.getDate());
+    var eve = dayOf(y, 11, 24);
+    if (date < firstAdvent(y) || date > eve) return null;
+    return {
+      daysLeft: Math.round((eve - date) / 86400000),
+      // Türchen 1 bis heute, im Advent vor dem 1.12. noch keins
+      maxDoor: now.getMonth() === 11 ? now.getDate() : 0
+    };
+  }
+
+  function paintAdventPill() {
+    var st = adventState();
+    adventPill.hidden = !st;
+    if (!st) return;
+    var todayOpen = st.maxDoor === 0 || adventOpened().indexOf(st.maxDoor) !== -1;
+    setText(adventPill, st.daysLeft === 0 ? '🎄 Heiligabend' :
+      '🎄 Noch ' + st.daysLeft + (st.daysLeft === 1 ? ' Tag' : ' Tage'));
+    adventPill.classList.toggle('has-door', !todayOpen);
+    adventPill.setAttribute('aria-label', 'Adventskalender, ' + (st.daysLeft === 0 ? 'heute ist Heiligabend' :
+      'noch ' + st.daysLeft + ' Tage bis Heiligabend') + (todayOpen ? '' : ', heutiges Türchen ist noch zu'));
+  }
+
+  function renderAdvent() {
+    var st = adventState() || { daysLeft: 0, maxDoor: 0 };
+    var opened = adventOpened();
+    setText(adventSub, st.maxDoor === 0 ? 'Das erste Türchen öffnet sich am 1. Dezember.' :
+      'Jeden Tag ein Türchen, verpasste lassen sich nachholen. Am 6. und 24. gibt es mehr.');
+    adventGrid.innerHTML = ADVENT_ORDER.map(function (d) {
+      var open = opened.indexOf(d) !== -1;
+      var locked = d > st.maxDoor;
+      return '<button type="button" class="az-advent-door' + (open ? ' is-open' : '') +
+        (d === st.maxDoor ? ' is-today' : '') + '" data-door="' + d + '"' + (locked || open ? ' disabled' : '') +
+        ' aria-label="Türchen ' + d + (open ? ', geöffnet' : locked ? ', noch zu' : '') + '">' +
+        (open ? ADVENT_GIFTS[d - 1] : d) + '</button>';
+    }).join('');
+  }
+
+  function openDoor(d) {
+    var st = adventState();
+    var opened = adventOpened();
+    if (!st || d > st.maxDoor || opened.indexOf(d) !== -1) return;
+    opened.push(d);
+    try { localStorage.setItem(adventKey(), JSON.stringify(opened)); } catch (e) {}
+    var gain = d === 6 || d === 24 ? 3 : 1;
+    game.shells += gain;
+    toast('Türchen ' + d + ' ' + ADVENT_GIFTS[d - 1], '+' + gain + (gain === 1 ? ' Muschel' : ' Muscheln'));
+    pulse(shellsEl);
+    playCue('catch');
+    renderHud();
+    renderAdvent();
+    paintAdventPill();
+    var btn = adventGrid.querySelector('[data-door="' + d + '"]');
+    if (btn) btn.focus();
+  }
+
+  function closeAdvent() {
+    adventModal.hidden = true;
+    adventPill.focus();
+  }
+
+  adventPill.addEventListener('click', function () {
+    renderAdvent();
+    adventModal.hidden = false;
+    document.getElementById('az-advent-close').focus();
+  });
+  document.getElementById('az-advent-close').addEventListener('click', closeAdvent);
+  adventModal.addEventListener('click', function (event) {
+    if (event.target === adventModal) { closeAdvent(); return; }
+    var door = event.target.closest('[data-door]');
+    if (door) openDoor(Number(door.dataset.door));
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !adventModal.hidden) closeAdvent();
+  });
+
+  // Gruß einmal pro Tag und Anlass
+  function greetEvent() {
+    var hit = eventWith('greet');
+    if (!hit) return;
+    var event = hit.ev;
+    var now = today();
+    var key = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate() + ':' + hit.id;
+    try {
+      if (localStorage.getItem('az-event-greeted') === key) return;
+      localStorage.setItem('az-event-greeted', key);
+    } catch (e) {}
+    var text = event.greet(now);
+    toast(text[0], text[1]);
+  }
+
   /* Krabbenfarbe anwenden: 'crab-auto' folgt weiterhin dem echten
      Wochentag (applyWeekdayCrabColor()), alles andere setzt die Stops von
      az-crab-grad fest - dasselbe Verlauf-Element wie Krabbe und
@@ -6214,7 +7243,8 @@
     pokes: [],         // Zeitpunkte der letzten Antipper, für die eigensinnige Katze
     snubUntil: 0,      // bis dahin ignoriert die Katze jedes Antippen
     snubs: 0,
-    evolving: false,   // Formwechsel läuft, renderPetStage() lässt den Inhalt in Ruhe
+    evolving: false,
+    trickAt: 0,        // nächstes Süßes oder Saures an Halloween, siehe trickOrTreat()   // Formwechsel läuft, renderPetStage() lässt den Inhalt in Ruhe
     evolveTimer: 0
   };
 
@@ -6290,6 +7320,8 @@
     var pet = findShopItem(SHOP_PETS, cosmetics.pet);
     if (!pet.emoji) {
       progressPetEl.removeAttribute('data-stage');
+      progressPetEl.removeAttribute('data-season');
+      progressPetEl.removeAttribute('data-acc');
       progressPetEl.style.removeProperty('--az-pet-size');
       petTrailEl.classList.remove('is-on');
       return;
@@ -6302,7 +7334,17 @@
     if (grown) petTrailEl.style.setProperty('--az-trail', trailUrl(pet));
     progressPetEl.setAttribute('data-stage', String(stage));
     progressPetEl.style.setProperty('--az-pet-size', PET_STAGES[stage].size + 'px');
-    progressPetEl.setAttribute('aria-label', petName(pet) + ', ' + pet.label + ', ' + PET_STAGES[stage].label +
+    var acc = petAccessory();
+    if (acc) {
+      progressPetEl.setAttribute('data-season', acc.id);
+      progressPetEl.setAttribute('data-acc', acc.slot || 'top');
+      progressPetEl.style.setProperty('--az-pet-hat', hatUrl(acc.svg));
+    } else {
+      progressPetEl.removeAttribute('data-season');
+      progressPetEl.removeAttribute('data-acc');
+    }
+    progressPetEl.setAttribute('aria-label', petName(pet) + ', ' + pet.label + (acc ? ' ' + acc.label : '') +
+      ', ' + PET_STAGES[stage].label +
       ' (Stufe ' + (stage + 1) + ' von ' + PET_STAGES.length + '), ' +
       (grown ? 'ausgewachsen, zum Spaß antippen' : 'antippen zum Füttern für 1 Muschel'));
   }
@@ -6448,6 +7490,28 @@
     petAnim('is-react-snub');
   }
 
+  var TRICK_MS = 10 * 60 * 1000;
+
+  function trickOrTreat(pet, name) {
+    if (Math.random() < 0.6) {
+      game.shells += 1;
+      petAnim('is-react-hop');
+      petFx('az-pet-spark', '🍬', 5, { x: [-40, 40], y: [-24, 6] });
+      toast('Süßes! 🍬', petEmoji(pet) + ' ' + name + ' teilt die Beute, +1 Muschel');
+      pulse(shellsEl);
+      playCue('catch');
+      renderHud();
+      return;
+    }
+    petAnim('is-poked');
+    toast('Saures! 👻', petEmoji(pet) + ' ' + name + ' spielt dir einen Streich');
+    if (calm.matches) return;
+    wrap.classList.remove('is-trick');
+    void wrap.offsetWidth;
+    wrap.classList.add('is-trick');
+    setTimeout(function () { wrap.classList.remove('is-trick'); }, 1600);
+  }
+
   function pokePet() {
     var pet = findShopItem(SHOP_PETS, cosmetics.pet);
     if (!pet.emoji) return;
@@ -6477,6 +7541,13 @@
         snubPet(pet, name, now);
         return;
       }
+    }
+
+    // Halloween: alle 10 Minuten bringt ein Antippen Süßes oder Saures
+    if (currentEvents.indexOf('halloween') !== -1 && now >= petState.trickAt) {
+      petState.trickAt = now + TRICK_MS;
+      trickOrTreat(pet, name);
+      return;
     }
 
     if (petGrown(pet.id)) { justPoke(pet, name + ' ist ausgewachsen'); return; }
@@ -8196,6 +9267,7 @@
     if (!realWeather) return;
     var desc = describeWeatherCode(realWeather.code);
     setText(realWeatherEl, 'Gerade in Eberbach: ' + Math.round(realWeather.tempC) + '°C, ' + desc.text + ' ' + desc.emoji);
+    renderPetStage();
   }
 
   function fetchRealWeather() {
@@ -8846,6 +9918,7 @@
     drawShine();
     drawTidemark();
     drawSeason();
+    drawEvent();
 
     bandLength = midBand.getTotalLength();
     drawChecks();
@@ -8869,11 +9942,9 @@
     // (Uhrzeit + "Kopieren"-Button) und war dahinter unsichtbar, darum
     // sitzt die Sandburg jetzt rechts davon.
     lighthouseEl.setAttribute('transform',
-      'translate(' + Math.round(clamp(view.width * 0.22, 60, view.width - 60)) + ',' +
-      Math.round(view.waterY) + ')');
+      'translate(' + beachX(0.22) + ',' + Math.round(view.waterY) + ')');
     sandcastleEl.setAttribute('transform',
-      'translate(' + Math.round(clamp(view.width * 0.78, 60, view.width - 60)) + ',' +
-      Math.round(view.waterY) + ')');
+      'translate(' + beachX(0.78) + ',' + Math.round(view.waterY) + ')');
 
     syncSun(minutesNow());
   }
@@ -8890,6 +9961,7 @@
   buildLawGull();
   buildSandcastle();
   buildLighthouse();
+  wrap.setAttribute('data-event', currentEvents.join(' '));
   applyCrabColor(cosmetics.crabColor);
   renderAwards();
   renderCatches();
@@ -8898,7 +9970,11 @@
   layout();
   calculate();
   renderHud();
+  syncEventTheme();
+  paintAdventPill();
   game.quiet = false;
+  setTimeout(greetEvent, 1200);
+  setInterval(refreshEvents, 60 * 1000);
 
   wrap.addEventListener('change', calculate);
   document.getElementById('target-hours').addEventListener('input', calculate);
@@ -8959,6 +10035,15 @@
       launchCrab();
       nextCrab();
     }, 14000 + Math.random() * 10000);
+  })();
+
+  // Silvester-Feuerwerk: tagsüber vereinzelt, ab 17 Uhr dichter
+  (function nextFirework() {
+    var evening = minutesNow() >= 17 * 60 || isNightNow();
+    setTimeout(function () {
+      launchFirework();
+      nextFirework();
+    }, evening ? 900 + Math.random() * 2200 : 5000 + Math.random() * 7000);
   })();
 
   // Flaschenpost treibt am seltensten vorbei, dafür lange sichtbar
