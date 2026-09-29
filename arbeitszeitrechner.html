@@ -1747,6 +1747,46 @@
     color: var(--az-muted);
   }
 
+  /* Schalter für das Saison-Theme oben im Shop */
+  .az-season-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 246, 255, 0.6));
+  }
+  .az-season-label { font-size: 13px; color: var(--az-text); }
+  .az-season-toggle {
+    flex: none;
+    position: relative;
+    width: 44px;
+    height: 26px;
+    padding: 0;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    background: rgba(78, 135, 166, 0.35);
+    transition: background 160ms ease;
+  }
+  .az-season-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(4, 52, 82, 0.3);
+    transition: transform 160ms ease;
+  }
+  .az-season-toggle[aria-checked="true"] { background: var(--az-cyan); }
+  .az-season-toggle[aria-checked="true"]::after { transform: translateX(18px); }
+  .az-season-toggle:focus-visible { outline: 2px solid var(--az-ring); outline-offset: 2px; }
+
   .az-shop-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
@@ -4026,6 +4066,14 @@
 
       <p class="az-modal-sub">Rein kosmetisch, gilt nur für diesen Besuch. Nach einem Neuladen ist der Shop wieder leer.</p>
 
+      <div class="az-shop-section" id="az-shop-season" hidden>
+        <h3 class="az-shop-heading">Saison-Theme</h3>
+        <div class="az-season-row">
+          <span class="az-season-label" id="az-season-label"></span>
+          <button type="button" class="az-season-toggle" id="az-season-toggle" role="switch" aria-labelledby="az-season-label"></button>
+        </div>
+      </div>
+
       <div class="az-shop-section">
         <h3 class="az-shop-heading">Farbthemen</h3>
         <div class="az-shop-grid" id="az-shop-themes"></div>
@@ -4855,7 +4903,180 @@
     }
   };
 
-  var currentEvents = activeEvents(today());
+  // ---- Saison-Varianten für Krabbe, Delfin und Möwen ----
+  // Formen zeigen nach rechts, Flugbahn und Spiegelung kommen aus
+  // launchCrab(), swim() und spawnGullFlock().
+
+  // Accessoire auf dem Delfinkopf, Motiv aus dem 40x32-Hut des Tiers
+  function dolphinHat(svg, tilt) {
+    return '<g transform="translate(10,-7.5) rotate(' + (tilt || 22) + ') scale(0.38) translate(-20,-16)">' + svg + '</g>';
+  }
+
+  function sparkTrail(x, y, colors) {
+    return [0, 1, 2].map(function (k) {
+      return '<circle class="az-event-twinkle" style="animation-delay:' + (k * 0.25) + 's" cx="' + (x - k * 6) +
+        '" cy="' + (y + (k % 2) * 2) + '" r="' + (1.6 - k * 0.35).toFixed(2) + '" fill="' + colors[k % colors.length] + '"/>';
+    }).join('');
+  }
+
+  var PRETZEL_D = 'M-8,0 C-14,-7 -10,-15 -3.5,-12.5 C1,-10.5 1,-5 -1.5,-2.5 M8,0 C14,-7 10,-15 3.5,-12.5 C-1,-10.5 -1,-5 1.5,-2.5 M-8,0 Q0,-6 8,0';
+
+  // Oktoberfest: Tirolerhut-Krabbe, Maßkrug, fliegende Brezeln
+  SEASON_EVENTS.oktoberfest.crabExtra =
+    '<path d="M3.6,-9 Q7,-16 5,-18 Q5,-13 2.2,-9 Z" fill="#6b8f3a"/>' +
+    '<path d="M-6,-6.5 Q-5,-12.5 0,-13 Q5,-12.5 6,-6.5 Z" fill="#3f6b3a"/>' +
+    '<path d="M-9,-6.5 Q0,-9 9,-6.5 Q0,-4.5 -9,-6.5 Z" fill="#2f5230"/>';
+  SEASON_EVENTS.oktoberfest.dolphin = { label: 'Maßkrug', float: true,
+    markup: '<path d="M7,-6 h3 q4,0 4,4 v5 q0,4 -4,4 h-3" fill="none" stroke="#e8f4ff" stroke-width="2.6"/>' +
+      '<rect x="-9" y="-11" width="16" height="21" rx="2.4" fill="#ffc53d" stroke="#e8f4ff" stroke-width="1.6"/>' +
+      '<path d="M-5,-7 v14 M-1,-7 v14 M3,-7 v14" stroke="#ffe08a" stroke-width="1.4" opacity="0.8"/>' +
+      '<g fill="#ffffff"><circle cx="-7" cy="-12" r="3.6"/><circle cx="-2" cy="-14" r="4.2"/>' +
+        '<circle cx="3.5" cy="-12.5" r="3.8"/><circle cx="7" cy="-11" r="2.6"/><path d="M-9,-11 q-1,4 1,5 q1,-3 0,-5 Z"/></g>' +
+      '<circle cx="-4" cy="2" r="0.9" fill="#fff3c4"/><circle cx="1" cy="-3" r="0.7" fill="#fff3c4"/><circle cx="-1" cy="5" r="0.6" fill="#fff3c4"/>' };
+  SEASON_EVENTS.oktoberfest.gull = { label: 'Brezelschwarm',
+    unit: function (dx, dy, i) {
+      return '<g transform="translate(' + dx + ',' + dy + ') scale(0.85)"><g class="az-event-spin" style="--spin:' + (2 + i * 0.4) + 's">' +
+        '<path d="' + PRETZEL_D + '" transform="translate(0,6)" fill="none" stroke="#a0622d" stroke-width="3.4" stroke-linecap="round"/>' +
+        '<g fill="#ffffff" transform="translate(0,6)"><circle cx="-9" cy="-9" r="0.8"/><circle cx="8" cy="-10" r="0.8"/><circle cx="0" cy="-4.2" r="0.8"/></g>' +
+        '</g></g>';
+    } };
+
+  // Weihnachten: Delfin mit Mütze, Rentierschlitten am Himmel
+  SEASON_EVENTS.xmas.dolphinExtra = dolphinHat(SEASON_EVENTS.xmas.hat);
+  SEASON_EVENTS.xmas.gull = { label: 'Rentierschlitten', count: 1,
+    unit: function (dx, dy) {
+      function deer(x, lead) {
+        return '<g transform="translate(' + x + ',0)">' +
+          '<path d="M-5,2 l-4,4 M-3,2 l-2,5 M4,2 l3,4 M5.5,1.5 l4,3" stroke="#6b4426" stroke-width="1.2" stroke-linecap="round"/>' +
+          '<ellipse cx="0" cy="0" rx="7" ry="3.4" fill="#8a5a33"/>' +
+          '<path d="M5,-1 L8,-5" stroke="#8a5a33" stroke-width="2.6" stroke-linecap="round"/>' +
+          '<ellipse cx="9.4" cy="-5.6" rx="2.8" ry="2" fill="#8a5a33"/>' +
+          '<path d="M8,-7 l-1,-4 l-2,-1 M7,-11 l1.6,-1.6 M9.4,-7.2 l1,-4 l2,-1" fill="none" stroke="#5c3a1e" stroke-width="0.9" stroke-linecap="round"/>' +
+          '<circle cx="9.6" cy="-6" r="0.5" fill="#1d1d1f"/>' +
+          (lead ? '<circle cx="12.2" cy="-5.2" r="3.4" fill="#ff5a4d" opacity="0.35"/><circle cx="12.2" cy="-5.2" r="1.4" fill="#ff2a2a"/>'
+                : '<circle cx="12" cy="-5.2" r="0.9" fill="#3a2414"/>') +
+          '</g>';
+      }
+      return '<g transform="translate(' + dx + ',' + dy + ')">' +
+        sparkTrail(-26, 2, ['#ffe9a8', '#ffffff', '#ffd24a']) +
+        '<path d="M-6,-6 L22,-2 M-6,-6 L42,-2" stroke="#7a5233" stroke-width="0.6"/>' +
+        deer(22, false) + deer(42, true) +
+        '<circle cx="-15" cy="-10" r="4.6" fill="#a0622d"/>' +
+        '<circle cx="-7" cy="-12" r="3.2" fill="#ffd9b8"/>' +
+        '<path d="M-10,-12 q3,6 6,0 Z" fill="#ffffff"/>' +
+        '<path d="M-10.4,-13.6 Q-7,-20 -2,-17 L-4,-13.6 Z" fill="#e0262e"/><circle cx="-2" cy="-17" r="1.2" fill="#ffffff"/>' +
+        '<path d="M-20,-8 H-1 Q3,-8 3,-13 L5,-13 Q5,-2 -3,-2 H-20 Z" fill="#d93a3a" stroke="#8a1c1c" stroke-width="0.8"/>' +
+        '<path d="M-17,-2 v4 M-5,-2 v4" stroke="#ffd24a" stroke-width="1"/>' +
+        '<path d="M-22,2 H1 Q5,2 5,-2" fill="none" stroke="#ffd24a" stroke-width="1.4" stroke-linecap="round"/>' +
+        '</g>';
+    } };
+
+  // Silvester: Partyhüte, Raketen mit Funkenschweif
+  SEASON_EVENTS.newyear.crabExtra =
+    '<path d="M-4,-6.5 L0,-17 L4,-6.5 Z" fill="#ffd24a"/>' +
+    '<path d="M-2.6,-10.5 h5.2 M-1.4,-13.8 h2.8" stroke="#6e7bff" stroke-width="1.1"/>' +
+    '<circle cx="0" cy="-17.5" r="1.6" fill="#ff5a4d"/>';
+  SEASON_EVENTS.newyear.dolphinExtra = dolphinHat(SEASON_EVENTS.newyear.hat, 28);
+  SEASON_EVENTS.newyear.gull = { label: 'Raketen',
+    unit: function (dx, dy, i) {
+      var body = ['#e0262e', '#3a86d6', '#2f9e5b'][i % 3];
+      return '<g transform="translate(' + dx + ',' + dy + ') rotate(-18)">' +
+        sparkTrail(-14, 0, ['#ffd24a', '#ff8a3c', '#ffffff']) +
+        '<path d="M-8,-2.6 H5 L10,0 L5,2.6 H-8 Z" fill="' + body + '" stroke="#ffffff" stroke-width="0.6"/>' +
+        '<path d="M-8,-2.6 l-3,-2.4 v10 l3,-2.4 Z" fill="#ffd24a"/>' +
+        '<path d="M-2,-2.6 v5.2" stroke="#ffffff" stroke-width="1"/>' +
+        '</g>';
+    } };
+
+  // Halloween: Gespenst statt Delfin, Hexe auf dem Besen
+  SEASON_EVENTS.halloween.dolphin = { label: 'Gespenst',
+    markup: '<path d="M-14,7 Q-14,-12 1,-12 Q15,-12 15,1 L19,3 L15,5.4 Q13,9 9,7.4 Q5,11 1,7.4 Q-3,11 -7,7.4 Q-10,10.6 -14,7 Z" ' +
+        'fill="#ffffff" stroke="#c9c2e8" stroke-width="1" opacity="0.94"/>' +
+      '<ellipse cx="4.6" cy="-4" rx="1.6" ry="2.4" fill="#2b1d3d"/><ellipse cx="10" cy="-4" rx="1.6" ry="2.4" fill="#2b1d3d"/>' +
+      '<ellipse cx="7.4" cy="1.4" rx="1.6" ry="2" fill="#2b1d3d"/>' };
+  SEASON_EVENTS.halloween.gull = { label: 'Hexe', count: 1,
+    unit: function (dx, dy) {
+      return '<g transform="translate(' + dx + ',' + dy + ')">' +
+        '<path d="M-17,5 L15,0" stroke="#7a5233" stroke-width="1.8" stroke-linecap="round"/>' +
+        '<path d="M-16,5 l-9,-5 l2,6 l-3,5 Z" fill="#e0a52f" stroke="#a8781a" stroke-width="0.6"/>' +
+        '<path d="M-7,3.4 Q-9,-2 -13,-3 Q-8,-5 -4,0 Z" fill="#6b3fa8"/>' +
+        '<path d="M-5,3.4 L0,-8 L5,3 Z" fill="#3b2656"/>' +
+        '<path d="M2,-2 L7,1" stroke="#7ed957" stroke-width="1.4" stroke-linecap="round"/>' +
+        '<circle cx="0.6" cy="-10.4" r="2.8" fill="#7ed957"/>' +
+        '<path d="M3,-10.6 l2.6,1 l-2.4,0.6 Z" fill="#6bbf4a"/>' +
+        '<path d="M-4.6,-12 Q0.6,-10.6 5.4,-12.6" stroke="#2b1d3d" stroke-width="1.4" fill="none"/>' +
+        '<path d="M-2.4,-12.4 L-1,-22 L3,-12.6 Z" fill="#2b1d3d"/>' +
+        '</g>';
+    } };
+
+  // Sankt Martin: Laternenboot, Gänse in V-Formation
+  SEASON_EVENTS.martin.dolphin = { label: 'Laternenboot', float: true,
+    markup: '<ellipse cx="0" cy="-6" rx="11" ry="11" fill="#ffd24a" filter="url(#az-bloom)" opacity="0.75"/>' +
+      '<path d="M-15,3 Q0,12 15,3 Q0,0 -15,3 Z" fill="#4d7a2a" stroke="#355a1c" stroke-width="0.8"/>' +
+      '<path d="M-12,3.4 Q0,4.6 12,3.4" fill="none" stroke="#7ea84a" stroke-width="0.8"/>' +
+      '<g class="az-sun-flicker">' +
+        '<rect x="-4" y="-14.5" width="8" height="2" rx="0.8" fill="#5c3a1e"/>' +
+        '<ellipse cx="0" cy="-6.4" rx="5.6" ry="6.6" fill="#ffb347" stroke="#c85a2b" stroke-width="0.8"/>' +
+        '<path d="M-2,-8.4 q2,-2 4,0 q-2,3 -4,0 Z" fill="#fff3b0"/>' +
+        '<rect x="-3.4" y="-0.6" width="6.8" height="1.8" rx="0.8" fill="#5c3a1e"/>' +
+      '</g>' };
+  SEASON_EVENTS.martin.gull = { label: 'Gänseschwarm', count: 5,
+    place: function (i) { var k = Math.ceil(i / 2); return [-k * 15, (i % 2 ? -1 : 1) * k * 7]; },
+    unit: function (dx, dy) {
+      return '<g transform="translate(' + dx + ',' + dy + ')">' +
+        '<path d="M-6,0 Q-2,-6 1,-0.5 Q4,-6 7,-0.5" fill="none" stroke="#f4f6f8" stroke-width="1.8" stroke-linecap="round"/>' +
+        '<ellipse cx="0" cy="0.6" rx="5.4" ry="1.9" fill="#f4f6f8" stroke="#b9c4cc" stroke-width="0.5"/>' +
+        '<path d="M4.4,0 L9.4,-1.2" stroke="#f4f6f8" stroke-width="1.5" stroke-linecap="round"/>' +
+        '<path d="M9.6,-1.9 l2.8,0.9 l-2.8,0.7 Z" fill="#ff9a3c"/>' +
+        '</g>';
+    } };
+
+  // Ostern: Osterhase statt Krabbe, Delfin mit Hasenohren, Möwen mit Ei
+  SEASON_EVENTS.easter.crab = { label: 'Osterhase', hop: true,
+    markup: '<ellipse cx="6.4" cy="-13" rx="1.7" ry="5.2" transform="rotate(-8 6.4 -13)" fill="#f2ebe0" stroke="#c9bba8" stroke-width="0.7"/>' +
+      '<ellipse cx="9.4" cy="-12.6" rx="1.7" ry="5.2" transform="rotate(12 9.4 -12.6)" fill="#f2ebe0" stroke="#c9bba8" stroke-width="0.7"/>' +
+      '<ellipse cx="9.4" cy="-12.6" rx="0.7" ry="3.6" transform="rotate(12 9.4 -12.6)" fill="#ffc2d6"/>' +
+      '<circle cx="-10" cy="-1" r="2.8" fill="#ffffff" stroke="#c9bba8" stroke-width="0.6"/>' +
+      '<ellipse cx="-2" cy="0" rx="8.4" ry="6.6" fill="#f2ebe0" stroke="#c9bba8" stroke-width="0.9"/>' +
+      '<ellipse cx="3" cy="6" rx="4" ry="1.6" fill="#f2ebe0" stroke="#c9bba8" stroke-width="0.6"/>' +
+      '<circle cx="7.4" cy="-5" r="4.6" fill="#f2ebe0" stroke="#c9bba8" stroke-width="0.8"/>' +
+      '<circle cx="9" cy="-6" r="0.9" fill="#2a1208"/>' +
+      '<circle cx="11.8" cy="-4.4" r="0.9" fill="#ff8fc4"/>' };
+  SEASON_EVENTS.easter.dolphinExtra = dolphinHat(SEASON_EVENTS.easter.hat, 14);
+  SEASON_EVENTS.easter.gull = { label: 'Eier-Möwen',
+    unit: function (dx, dy, i) {
+      var egg = ['#ffb3c7', '#9bf6ff', '#fdffb6'][i % 3];
+      return '<path d="M' + (dx - 9) + ',' + dy + ' Q' + dx + ',' + (dy - 6) + ' ' + (dx + 9) + ',' + dy +
+        ' Q' + dx + ',' + (dy - 6) + ' ' + (dx - 9) + ',' + dy + '" fill="none" ' +
+        'stroke="url(#az-gull-grad)" stroke-width="2.2" stroke-linecap="round"/>' +
+        '<ellipse cx="' + dx + '" cy="' + (dy + 5) + '" rx="2.6" ry="3.4" fill="' + egg + '" stroke="rgba(10,90,134,0.35)" stroke-width="0.5"/>';
+    } };
+
+  // Fasching: Pappnase und Narrenkappe, bunte Luftballons
+  SEASON_EVENTS.fasching.crabExtra =
+    '<g transform="translate(0,-12) scale(0.32) translate(-20,-16)">' + SEASON_EVENTS.fasching.hat + '</g>' +
+    '<circle cx="0" cy="1.4" r="2.6" fill="#ff2a2a" stroke="#ffffff" stroke-width="0.6"/>';
+  SEASON_EVENTS.fasching.dolphinExtra = dolphinHat(SEASON_EVENTS.fasching.hat, 16);
+  SEASON_EVENTS.fasching.gull = { label: 'Luftballons', count: 3,
+    unit: function (dx, dy, i) {
+      var c = ['#ff5a4d', '#ffe04a', '#45d0ff'][i % 3];
+      return '<g transform="translate(' + dx + ',' + (dy - 6) + ')">' +
+        '<path d="M0,8 q-2,4 0,7 q2,3 0,6" fill="none" stroke="#8fa3b8" stroke-width="0.7"/>' +
+        '<ellipse cx="0" cy="0" rx="5.6" ry="7" fill="' + c + '"/>' +
+        '<path d="M-1.4,7 L1.4,7 L0,8.6 Z" fill="' + c + '"/>' +
+        '<ellipse cx="-2" cy="-3" rx="1.4" ry="2" fill="#ffffff" opacity="0.55"/>' +
+        '</g>';
+    } };
+
+  /* Saison-Theme lässt sich im Shop abschalten. Die Wahl bleibt über ein
+     Neuladen hinweg erhalten, anders als die Käufe im Shop. */
+  var seasonOff = storedFlag('az-season-off');
+
+  function seasonEvents() {
+    return seasonOff ? [] : activeEvents(today());
+  }
+
+  var currentEvents = seasonEvents();
   var eggsFound = new Set();   // Ostereiersuche, gilt wie die Muscheln nur für diese Sitzung
   var EGG_COUNT = 5;
 
@@ -4897,6 +5118,8 @@
     document.querySelector('.az-wrap').setAttribute('data-event', currentEvents.join(' '));
     buildSun();
     buildCrab();
+    buildDolphin();
+    buildLawGull();
     buildChest();
     buildSandcastle();
     if (view) { syncSun(minutesNow()); calculate(); }
@@ -5337,12 +5560,14 @@
     'C2,8 10,7.4 15,6 C18,5.2 20,4.2 21,3 Z';
 
   function buildDolphin() {
-    dolphinEl.innerHTML =
+    var alt = eventPart('dolphin');
+    dolphinEl.innerHTML = alt ? alt.markup :
       '<path d="' + DOLPHIN_BODY + '" fill="url(#az-dolphin-grad)"/>' +
       '<path d="M-14,3 C-6,6.8 4,7.8 14,5.2 C8,8.8 -4,9 -14,3 Z" fill="#eaf6ff" opacity="0.6"/>' +
       '<path d="M-2,5.4 C-4,9.4 -7,12 -10.5,13 C-8.2,9.2 -6.6,7 -6,5" fill="#215878"/>' +
       '<circle cx="12.5" cy="-1.2" r="1" fill="#123c55"/>' +
-      '<path d="M4,-5.4 C9,-4.4 14,-2.6 17.5,-0.6" fill="none" stroke="#ffffff" stroke-width="1.1" opacity="0.5"/>';
+      '<path d="M4,-5.4 C9,-4.4 14,-2.6 17.5,-0.6" fill="none" stroke="#ffffff" stroke-width="1.1" opacity="0.5"/>' +
+      (eventPart('dolphinExtra') || '');
 
     splashEl.innerHTML =
       '<path d="M-16,0 C-11,-9 11,-9 16,0" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" opacity="0.85"/>' +
@@ -5358,6 +5583,22 @@
     if (calm.matches || document.hidden || !view) return;
 
     var span = clamp(view.width * 0.18, 130, 240);
+    var alt = eventPart('dolphin');
+    if (alt && alt.float) {
+      // Treibt schaukelnd über die Wasserlinie statt zu springen
+      span = clamp(view.width * 0.3, 200, 380);
+      jump = {
+        t0: performance.now(),
+        duration: 7000,
+        x0: 40 + Math.random() * Math.max(40, view.width - span - 80),
+        span: span,
+        float: true,
+        scale: view.width < 640 ? 0.9 : 1.1
+      };
+      dolphinEl.setAttribute('opacity', '0');
+      requestAnimationFrame(swim);
+      return;
+    }
     jump = {
       t0: performance.now(),
       duration: 2600,
@@ -5384,6 +5625,19 @@
     }
 
     var x = jump.x0 + jump.span * p;
+
+    if (jump.float) {
+      var fy = view.waterY - 9 + Math.sin(p * Math.PI * 6) * 1.8;
+      jump.x = x;
+      jump.y = fy;
+      dolphinEl.setAttribute('opacity', Math.min(1, p / 0.08, (1 - p) / 0.08).toFixed(2));
+      dolphinEl.setAttribute('transform',
+        'translate(' + x.toFixed(1) + ',' + fy.toFixed(1) + ') ' +
+        'rotate(' + (Math.sin(p * Math.PI * 5) * 7).toFixed(1) + ') scale(' + jump.scale + ')');
+      requestAnimationFrame(swim);
+      return;
+    }
+
     var y = view.waterY + 6 - Math.sin(Math.PI * p) * jump.peak;
 
     // Neigung aus der Ableitung der Sprungkurve
@@ -5486,6 +5740,8 @@
     // Fliegende Ersatzfigur (Halloween-Fledermaus) hebt im Bogen ab
     var critter = eventPart('crab');
     if (critter && critter.fly) wobble = Math.sin(p * 18) * 4 - Math.sin(p * Math.PI) * 46 - 14;
+    // Osterhase hüpft in Bögen über den Strand
+    if (critter && critter.hop) wobble = -Math.abs(Math.sin(p * Math.PI * 5)) * 14;
     crawl.x = x;
     crawl.y2 = crawl.y + wobble;
 
@@ -5722,7 +5978,8 @@
   // Möwe ist nur der sichtbare, sinnfällige Moment dazu.
 
   function buildLawGull() {
-    lawGullEl.innerHTML =
+    var alt = eventPart('gull');
+    lawGullEl.innerHTML = alt ? alt.unit(0, 0, 0) :
       '<path d="M-12,0 Q-6,-7 0,0 Q6,-7 12,0" fill="none" ' +
       'stroke="url(#az-gull-grad)" stroke-width="2.4" stroke-linecap="round"/>';
   }
@@ -5762,11 +6019,15 @@
   function spawnGullFlock() {
     if (calm.matches || document.hidden || !view) return;
 
-    var count = 1 + Math.floor(Math.random() * 3);
+    // Saison-Variante (Brezeln, Rentierschlitten, Gänse ...) siehe SEASON_EVENTS
+    var alt = eventPart('gull');
+    var count = alt && alt.count ? alt.count : 1 + Math.floor(Math.random() * 3);
     var out = '';
     for (var i = 0; i < count; i++) {
       var dx = i * 16 - (count - 1) * 8;
       var dy = (i % 2) * 8;
+      if (alt && alt.place) { var pos = alt.place(i); dx = pos[0]; dy = pos[1]; }
+      if (alt) { out += alt.unit(dx, dy, i); continue; }
       out += '<path d="M' + (dx - 9) + ',' + dy + ' Q' + dx + ',' + (dy - 6) + ' ' + (dx + 9) + ',' + dy +
         ' Q' + dx + ',' + (dy - 6) + ' ' + (dx - 9) + ',' + dy + '" fill="none" ' +
         'stroke="url(#az-gull-grad)" stroke-width="2.2" stroke-linecap="round"/>';
@@ -6678,7 +6939,7 @@
     splashEl.setAttribute('opacity', '0');
     jump = null;
 
-    toast('Delfin gefangen', '+1 Muschel');
+    toast(((eventPart('dolphin') || {}).label || 'Delfin') + ' gefangen', '+1 Muschel');
     pulse(shellsEl);
     playCue('catch');
     unlock('dolphin');
@@ -6742,7 +7003,7 @@
     burstAt(caught.x || 0, caught.y || 0);
     gullFlockEl.setAttribute('opacity', '0');
 
-    toast('Möwenschwarm entdeckt', '+1 Muschel');
+    toast(((eventPart('gull') || {}).label || 'Möwenschwarm') + ' entdeckt', '+1 Muschel');
     pulse(shellsEl);
     playCue('catch');
     unlock('gull');
@@ -7087,7 +7348,7 @@
      Szene, Tier und Farben nach. */
   function refreshEvents() {
     paintAdventPill();
-    var next = activeEvents(today());
+    var next = seasonEvents();
     if (next.join() === currentEvents.join()) return;
     currentEvents = next;
     applyEventDecor();
@@ -7116,6 +7377,7 @@
   }
 
   function adventState() {
+    if (seasonOff) return null;
     var now = today();
     var y = now.getFullYear();
     var date = dayOf(y, now.getMonth(), now.getDate());
@@ -7676,7 +7938,32 @@
     }).join('');
   }
 
+  var seasonSection = document.getElementById('az-shop-season');
+  var seasonToggle  = document.getElementById('az-season-toggle');
+  var seasonLabel   = document.getElementById('az-season-label');
+
+  // Schalter nur zeigen, wenn laut Kalender gerade ein Anlass läuft
+  function renderSeasonToggle() {
+    var byDate = activeEvents(today()).filter(function (id) { return SEASON_EVENTS[id].label; });
+    seasonSection.hidden = !byDate.length;
+    if (!byDate.length) return;
+    var names = byDate.map(function (id) { return SEASON_EVENTS[id].label; }).join(' und ');
+    setText(seasonLabel, names + (seasonOff ? ' ist aus' : ' ist an'));
+    seasonToggle.setAttribute('aria-checked', String(!seasonOff));
+  }
+
+  seasonToggle.addEventListener('click', function () {
+    seasonOff = !seasonOff;
+    try {
+      if (seasonOff) localStorage.setItem('az-season-off', '1');
+      else localStorage.removeItem('az-season-off');
+    } catch (e) {}
+    refreshEvents();
+    renderShop();
+  });
+
   function renderShop() {
+    renderSeasonToggle();
     renderShopGrid(shopThemesEl, SHOP_THEMES, shop.theme, 'theme');
     renderShopGrid(shopSkinsEl, SHOP_SKINS, shop.skin, 'skin');
     renderShopGrid(shopCrabColorsEl, SHOP_CRAB_COLORS, cosmetics.crabColor, 'crabColor');
