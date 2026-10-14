@@ -1127,6 +1127,104 @@
 
   .az-shells.is-fresh { animation: az-pop 520ms ease-out; }
 
+  /* Wasser holen: kleiner Zähler neben den Muscheln, einmal pro Stunde.
+     --az-drink-fill (0 bis 1) füllt den Tropfen während der Wartezeit. */
+  .az-drink {
+    --az-drink-fill: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px 5px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 246, 255, 0.6));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--az-cyan-deep);
+    cursor: pointer;
+    transition: filter 140ms ease, transform 140ms ease, opacity 300ms ease;
+  }
+
+  .az-drink:hover:not(.is-cooling) { filter: brightness(1.05); transform: translateY(-1px); }
+  .az-drink:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(69, 208, 255, 0.55); }
+  .az-drink.is-cooling { cursor: help; opacity: 0.72; }
+  .az-drink.is-happy { opacity: 1; }
+  .az-drink.is-nope { animation: az-drink-nope 360ms ease-in-out; }
+  .az-drink svg { width: 21px; height: 21px; flex: none; overflow: visible; }
+
+  /* Gesicht: wach und blinzelnd, wenn bereit, schläfrig in der Wartezeit,
+     glücklich direkt nach dem Trinken */
+  .az-drink .az-drink-eyes-sleepy,
+  .az-drink .az-drink-eyes-happy,
+  .az-drink .az-drink-mouth-o { display: none; }
+  .az-drink.is-cooling .az-drink-eyes-open,
+  .az-drink.is-cooling .az-drink-mouth-smile { display: none; }
+  .az-drink.is-cooling .az-drink-eyes-sleepy,
+  .az-drink.is-cooling .az-drink-mouth-o { display: inline; }
+  .az-drink.is-happy .az-drink-eyes-open,
+  .az-drink.is-happy .az-drink-eyes-sleepy { display: none; }
+  .az-drink.is-happy .az-drink-eyes-happy { display: inline; }
+  .az-drink.is-happy .az-drink-mouth-o { display: none; }
+  .az-drink.is-happy .az-drink-mouth-smile { display: inline; }
+  .az-drink.is-ready .az-drink-eyes-open {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: az-drink-blink 4.2s infinite;
+  }
+  @keyframes az-drink-blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    96%           { transform: scaleY(0.1); }
+  }
+  .az-drink .az-drink-level {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transform: scaleY(var(--az-drink-fill));
+    transition: transform 600ms ease;
+  }
+  .az-drink.is-ready svg { animation: az-drink-bob 2.4s ease-in-out infinite; }
+  .az-drink.is-fresh { animation: az-pop 520ms ease-out; }
+
+  @keyframes az-drink-nope {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-3px); }
+    75%      { transform: translateX(3px); }
+  }
+
+  /* "gluck gluck gluck": steigt einzeln versetzt über dem Button auf */
+  .az-gluck {
+    position: fixed;
+    z-index: 60;
+    pointer-events: none;
+    font-size: 13px;
+    font-weight: 700;
+    font-style: italic;
+    color: #1784c4;
+    text-shadow: 0 1px 0 #ffffff, 0 0 6px rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    opacity: 0;
+    animation: az-gluck 1100ms ease-out forwards;
+  }
+
+  @keyframes az-gluck {
+    0%   { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
+    20%  { opacity: 1; transform: translate(-50%, -10px) scale(1.05); }
+    100% { opacity: 0; transform: translate(-50%, -42px) scale(1); }
+  }
+
+  @keyframes az-drink-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-2px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .az-drink.is-ready svg, .az-drink.is-fresh, .az-drink.is-nope,
+    .az-drink.is-ready .az-drink-eyes-open { animation: none; }
+    .az-gluck { animation-duration: 1ms; animation-delay: 0ms !important; }
+  }
+
   @keyframes az-pop {
     0%   { transform: scale(1); }
     35%  { transform: scale(1.16); }
@@ -1445,7 +1543,8 @@
   .az-modal[hidden] { display: none; }
 
   .az-modal-card {
-    width: min(430px, 100%);
+    max-width: 70vw;
+    width: 1000px;
     max-height: 92dvh;
     overflow: auto;
     padding: 16px 18px 18px;
@@ -1697,41 +1796,280 @@
     box-shadow: 0 0 0 2px #ffffff;
   }
 
+  /* Festlicher Rahmen: Tannengrün mit feinen Schneeflocken */
   .az-advent-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 7px;
+    margin-top: 6px;
+    padding: 10px;
+    border-radius: 16px;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.5) 0 1.2px, transparent 1.6px) 0 0 / 38px 34px,
+      radial-gradient(circle at 70% 64%, rgba(255, 255, 255, 0.35) 0 1px, transparent 1.4px) 0 0 / 29px 31px,
+      linear-gradient(160deg, #1f6b43, #134a2d);
+    box-shadow: inset 0 0 0 1px rgba(255, 210, 74, 0.45), inset 0 2px 10px rgba(0, 0, 0, 0.25);
   }
   @media (max-width: 420px) {
     .az-advent-grid { grid-template-columns: repeat(4, 1fr); }
   }
+
+  /* Türchen aus zwei Ebenen: Inhalt dahinter, Klappe davor. Die Klappe
+     dreht sich an der linken Kante auf (siehe openDoor()). */
   .az-advent-door {
+    position: relative;
     aspect-ratio: 1;
-    display: grid;
-    place-items: center;
     padding: 0;
     font-family: inherit;
+    cursor: pointer;
+    border: 0;
+    border-radius: 10px;
+    background: #fffdf4;
+    box-shadow: inset 0 2px 6px rgba(92, 58, 30, 0.25);
+    perspective: 260px;
+  }
+  .az-advent-inside {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 21px;
+  }
+  .az-advent-leaf {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
     font-size: 17px;
     font-weight: 700;
     color: #ffffff;
-    cursor: pointer;
-    border: 1px dashed rgba(255, 255, 255, 0.75);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 210, 74, 0.8);
     border-radius: 10px;
-    background: linear-gradient(160deg, #d93a3a, #a82424);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    background:
+      linear-gradient(90deg, transparent 44%, rgba(255, 210, 74, 0.55) 44% 56%, transparent 56%),
+      linear-gradient(160deg, #d93a3a, #a82424);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform-origin: left center;
+    /* Rückseite unsichtbar: die Klappe verschwindet ab 90 Grad, statt
+       gespiegelt über dem Nachbartürchen zu hängen */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transition: transform 650ms cubic-bezier(0.3, 1.3, 0.5, 1);
   }
-  .az-advent-door:nth-child(3n+2) { background: linear-gradient(160deg, #2f9e5b, #1c6b3c); }
-  .az-advent-door:nth-child(4n+3) { background: linear-gradient(160deg, #e0a52f, #a8781a); }
-  .az-advent-door:hover:not(:disabled) { filter: brightness(1.1); }
-  .az-advent-door:focus-visible { outline: 2px solid var(--az-ring); outline-offset: 2px; }
-  .az-advent-door:disabled { cursor: default; opacity: 0.45; }
-  .az-advent-door.is-today { box-shadow: 0 0 0 2px #ffd24a, 0 0 12px #ffd24a; }
-  .az-advent-door.is-open {
-    font-size: 20px;
-    border-style: solid;
-    border-color: rgba(10, 90, 134, 0.18);
-    background: #fffdf4;
-    opacity: 1;
+  .az-advent-door:nth-child(3n+2) .az-advent-leaf {
+    background:
+      linear-gradient(90deg, transparent 44%, rgba(255, 90, 77, 0.6) 44% 56%, transparent 56%),
+      linear-gradient(160deg, #2f9e5b, #1c6b3c);
+  }
+  .az-advent-door:nth-child(5n+3) .az-advent-leaf {
+    background:
+      linear-gradient(90deg, transparent 44%, rgba(255, 255, 255, 0.55) 44% 56%, transparent 56%),
+      linear-gradient(160deg, #e0a52f, #a8781a);
+  }
+  .az-advent-door:hover:not(:disabled) .az-advent-leaf { filter: brightness(1.1); }
+  .az-advent-door:focus-visible { outline: 2px solid #ffd24a; outline-offset: 2px; }
+  .az-advent-door:disabled { cursor: default; }
+  .az-advent-door:disabled .az-advent-leaf { filter: saturate(0.4) brightness(0.8); }
+  .az-advent-door.is-today .az-advent-leaf { animation: az-advent-pulse 1.8s ease-in-out infinite alternate; }
+  @keyframes az-advent-pulse {
+    from { box-shadow: 0 0 0 2px #ffd24a, 0 0 6px #ffd24a; }
+    to   { box-shadow: 0 0 0 2px #ffd24a, 0 0 16px #ffe27a; }
+  }
+  .az-advent-door.is-open .az-advent-leaf {
+    transform: rotateY(-118deg);
+    animation: none;
+    pointer-events: none;
+  }
+  .az-advent-door.is-open[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #ffd24a, inset 0 2px 6px rgba(92, 58, 30, 0.25); }
+
+  /* Funkenkranz beim Öffnen, Richtung und Weite kommen per --dx/--dy */
+  .az-advent-spark {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 11px;
+    color: #ffd24a;
+    pointer-events: none;
+    animation: az-advent-spark 800ms ease-out forwards;
+  }
+  @keyframes az-advent-spark {
+    from { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+    to   { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); opacity: 0; }
+  }
+
+  .az-advent-note {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 210, 74, 0.6);
+    background: linear-gradient(180deg, #fffdf4, #fff5dc);
+  }
+  .az-advent-note[hidden] { display: none; }
+  .az-advent-note-gift { font-size: 28px; line-height: 1; }
+  .az-advent-note-title {
+    margin: 0 0 2px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1c6b3c;
+  }
+  .az-advent-note-text {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--az-headline);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .az-advent-leaf { transition: none; }
+    .az-advent-spark { display: none; }
+  }
+
+  /* ---------- Gruselkalender ----------
+     Nutzt Raster, Türchen und Notiz des Adventskalenders. Hier nur die
+     Halloween-Optik: Nachthimmel statt Tannengrün, Grabsteine statt Klappen. */
+  .az-spook-pill {
+    color: #8a3d06;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 222, 190, 0.75));
+  }
+  .az-spook-pill.has-door::after { background: #7b3fc4; }
+
+  #az-spook-modal .az-advent-grid {
+    background:
+      radial-gradient(circle at 18% 22%, rgba(255, 246, 214, 0.7) 0 1px, transparent 1.4px) 0 0 / 41px 37px,
+      radial-gradient(circle at 64% 70%, rgba(255, 246, 214, 0.45) 0 0.8px, transparent 1.2px) 0 0 / 31px 29px,
+      linear-gradient(170deg, #2b1d3d, #17111f);
+    box-shadow: inset 0 0 0 1px rgba(255, 138, 29, 0.45), inset 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+  #az-spook-modal .az-advent-door {
+    border-radius: 48% 48% 8px 8px / 36% 36% 8px 8px;
+    background: #2a1f33;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+  #az-spook-modal .az-advent-leaf {
+    font-size: 15px;
+    color: #f2eef6;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    border: 1px solid #5f6b75;
+    border-radius: 48% 48% 8px 8px / 36% 36% 8px 8px;
+    background:
+      radial-gradient(ellipse at 50% 100%, rgba(77, 122, 42, 0.75) 0 18%, transparent 19%),
+      linear-gradient(170deg, #a3acb6, #6e7882);
+  }
+  #az-spook-modal .az-advent-door:nth-child(3n+2) .az-advent-leaf {
+    background:
+      radial-gradient(ellipse at 30% 100%, rgba(77, 122, 42, 0.75) 0 16%, transparent 17%),
+      linear-gradient(170deg, #8f98a2, #5f6b75);
+  }
+  #az-spook-modal .az-advent-door:nth-child(5n+3) .az-advent-leaf {
+    background:
+      radial-gradient(ellipse at 70% 100%, rgba(77, 122, 42, 0.75) 0 16%, transparent 17%),
+      linear-gradient(170deg, #b4aea4, #7d776d);
+  }
+  #az-spook-modal .az-advent-door:focus-visible { outline-color: #ff8a1d; }
+  #az-spook-modal .az-advent-door.is-today .az-advent-leaf { animation-name: az-spook-pulse; }
+  @keyframes az-spook-pulse {
+    from { box-shadow: 0 0 0 2px #ff8a1d, 0 0 6px #ff8a1d; }
+    to   { box-shadow: 0 0 0 2px #ff8a1d, 0 0 16px #ffb347; }
+  }
+  /* Grabstein kippt nach hinten weg statt seitlich aufzuklappen */
+  #az-spook-modal .az-advent-leaf { transform-origin: center bottom; }
+  #az-spook-modal .az-advent-door.is-open .az-advent-leaf { transform: rotateX(-100deg); }
+  #az-spook-modal .az-advent-door.is-open[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #ff8a1d, inset 0 2px 8px rgba(0, 0, 0, 0.5); }
+  #az-spook-modal .az-advent-spark { color: #ff8a1d; }
+  #az-spook-modal .az-advent-note {
+    border-color: rgba(154, 107, 219, 0.55);
+    background: linear-gradient(180deg, #fbf7ff, #f1e6ff);
+  }
+  #az-spook-modal .az-advent-note-title { color: #6b3fa8; }
+
+  /* ---------- Kürbis schnitzen ---------- */
+  .az-carve-open { margin-top: 10px; }
+  .az-carve-open[hidden] { display: none; }
+  .az-carve-stage {
+    display: block;
+    width: 100%;
+    max-width: 180px;
+    margin: 4px auto 10px;
+    overflow: visible;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(43, 29, 61, 0.9) 0 55%, rgba(43, 29, 61, 0) 70%);
+  }
+  .az-carve-rows { display: grid; gap: 8px; }
+  .az-carve-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .az-carve-label {
+    flex: 0 0 52px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--az-muted);
+  }
+  .az-carve-save:disabled { cursor: default; filter: saturate(0.3); opacity: 0.7; }
+
+  /* ---------- Hexen-Glaskugel ----------
+     Zu Halloween ersetzt die Kugel die Muschelschalen im Orakel. */
+  #az-oracle-ball { display: none; }
+  #az-oracle-modal.is-spooky #az-oracle-ball { display: inline; }
+  #az-oracle-modal.is-spooky #az-oracle-lower,
+  #az-oracle-modal.is-spooky #az-oracle-upper { display: none; }
+  #az-oracle-modal.is-spooky .az-oracle-eyebrow { color: #6b3fa8; }
+  #az-oracle-modal.is-spooky .az-badge svg { display: none; }
+  #az-oracle-modal.is-spooky .az-badge::after { content: '🔮'; font-size: 15px; line-height: 1; }
+  .az-oracle-orb { transition: filter 600ms ease; }
+  #az-oracle-modal.is-gazing .az-oracle-orb { filter: drop-shadow(0 0 10px #b77bff) brightness(1.15); }
+  .az-oracle-mist {
+    transform-box: view-box;
+    transform-origin: 0 0;
+    animation: az-oracle-mist 9s linear infinite;
+  }
+  #az-oracle-modal.is-gazing .az-oracle-mist { animation-duration: 1.6s; }
+  @keyframes az-oracle-mist {
+    to { transform: rotate(360deg); }
+  }
+  .az-modal-card.is-trick { animation: az-trick 1600ms ease-in-out; }
+
+  /* ---------- Gruseleffekte beim Schließen des Kalenders ---------- */
+  .az-spook-swoop {
+    opacity: 0;
+    animation: az-spook-swoop var(--dur, 4s) ease-in-out forwards;
+  }
+  @keyframes az-spook-swoop {
+    0%   { transform: translate(0, 0); opacity: 1; }
+    50%  { transform: translate(calc(var(--dx, 600px) / 2), var(--rise, -40px)); }
+    100% { transform: translate(var(--dx, 600px), 0); opacity: 1; }
+  }
+  .az-spook-fog { animation: az-spook-fog var(--dur, 7s) ease-in-out forwards; }
+  @keyframes az-spook-fog {
+    from { transform: translateX(0); }
+    to   { transform: translateX(var(--dx, 100px)); }
+  }
+  .az-spook-bolt { animation: az-spook-bolt 900ms steps(1, end) forwards; }
+  @keyframes az-spook-bolt {
+    0% { opacity: 1; } 20% { opacity: 0.2; } 30% { opacity: 1; } 60% { opacity: 0; } 100% { opacity: 0; }
+  }
+  .az-spook-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    pointer-events: none;
+    background: #f4efff;
+    opacity: 0;
+    animation: az-spook-flash 900ms ease-out forwards;
+  }
+  @keyframes az-spook-flash {
+    0% { opacity: 0; } 8% { opacity: 0.55; } 20% { opacity: 0.1; } 30% { opacity: 0.4; } 100% { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .az-oracle-mist { animation: none; }
+    .az-modal-card.is-trick { animation: none; }
   }
 
   /* ---------- Muschel-Shop ---------- */
@@ -1758,7 +2096,14 @@
     border-radius: 14px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(219, 246, 255, 0.6));
   }
+  .az-season-row[hidden] { display: none; }
   .az-season-label { font-size: 13px; color: var(--az-text); }
+  .az-season-next {
+    margin: 6px 2px 0;
+    font-size: 12px;
+    color: var(--az-muted);
+  }
+  .az-season-row[hidden] + .az-season-next { margin-top: 0; }
   .az-season-toggle {
     flex: none;
     position: relative;
@@ -2693,6 +3038,33 @@
     pointer-events: none;
   }
 
+  /* Spinnennetz in der Ecke und Spinne am Faden auf den Kacheln zu
+     Halloween. Der Faden reicht über die Kachelkante hinaus, border-radius
+     schneidet ihn dort ab, damit die Spinne beim Auf und Ab hängen bleibt. */
+  .az-wrap[data-event~="halloween"] .az-block::before,
+  .az-wrap[data-event~="halloween"] .az-metric::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2060%2060%22%3E%3Cpath%20d%3D%22M1%2C1L59%2C1M1%2C1L57%2C16M1%2C1L51.2%2C30M1%2C1L42%2C42M1%2C1L30%2C51.2M1%2C1L16%2C57M1%2C1L1%2C59M12%2C1Q10.4%2C2.2%2011.6%2C3.8Q9.7%2C4.6%2010.5%2C6.5Q8.5%2C6.8%208.8%2C8.8Q6.8%2C8.5%206.5%2C10.5Q4.6%2C9.7%203.8%2C11.6Q2.2%2C10.4%201%2C12M21%2C1Q18.1%2C3.2%2020.3%2C6.2Q16.9%2C7.6%2018.3%2C11Q14.6%2C11.5%2015.1%2C15.1Q11.5%2C14.6%2011%2C18.3Q7.6%2C16.9%206.2%2C20.3Q3.2%2C18.1%201%2C21M30%2C1Q25.7%2C4.3%2029%2C8.5Q24%2C10.5%2026.1%2C15.5Q20.8%2C16.2%2021.5%2C21.5Q16.2%2C20.8%2015.5%2C26.1Q10.5%2C24%208.5%2C29Q4.3%2C25.7%201%2C30M39%2C1Q33.4%2C5.3%2037.7%2C10.8Q31.2%2C13.5%2033.9%2C20Q26.9%2C20.9%2027.9%2C27.9Q20.9%2C26.9%2020%2C33.9Q13.5%2C31.2%2010.8%2C37.7Q5.3%2C33.4%201%2C39M48%2C1Q41.1%2C6.3%2046.4%2C13.2Q38.3%2C16.5%2041.7%2C24.5Q33.1%2C25.6%2034.2%2C34.2Q25.6%2C33.1%2024.5%2C41.7Q16.5%2C38.3%2013.2%2C46.4Q6.3%2C41.1%201%2C48%22%20fill%3D%22none%22%20stroke%3D%22%233b2656%22%20stroke-width%3D%220.8%22%20stroke-opacity%3D%220.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E") left top / 56px 56px no-repeat;
+    pointer-events: none;
+  }
+  .az-wrap[data-event~="halloween"] .az-block::before {
+    background:
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2060%22%3E%3Crect%20x%3D%227.75%22%20y%3D%220%22%20width%3D%220.5%22%20height%3D%2244%22%20fill%3D%22%233b2656%22%20fill-opacity%3D%220.55%22%2F%3E%3Cpath%20d%3D%22M6.5%2C46.5Q3.5%2C43.5%202%2C46M6.5%2C47.5Q3%2C46%201.5%2C48.5M6.5%2C48.2Q3%2C48.5%202%2C51M6.8%2C48.8Q4.5%2C50.5%204%2C53M9.5%2C46.5Q12.5%2C43.5%2014%2C46M9.5%2C47.5Q13%2C46%2014.5%2C48.5M9.5%2C48.2Q13%2C48.5%2014%2C51M9.2%2C48.8Q11.5%2C50.5%2012%2C53%22%20stroke%3D%22%232b1d3d%22%20stroke-width%3D%220.9%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%2F%3E%3Cellipse%20cx%3D%228%22%20cy%3D%2249.4%22%20rx%3D%222.8%22%20ry%3D%223.2%22%20fill%3D%22%232b1d3d%22%2F%3E%3Ccircle%20cx%3D%228%22%20cy%3D%2245.4%22%20r%3D%221.8%22%20fill%3D%22%232b1d3d%22%2F%3E%3Ccircle%20cx%3D%227.3%22%20cy%3D%2245.2%22%20r%3D%220.45%22%20fill%3D%22%23ff8a1d%22%2F%3E%3Ccircle%20cx%3D%228.7%22%20cy%3D%2245.2%22%20r%3D%220.45%22%20fill%3D%22%23ff8a1d%22%2F%3E%3C%2Fsvg%3E") right 12px top -34px / 16px 60px no-repeat,
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2060%2060%22%3E%3Cpath%20d%3D%22M1%2C1L59%2C1M1%2C1L57%2C16M1%2C1L51.2%2C30M1%2C1L42%2C42M1%2C1L30%2C51.2M1%2C1L16%2C57M1%2C1L1%2C59M12%2C1Q10.4%2C2.2%2011.6%2C3.8Q9.7%2C4.6%2010.5%2C6.5Q8.5%2C6.8%208.8%2C8.8Q6.8%2C8.5%206.5%2C10.5Q4.6%2C9.7%203.8%2C11.6Q2.2%2C10.4%201%2C12M21%2C1Q18.1%2C3.2%2020.3%2C6.2Q16.9%2C7.6%2018.3%2C11Q14.6%2C11.5%2015.1%2C15.1Q11.5%2C14.6%2011%2C18.3Q7.6%2C16.9%206.2%2C20.3Q3.2%2C18.1%201%2C21M30%2C1Q25.7%2C4.3%2029%2C8.5Q24%2C10.5%2026.1%2C15.5Q20.8%2C16.2%2021.5%2C21.5Q16.2%2C20.8%2015.5%2C26.1Q10.5%2C24%208.5%2C29Q4.3%2C25.7%201%2C30M39%2C1Q33.4%2C5.3%2037.7%2C10.8Q31.2%2C13.5%2033.9%2C20Q26.9%2C20.9%2027.9%2C27.9Q20.9%2C26.9%2020%2C33.9Q13.5%2C31.2%2010.8%2C37.7Q5.3%2C33.4%201%2C39M48%2C1Q41.1%2C6.3%2046.4%2C13.2Q38.3%2C16.5%2041.7%2C24.5Q33.1%2C25.6%2034.2%2C34.2Q25.6%2C33.1%2024.5%2C41.7Q16.5%2C38.3%2013.2%2C46.4Q6.3%2C41.1%201%2C48%22%20fill%3D%22none%22%20stroke%3D%22%233b2656%22%20stroke-width%3D%220.8%22%20stroke-opacity%3D%220.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E") left top / 56px 56px no-repeat;
+    animation: az-web-spider 3.4s ease-in-out infinite alternate;
+  }
+  .az-wrap[data-event~="halloween"] .az-metric::before { background-size: 36px 36px; }
+  @keyframes az-web-spider {
+    to { background-position: right 12px top -27px, left top; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .az-wrap[data-event~="halloween"] .az-block::before { animation: none; }
+  }
+
   /* Anklickbare Fundstücke (Ostereier, Nikolausstiefel) */
   .az-event-pick { pointer-events: all; cursor: pointer; }
   .az-event-pick:hover { filter: brightness(1.08) drop-shadow(0 0 3px #ffffff); }
@@ -2753,6 +3125,33 @@
   }
   @keyframes az-event-flap {
     to { transform: scaleY(0.35); }
+  }
+
+  /* Spinne am Faden: Faden streckt sich im selben Takt, in dem die Spinne
+     sinkt, --stretch = (Fadenlänge + --drop) / Fadenlänge */
+  .az-event-dangle { animation: az-event-dangle var(--dur, 3s) ease-in-out infinite alternate; }
+  .az-event-thread {
+    transform-box: fill-box;
+    transform-origin: top;
+    animation: az-event-thread var(--dur, 3s) ease-in-out infinite alternate;
+  }
+  @keyframes az-event-dangle {
+    to { transform: translateY(var(--drop, 6px)); }
+  }
+  @keyframes az-event-thread {
+    to { transform: scaleY(var(--stretch, 1.3)); }
+  }
+
+  /* Frisch freigeschaltete Adventsdeko wächst einmal kurz auf */
+  .az-advent-fresh {
+    transform-box: fill-box;
+    transform-origin: center bottom;
+    animation: az-advent-fresh 1400ms cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+  @keyframes az-advent-fresh {
+    0% { transform: scale(0.2); opacity: 0; filter: drop-shadow(0 0 0 #ffd24a); }
+    50% { opacity: 1; filter: drop-shadow(0 0 8px #ffd24a); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 0 #ffd24a); }
   }
 
   .az-event-twinkle { animation: az-event-twinkle 1.6s ease-in-out infinite alternate; }
@@ -3590,6 +3989,7 @@
           <button type="button" class="az-hud-tip" id="az-hud-tip" aria-label="Tipp für heute"></button>
           <div class="az-hud-tip-bubble" id="az-hud-tip-bubble" hidden></div>
           <button type="button" class="az-advent-pill" id="az-advent-open" hidden></button>
+          <button type="button" class="az-advent-pill az-spook-pill" id="az-spook-open" hidden></button>
         </div>
 
         <span class="az-shells" id="az-shells">
@@ -3602,6 +4002,36 @@
           <span id="az-shell-count">1</span>
           <span class="sr-only">Muscheln</span>
         </span>
+
+        <button type="button" class="az-drink" id="az-drink" aria-label="Wasser holen, 1 Muschel pro Stunde">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <defs>
+              <clipPath id="az-drink-clip">
+                <path d="M12 3.2C9.6 6.6 6.2 10.4 6.2 14.2a5.8 5.8 0 0 0 11.6 0c0-3.8-3.4-7.6-5.8-11Z"/>
+              </clipPath>
+            </defs>
+            <g clip-path="url(#az-drink-clip)">
+              <rect class="az-drink-level" x="4" y="3" width="16" height="18" fill="#45c8ff"/>
+            </g>
+            <path d="M12 3.2C9.6 6.6 6.2 10.4 6.2 14.2a5.8 5.8 0 0 0 11.6 0c0-3.8-3.4-7.6-5.8-11Z"
+                  fill="none" stroke="#1784c4" stroke-width="1.3" stroke-linejoin="round"/>
+            <path d="M9 10.4c.4-1 1-1.9 1.7-2.7" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" opacity="0.9"/>
+            <g class="az-drink-face" fill="none" stroke="#0e5f8f" stroke-width="1" stroke-linecap="round">
+              <ellipse cx="9" cy="15.9" rx="1.1" ry="0.65" fill="#ff8fb1" stroke="none" opacity="0.7"/>
+              <ellipse cx="15" cy="15.9" rx="1.1" ry="0.65" fill="#ff8fb1" stroke="none" opacity="0.7"/>
+              <g class="az-drink-eyes-open" fill="#0e5f8f" stroke="none">
+                <circle cx="10.1" cy="14.2" r="0.85"/><circle cx="13.9" cy="14.2" r="0.85"/>
+                <circle cx="10.35" cy="13.95" r="0.28" fill="#ffffff"/><circle cx="14.15" cy="13.95" r="0.28" fill="#ffffff"/>
+              </g>
+              <path class="az-drink-eyes-sleepy" d="M9.3 14.3h1.6M13.1 14.3h1.6"/>
+              <path class="az-drink-eyes-happy" d="M9.3 14.6l.8-.8.8.8M13.1 14.6l.8-.8.8.8"/>
+              <path class="az-drink-mouth-smile" d="M11.2 16.1c.5.5 1.1.5 1.6 0"/>
+              <circle class="az-drink-mouth-o" cx="12" cy="16.4" r="0.45"/>
+            </g>
+          </svg>
+          <span id="az-drink-count">0</span>
+          <span class="sr-only">Gläser Wasser heute</span>
+        </button>
 
         <button type="button" class="btn-wheel" id="az-wheel-open">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
@@ -3821,10 +4251,25 @@
         <button type="button" class="btn-close" id="az-oracle-close" aria-label="Orakel schließen">×</button>
       </div>
 
-      <p class="az-modal-sub">Eine Frage, eine Muschel, eine knappe Antwort.</p>
+      <p class="az-modal-sub" id="az-oracle-sub">Eine Frage, eine Muschel, eine knappe Antwort.</p>
 
       <svg class="az-oracle-stage" viewBox="-60 -52 120 104" aria-hidden="true">
         <ellipse cx="0" cy="44" rx="42" ry="7" fill="#0a5a86" opacity="0.12"/>
+
+        <!-- Hexen-Glaskugel zu Halloween, ersetzt die Schalen (siehe ORACLE_SKIN) -->
+        <g id="az-oracle-ball">
+          <path d="M-22 44 L-16 30 H16 L22 44 Z" fill="#3b2656" stroke="#2b1d3d" stroke-width="1.4"/>
+          <path d="M-16 30 H16" stroke="#9a6bdb" stroke-width="1.6"/>
+          <g class="az-oracle-orb">
+            <circle cx="0" cy="0" r="31" fill="url(#az-oracle-ball-grad)" stroke="#e7d6ff" stroke-width="1.4"/>
+            <g id="az-oracle-mist" class="az-oracle-mist" fill="#f1e6ff">
+              <ellipse cx="-8" cy="4" rx="14" ry="5" opacity="0.35"/>
+              <ellipse cx="9" cy="-6" rx="12" ry="4" opacity="0.3"/>
+              <ellipse cx="2" cy="12" rx="10" ry="3.4" opacity="0.28"/>
+            </g>
+            <ellipse cx="-12" cy="-15" rx="8" ry="4.5" fill="#ffffff" opacity="0.55" transform="rotate(-30 -12 -15)"/>
+          </g>
+        </g>
 
         <g id="az-oracle-bubbles"></g>
 
@@ -3844,12 +4289,18 @@
           <circle cx="-11" cy="6" r="3.4" fill="#ffffff" opacity="0.7"/>
         </g>
 
+
         <defs>
           <linearGradient id="az-oracle-light" x1="0" y1="0" x2="0.4" y2="1">
             <stop offset="0" stop-color="#ffe4f5"/>
             <stop offset="0.45" stop-color="#f2b0dd"/>
             <stop offset="1" stop-color="#c07fca"/>
           </linearGradient>
+          <radialGradient id="az-oracle-ball-grad" cx="0.38" cy="0.32" r="0.75">
+            <stop offset="0" stop-color="#e9d8ff"/>
+            <stop offset="0.45" stop-color="#9a6bdb"/>
+            <stop offset="1" stop-color="#3b2656"/>
+          </radialGradient>
           <linearGradient id="az-oracle-deep" x1="0" y1="0" x2="0.4" y2="1">
             <stop offset="0" stop-color="#f6c9e8"/>
             <stop offset="0.5" stop-color="#d68fc8"/>
@@ -3875,7 +4326,7 @@
         <button type="button" class="az-oracle-hint">Noch einen Kaffee?</button>
       </div>
 
-      <p class="az-share-note">Die Muschel entscheidet zufällig. Bei Fragen zu Pause, Feierabend und Überstunden schaut sie vorher auf die Uhr.</p>
+      <p class="az-share-note" id="az-oracle-note">Die Muschel entscheidet zufällig. Bei Fragen zu Pause, Feierabend und Überstunden schaut sie vorher auf die Uhr.</p>
     </div>
   </div>
 
@@ -4048,6 +4499,46 @@
       </div>
       <p class="az-modal-sub" id="az-advent-sub"></p>
       <div class="az-advent-grid" id="az-advent-grid"></div>
+      <div class="az-advent-note" id="az-advent-note" aria-live="polite" hidden>
+        <span class="az-advent-note-gift" id="az-advent-note-gift" aria-hidden="true"></span>
+        <div>
+          <p class="az-advent-note-title" id="az-advent-note-title"></p>
+          <p class="az-advent-note-text" id="az-advent-note-text"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="az-modal" id="az-spook-modal" role="dialog" aria-modal="true" aria-labelledby="az-spook-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge" aria-hidden="true">🎃</span>
+        <span class="az-modal-title" id="az-spook-title">Gruselkalender</span>
+        <button type="button" class="btn-close" id="az-spook-close" aria-label="Gruselkalender schließen">×</button>
+      </div>
+      <p class="az-modal-sub" id="az-spook-sub"></p>
+      <div class="az-advent-grid" id="az-spook-grid"></div>
+      <div class="az-advent-note" id="az-spook-note" aria-live="polite" hidden>
+        <span class="az-advent-note-gift" id="az-spook-note-gift" aria-hidden="true"></span>
+        <div>
+          <p class="az-advent-note-title" id="az-spook-note-title"></p>
+          <p class="az-advent-note-text" id="az-spook-note-text"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="az-modal" id="az-carve-modal" role="dialog" aria-modal="true" aria-labelledby="az-carve-title" hidden>
+    <div class="az-modal-card">
+      <div class="az-modal-head">
+        <span class="az-badge" aria-hidden="true">🔪</span>
+        <span class="az-modal-title" id="az-carve-title">Kürbis schnitzen</span>
+        <button type="button" class="btn-close" id="az-carve-close" aria-label="Kürbis schnitzen schließen">×</button>
+      </div>
+      <p class="az-modal-sub">Gesicht zusammenstellen und schnitzen. Die Sonne trägt es bis Ende Halloween, auch nach einem Neuladen.</p>
+      <svg class="az-carve-stage" id="az-carve-preview" viewBox="-48 -50 96 92" aria-hidden="true"></svg>
+      <div class="az-carve-rows" id="az-carve-rows"></div>
+      <button type="button" class="btn-add az-carve-save" id="az-carve-save">Schnitzen, 3 Muscheln</button>
     </div>
   </div>
 
@@ -4066,12 +4557,14 @@
 
       <p class="az-modal-sub">Rein kosmetisch, gilt nur für diesen Besuch. Nach einem Neuladen ist der Shop wieder leer.</p>
 
-      <div class="az-shop-section" id="az-shop-season" hidden>
+      <div class="az-shop-section" id="az-shop-season">
         <h3 class="az-shop-heading">Saison-Theme</h3>
-        <div class="az-season-row">
+        <div class="az-season-row" id="az-season-row" hidden>
           <span class="az-season-label" id="az-season-label"></span>
           <button type="button" class="az-season-toggle" id="az-season-toggle" role="switch" aria-labelledby="az-season-label"></button>
         </div>
+        <p class="az-season-next" id="az-season-next"></p>
+        <button type="button" class="btn-ghost az-carve-open" id="az-carve-open" hidden>🎃 Kürbis schnitzen</button>
       </div>
 
       <div class="az-shop-section">
@@ -4543,6 +5036,62 @@
       '</g></g>';
   }
 
+  /* Schnitzteile für die Kürbis-Sonne zu Halloween. Der erste Eintrag
+     jeder Gruppe ist das Standardgesicht. Koordinaten passen zur
+     Kürbisform in pumpkinFace(). */
+  var PUMPKIN_PARTS = {
+    eyes: [
+      { id: 'dreieck', label: 'Dreieck', d: 'M-23,-6 l9,-14 l9,14 Z M5,-6 l9,-14 l9,14 Z' },
+      { id: 'rund', label: 'Rund', d: 'M-19,-12 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z M7,-12 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z' },
+      { id: 'boese', label: 'Böse', d: 'M-23,-16 L-5,-9 L-9,-3 L-21,-6 Z M23,-16 L5,-9 L9,-3 L21,-6 Z' },
+      { id: 'schlitz', label: 'Schlitz', d: 'M-22,-10 Q-14,-16 -6,-10 Q-14,-6 -22,-10 Z M6,-10 Q14,-16 22,-10 Q14,-6 6,-10 Z' }
+    ],
+    nose: [
+      { id: 'dreieck', label: 'Dreieck', d: 'M-3.5,4 l3.5,-6 l3.5,6 Z' },
+      { id: 'herz', label: 'Herz', d: 'M0,4 C-6,0 -5,-4 -2.4,-4 C-1,-4 0,-3 0,-2 C0,-3 1,-4 2.4,-4 C5,-4 6,0 0,4 Z' },
+      { id: 'keine', label: 'Keine', d: '' }
+    ],
+    mouth: [
+      { id: 'zickzack', label: 'Zickzack', d: 'M-25,9 q25,24 50,0 l-6,3 l-4,-4 l-5,5 l-5,-5 l-5,5 l-5,-5 l-5,5 l-5,-5 l-4,4 Z' },
+      { id: 'grinsen', label: 'Grinsen', d: 'M-24,8 Q0,30 24,8 Q0,18 -24,8 Z' },
+      { id: 'vampir', label: 'Vampir', d: 'M-20,10 L-12,10 L-10,17 L-8,10 L8,10 L10,17 L12,10 L20,10 Q14,24 0,24 Q-14,24 -20,10 Z' },
+      { id: 'oh', label: 'Oh', d: 'M-7,13 a7,8 0 1,0 14,0 a7,8 0 1,0 -14,0 Z' }
+    ]
+  };
+
+  function pumpkinPart(group, id) {
+    var list = PUMPKIN_PARTS[group];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return list[0];
+  }
+
+  function carveKey() { return 'az-pumpkin-' + today().getFullYear(); }
+
+  // Gespeichertes Gesicht, unbekannte Teile fallen aufs Standardgesicht zurück
+  function storedCarve() {
+    var raw = {};
+    try { raw = JSON.parse(localStorage.getItem(carveKey()) || '{}') || {}; } catch (e) {}
+    return { eyes: pumpkinPart('eyes', raw.eyes).id, nose: pumpkinPart('nose', raw.nose).id,
+             mouth: pumpkinPart('mouth', raw.mouth).id };
+  }
+
+  /* Kürbis als Sonnengesicht. preview: ohne az-sun-core, damit die
+     Vorschau im Schnitz-Dialog keine doppelte ID erzeugt. */
+  function pumpkinFace(carve, preview) {
+    var d = [pumpkinPart('eyes', carve.eyes).d, pumpkinPart('nose', carve.nose).d,
+             pumpkinPart('mouth', carve.mouth).d].join(' ');
+    var cut = '<path d="' + d + '"/>';
+    return '<ellipse cx="-17" cy="3" rx="21" ry="32" fill="#d9661a"/>' +
+      '<ellipse cx="17" cy="3" rx="21" ry="32" fill="#d9661a"/>' +
+      '<ellipse cx="0" cy="3" rx="21" ry="34" fill="#ff8a1d" stroke="#b3530a" stroke-width="1.4"/>' +
+      '<path d="M-1,-30 q2,-11 11,-13" fill="none" stroke="#4d7a2a" stroke-width="6" stroke-linecap="round"/>' +
+      '<circle' + (preview ? '' : ' id="az-sun-core"') + ' r="30" fill="#ffe27a" opacity="' + (preview ? '0.3' : '0.08') + '"/>' +
+      '<g class="az-sun-flicker">' +
+        '<g fill="#ffd24a" filter="url(#az-bloom)" opacity="0.95">' + cut + '</g>' +
+        '<g fill="#fff3b0">' + cut + '</g>' +
+      '</g>';
+  }
+
   function bat(y, i) {
     var dur = rand(16, 24);
     return '<g transform="translate(-30,' + y.toFixed(0) + ')">' +
@@ -4553,8 +5102,11 @@
       '</g></g>';
   }
 
-  function tree(x, y) {
+  // extra: zusätzliche Kugeln aus dem Adventskalender (Türchen 14)
+  function tree(x, y, extra) {
     var balls = [[-6, -9, '#ff5a4d'], [5, -12, '#ffd24a'], [-3, -19, '#ffd24a'], [4, -24, '#ff5a4d']];
+    if (extra) balls = balls.concat([[-9, -6, '#45d0ff'], [9, -6, '#b77bff'], [0, -10, '#45d0ff'],
+                                     [-5, -15, '#b77bff'], [5, -18, '#4fdd7e'], [0, -27, '#ff8fc4']]);
     return '<g transform="translate(' + x + ',' + y + ')">' +
       '<ellipse cx="0" cy="2" rx="14" ry="3" fill="#0a5580" opacity="0.14"/>' +
       '<rect x="-2" y="-5" width="4" height="7" fill="#7a5233"/>' +
@@ -4568,10 +5120,10 @@
   }
 
   // Lichterkette um den Turm zwischen den beiden roten Ringen
-  function lighthouseLights(x, y) {
-    var colors = ['#ff5a4d', '#ffd24a', '#4fdd7e', '#45d0ff'];
+  function lighthouseLights(x, y, colors, wire) {
+    colors = colors || ['#ff5a4d', '#ffd24a', '#4fdd7e', '#45d0ff'];
     var out = '<g transform="translate(' + x + ',' + y + ')">' +
-      '<path d="M-8.3,-35 Q0,-29 8.3,-35" fill="none" stroke="#15562f" stroke-width="0.7"/>';
+      '<path d="M-8.3,-35 Q0,-29 8.3,-35" fill="none" stroke="' + (wire || '#15562f') + '" stroke-width="0.7"/>';
     [-6, -3, 0, 3, 6].forEach(function (dx, i) {
       out += '<circle class="az-event-twinkle" style="animation-delay:' + (i * 0.3) + 's" cx="' + dx +
         '" cy="' + (-32 + Math.abs(dx) * 0.34 - 1).toFixed(1) + '" r="1.7" fill="' + colors[i % colors.length] + '"/>';
@@ -4586,6 +5138,145 @@
       '<path d="M-10.4,-64.6 h20.8 q0.6,2 -1.6,2.2 q-2,1.8 -3.6,0.2 q-2.2,1.6 -4,0 q-2,1.8 -4,0.2 q-2,1.6 -3.6,-0.2 q-2.4,0 -4,-2.4 Z"/>' +
       '<path d="M-14.6,-5 Q-15,-8.4 -9,-9.2 Q0,-11.4 9,-9.2 Q15,-8.4 14.6,-5 q-2,1.4 -4,0 q-3,1.6 -5.4,0 q-2.6,1.8 -5.2,0 q-2.6,1.6 -5.2,0 q-2.4,1.6 -5,0 q-2,1.6 -4.8,0 Z"/>' +
       '</g>';
+  }
+
+  /* ---- Deko aus dem Adventskalender ----
+     Jedes geöffnete Türchen mit deco-Schlüssel (siehe ADVENT_DOORS) stellt
+     ein Stück in die Weihnachtsszene. Kein eigener Zustand, alles kommt aus
+     adventOpened(). */
+
+  // Adventskranz, Kerzen brennen je nach vergangenen Adventssonntagen
+  function wreath(x, y) {
+    var now = today();
+    var date = dayOf(now.getFullYear(), now.getMonth(), now.getDate());
+    var lit = clamp(Math.floor((date - firstAdvent(now.getFullYear())) / (7 * 86400000)) + 1, 0, 4);
+    var out = '<g transform="translate(' + x + ',' + y + ')">' +
+      '<ellipse cx="0" cy="1.5" rx="13" ry="2.6" fill="#0a5580" opacity="0.14"/>';
+    [[-6.5, -3], [2.5, -3.6], [-2.5, 0], [6.5, 0]].forEach(function (c, i) {
+      if (i === 2) out += '<ellipse cx="0" cy="-2" rx="11" ry="3.6" fill="none" stroke="#1f7a44" stroke-width="4"/>' +
+        '<g fill="#e0262e"><circle cx="-9" cy="-1" r="1.1"/><circle cx="-3" cy="1.4" r="1.1"/><circle cx="4" cy="1.2" r="1.1"/><circle cx="9.6" cy="-2.4" r="1.1"/></g>';
+      out += '<rect x="' + (c[0] - 1.3) + '" y="' + (c[1] - 9) + '" width="2.6" height="8" rx="0.6" fill="#e0262e" stroke="#a81c1c" stroke-width="0.4"/>';
+      if (i < lit) out += '<g class="az-sun-flicker"><ellipse cx="' + c[0] + '" cy="' + (c[1] - 11.4) + '" rx="3" ry="3.4" fill="#ffd24a" opacity="0.35"/>' +
+        '<ellipse cx="' + c[0] + '" cy="' + (c[1] - 11.4) + '" rx="1.1" ry="2" fill="#ffb347"/></g>';
+    });
+    return out + '</g>';
+  }
+
+  function giftBox(x, y, w, h, fill, ribbon) {
+    return '<rect x="' + x + '" y="' + (y - h) + '" width="' + w + '" height="' + h + '" rx="1" fill="' + fill + '" stroke="rgba(0,0,0,0.25)" stroke-width="0.6"/>' +
+      '<rect x="' + (x + w / 2 - 1.2) + '" y="' + (y - h) + '" width="2.4" height="' + h + '" fill="' + ribbon + '"/>' +
+      '<path d="M' + (x + w / 2) + ',' + (y - h) + ' c-3,-4 -6,-2 -3,0 Z M' + (x + w / 2) + ',' + (y - h) + ' c3,-4 6,-2 3,0 Z" fill="' + ribbon + '"/>';
+  }
+
+  // Geschenkestapel, ein bis drei Pakete
+  function giftPile(x, y, count) {
+    var out = '<g transform="translate(' + x + ',' + y + ')"><ellipse cx="0" cy="1.5" rx="15" ry="2.8" fill="#0a5580" opacity="0.14"/>';
+    out += giftBox(-12, 1, 14, 11, '#d93a3a', '#ffd24a');
+    if (count > 1) out += giftBox(3, 1, 11, 9, '#3a86d6', '#ffffff');
+    if (count > 2) out += giftBox(-8, -10, 10, 8, '#2f9e5b', '#ff5a4d');
+    return out + '</g>';
+  }
+
+  // Lichterkette hängt von der Galerie des Leuchtturms bis zur Baumspitze
+  function garland(x1, y1, x2, y2) {
+    var cx = (x1 + x2) / 2, cy = Math.max(y1, y2) + 14;
+    var colors = ['#ff5a4d', '#ffd24a', '#4fdd7e', '#45d0ff', '#ff8fc4'];
+    var out = '<path d="M' + x1 + ',' + y1 + ' Q' + cx + ',' + cy + ' ' + x2 + ',' + y2 + '" fill="none" stroke="#15562f" stroke-width="0.7"/>';
+    for (var i = 1; i <= 6; i++) {
+      var t = i / 7, u = 1 - t;
+      var px = u * u * x1 + 2 * u * t * cx + t * t * x2;
+      var py = u * u * y1 + 2 * u * t * cy + t * t * y2;
+      out += '<circle class="az-event-twinkle" style="animation-delay:' + (i * 0.27).toFixed(2) + 's" cx="' + px.toFixed(1) +
+        '" cy="' + (py + 1.4).toFixed(1) + '" r="1.6" fill="' + colors[i % colors.length] + '"/>';
+    }
+    return out;
+  }
+
+  function sled(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<ellipse cx="0" cy="1.5" rx="14" ry="2.4" fill="#0a5580" opacity="0.14"/>' +
+      '<path d="M-10,0 v-4 M6,0 v-4" stroke="#8a5a33" stroke-width="1.4"/>' +
+      '<path d="M-14,0 H10 Q15,0 15,-5" fill="none" stroke="#8a5a33" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<path d="M-13,-8 v-5 q0,-2 2,-2" fill="none" stroke="#c9302c" stroke-width="2" stroke-linecap="round"/>' +
+      '<rect x="-13" y="-8" width="20" height="4" rx="1.4" fill="#c9302c" stroke="#8a1c1c" stroke-width="0.8"/>' +
+      '</g>';
+  }
+
+  function gingerHouse(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<ellipse cx="0" cy="1.5" rx="13" ry="2.6" fill="#0a5580" opacity="0.14"/>' +
+      '<rect x="-9" y="-12" width="18" height="12" fill="#a0622d" stroke="#6b3d17" stroke-width="0.8"/>' +
+      '<path d="M-12,-11 L0,-22 L12,-11 Z" fill="#8a4f22" stroke="#6b3d17" stroke-width="0.8"/>' +
+      '<path d="M-12,-11 q2,2 4,0 q2,2 4,0 q2,2 4,0 q2,2 4,0 q2,2 4,0 q2,2 4,0" fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round"/>' +
+      '<rect x="-2.5" y="-7" width="5" height="7" rx="2.5" fill="#6b3d17"/>' +
+      '<rect x="-7.4" y="-9.4" width="3.6" height="3.6" fill="#ffd24a" stroke="#ffffff" stroke-width="0.6"/>' +
+      '<rect x="3.8" y="-9.4" width="3.6" height="3.6" fill="#ffd24a" stroke="#ffffff" stroke-width="0.6"/>' +
+      '<g fill="#ff5a4d"><circle cx="-4" cy="-15" r="0.9"/><circle cx="4" cy="-15" r="0.9"/></g><circle cx="0" cy="-18" r="0.9" fill="#4fdd7e"/>' +
+      '</g>';
+  }
+
+  // Stern auf der Kuppel des Leuchtturms
+  function lighthouseStar(x, y) {
+    return '<g transform="translate(' + x + ',' + (y - 87) + ')">' +
+      '<circle class="az-event-twinkle" r="7" fill="#ffe27a" opacity="0.55" filter="url(#az-bloom)"/>' +
+      '<path d="M0,-5 l1.5,3.2 l3.5,0.4 l-2.6,2.4 l0.8,3.4 l-3.2,-1.8 l-3.2,1.8 l0.8,-3.4 l-2.6,-2.4 l3.5,-0.4 Z" fill="#ffd24a" stroke="#e0a52f" stroke-width="0.5"/>' +
+      '</g>';
+  }
+
+  /* Liefert { back, front }: back liegt hinter dem Baum (goldener Schimmer),
+     front vor allem anderen. Das zuletzt freigeschaltete Stück bekommt
+     az-advent-fresh und wächst beim Schließen des Kalenders kurz auf. */
+  function adventDeco() {
+    var out = { back: '', front: '', tree: false, freshTree: false };
+    if (!ADVENT_DOORS) return out;   // Szene vor der Initialisierung des Kalenders
+    var has = {}, gifts = 0;
+    adventOpened().forEach(function (d) {
+      var key = ADVENT_DOORS[d - 1] && ADVENT_DOORS[d - 1].deco;
+      if (!key) return;
+      has[key] = true;
+      if (key === 'geschenke') gifts++;
+    });
+    var tower = beachX(0.22), castle = beachX(0.78), y = view.waterY;
+    function piece(key, svg) {
+      return key === adventFresh ? '<g class="az-advent-fresh">' + svg + '</g>' : svg;
+    }
+    if (has.glanz) out.back += piece('glanz', '<ellipse class="az-event-twinkle" cx="' + (tower + 34) + '" cy="' + (y - 18) +
+      '" rx="22" ry="26" fill="#ffe27a" opacity="0.6" filter="url(#az-bloom)"/>');
+    out.tree = !!has.kugeln;
+    out.freshTree = adventFresh === 'kugeln';
+    if (has.girlande) out.front += piece('girlande', garland(tower + 9.5, y - 60, tower + 33, y - 31));
+    if (has.stern) out.front += piece('stern', lighthouseStar(tower, y));
+    if (has.kranz) out.front += piece('kranz', wreath(tower + 64, y));
+    if (gifts) out.front += piece('geschenke', giftPile(tower - 36, y, gifts));
+    if (has.laterne) out.front += piece('laterne', lantern(castle - 46, y, '#ffd24a'));
+    if (has.schlitten) out.front += piece('schlitten', sled(castle + 36, y));
+    if (has.lebkuchen) out.front += piece('lebkuchen', gingerHouse(castle - 74, y));
+    return out;
+  }
+
+  function spider() {
+    return '<path d="M-1.5,1.5 Q-4.5,-1.5 -6,1 M-1.5,2.5 Q-5,1 -6.5,3.5 M-1.5,3.2 Q-5,3.5 -6,6 M-1.2,3.8 Q-3.5,5.5 -4,8 ' +
+        'M1.5,1.5 Q4.5,-1.5 6,1 M1.5,2.5 Q5,1 6.5,3.5 M1.5,3.2 Q5,3.5 6,6 M1.2,3.8 Q3.5,5.5 4,8" ' +
+        'fill="none" stroke="#2b1d3d" stroke-width="0.9" stroke-linecap="round"/>' +
+      '<ellipse cx="0" cy="4.4" rx="2.8" ry="3.2" fill="#2b1d3d"/><circle cx="0" cy="0.4" r="1.8" fill="#2b1d3d"/>' +
+      '<circle cx="-0.7" cy="0.2" r="0.45" fill="#ff8a1d"/><circle cx="0.7" cy="0.2" r="0.45" fill="#ff8a1d"/>';
+  }
+
+  // Spinne seilt sich an der Galerie des Leuchtturms ab
+  function lighthouseSpider(x, y) {
+    var len = 7, drop = 5;
+    return '<g transform="translate(' + (x + 9) + ',' + (y - 59.5) + ')" style="--dur:3.8s;--drop:' + drop +
+        'px;--stretch:' + ((len + drop) / len).toFixed(3) + '">' +
+      '<rect class="az-event-thread" x="-0.25" y="0" width="0.5" height="' + len + '" fill="#3b2656" opacity="0.7"/>' +
+      '<g class="az-event-dangle"><g transform="translate(0,' + len + ')">' + spider() + '</g></g>' +
+      '</g>';
+  }
+
+  function leaf(x, y, i) {
+    var colors = ['#e0a52f', '#c85a2b', '#8a4a1f', '#ff8a1d'];
+    return '<g transform="translate(' + x + ',' + y + ')"><g class="az-event-spin" style="--spin:' + (2.4 + (i % 4) * 0.7) + 's">' +
+      '<path d="M0,-5 Q5,-2 0,5 Q-5,-2 0,-5 Z M0,-5 V6" fill="' + colors[i % colors.length] + '" stroke="#6b3d17" stroke-width="0.5"/>' +
+      '</g></g>';
   }
 
   function pretzel(x, y) {
@@ -4700,27 +5391,19 @@
         var castle = beachX(0.78), tower = beachX(0.22);
         return pumpkin(castle + 36, view.waterY, 1) + pumpkin(castle + 55, view.waterY, 0.7) +
           pumpkin(tower + 30, view.waterY, 0.85) +
-          [0.2, 0.55, 0.38].map(function (f, i) { return bat(skyBandY(f), i); }).join('');
+          lighthouseLights(tower, view.waterY, ['#ff8a1d', '#9a6bdb', '#7ed957', '#ffd24a'], '#2b1d3d') +
+          lighthouseSpider(tower, view.waterY) +
+          [0.2, 0.55, 0.38].map(function (f, i) { return bat(skyBandY(f), i); }).join('') +
+          fallers(14, leaf) + spookDeco();
       },
       theme: { '--az-cyan': '#ff8a1d', '--az-cyan-deep': '#b3530a', '--az-tint': 'rgba(255,226,200,0.3)',
                '--az-bright': '#ffd9a8', '--az-ring': 'rgba(255,138,29,0.45)',
                '--az-rainbow': 'linear-gradient(90deg, #ff8a1d, #ffb347, #9a6bdb, #6b3fa8, #7ed957, #ff8a1d, #b77bff)' },
-      greet: function () { return ['Happy Halloween 🎃', 'Tipp dein Tier an: Süßes oder Saures?']; },
+      greet: function () { return ['Happy Halloween 🎃', 'Spinnen am Leuchtturm, Gruseln am Strand. Tipp dein Tier an: Süßes oder Saures?']; },
       // Sonne wird zum leuchtenden Kürbis. az-sun-core bleibt für setSunGlow().
       sunRays: '#ff9a3c',
-      sunFace: (function () {
-        var carve = '<path d="M-23,-6 l9,-14 l9,14 Z M5,-6 l9,-14 l9,14 Z M-3.5,4 l3.5,-6 l3.5,6 Z ' +
-          'M-25,9 q25,24 50,0 l-6,3 l-4,-4 l-5,5 l-5,-5 l-5,5 l-5,-5 l-5,5 l-5,-5 l-4,4 Z"/>';
-        return '<ellipse cx="-17" cy="3" rx="21" ry="32" fill="#d9661a"/>' +
-          '<ellipse cx="17" cy="3" rx="21" ry="32" fill="#d9661a"/>' +
-          '<ellipse cx="0" cy="3" rx="21" ry="34" fill="#ff8a1d" stroke="#b3530a" stroke-width="1.4"/>' +
-          '<path d="M-1,-30 q2,-11 11,-13" fill="none" stroke="#4d7a2a" stroke-width="6" stroke-linecap="round"/>' +
-          '<circle id="az-sun-core" r="30" fill="#ffe27a" opacity="0.08"/>' +
-          '<g class="az-sun-flicker">' +
-            '<g fill="#ffd24a" filter="url(#az-bloom)" opacity="0.95">' + carve + '</g>' +
-            '<g fill="#fff3b0">' + carve + '</g>' +
-          '</g>';
-      })(),
+      // Gesicht aus dem Kürbis-Schnitzen (siehe storedCarve(), saveCarve())
+      sunFace: pumpkinFace(storedCarve()),
       // Krabbe wird zur Fledermaus, die im Bogen über den Strand flattert
       crab: {
         label: 'Fledermaus', fly: true,
@@ -4739,8 +5422,11 @@
            '<circle cx="33" cy="8" r="4.5" fill="#ffffff"/>' +
            '<rect x="3" y="21" width="34" height="8" rx="4" fill="#ffffff"/>',
       scene: function () {
-        return tree(beachX(0.22) + 34, view.waterY) + lighthouseLights(beachX(0.22), view.waterY) +
-          lighthouseSnow(beachX(0.22), view.waterY) +
+        var deco = adventDeco();
+        var xmasTree = tree(beachX(0.22) + 34, view.waterY, deco.tree);
+        return deco.back + (deco.freshTree ? '<g class="az-advent-fresh">' + xmasTree + '</g>' : xmasTree) +
+          lighthouseLights(beachX(0.22), view.waterY) +
+          lighthouseSnow(beachX(0.22), view.waterY) + deco.front +
           fallers(28, function (x, y, i) {
             return '<circle cx="' + x + '" cy="' + y + '" r="' + (1.6 + (i % 3) * 0.8) + '" fill="#ffffff" stroke="rgba(10,90,134,0.25)" stroke-width="0.6"/>';
           });
@@ -5009,6 +5695,53 @@
         '</g>';
     } };
 
+  // Halloween: Feierabend-Truhe wird zum brodelnden Hexenkessel voller Süßigkeiten
+  SEASON_EVENTS.halloween.chest =
+    '<ellipse cx="0" cy="-7" rx="12" ry="5" fill="#7ed957" filter="url(#az-bloom)" opacity="0.55"/>' +
+    '<path d="M-9,8 l-2.4,3.4 M9,8 l2.4,3.4" stroke="#2a2a33" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M-12.5,-6 Q-15,8.5 -6,9.5 H6 Q15,8.5 12.5,-6 Z" fill="#2f2f3a" stroke="#15151c" stroke-width="1.1"/>' +
+    '<path d="M-9,0 Q-10,6 -5,7" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.18" stroke-linecap="round"/>' +
+    '<ellipse cx="0" cy="-6" rx="13.4" ry="3.2" fill="#3d3d4a" stroke="#15151c" stroke-width="1.1"/>' +
+    '<ellipse cx="0" cy="-6.2" rx="10.8" ry="2.1" fill="#7ed957"/>' +
+    '<g transform="translate(5,-8.6) rotate(-24)">' +
+      '<path d="M-2,0 l-2.6,-1.8 v3.6 Z M2,0 l2.6,-1.8 v3.6 Z" fill="#ff8a1d"/><circle r="2.3" fill="#ff8a1d" stroke="#b3530a" stroke-width="0.5"/>' +
+    '</g>' +
+    '<path d="M-6,-6.6 V-12 M-8,-11 Q-6,-14 -4,-11" fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round"/>' +
+    '<path d="M-8,-11 Q-6,-14 -4,-11" fill="none" stroke="#e0262e" stroke-width="1.4" stroke-dasharray="1 1" stroke-linecap="round"/>' +
+    '<circle class="az-event-twinkle" cx="-2" cy="-8.4" r="1.4" fill="#b8f58f"/>' +
+    '<circle class="az-event-twinkle" style="animation-delay:0.6s" cx="1.4" cy="-10.6" r="1" fill="#b8f58f"/>' +
+    '<circle class="az-event-twinkle" style="animation-delay:1.1s" cx="-4" cy="-12" r="0.8" fill="#b8f58f"/>';
+
+  // Halloween: Sandburg wird zum Friedhof, Stufen wie bei syncSandcastle()
+  SEASON_EVENTS.halloween.castle =
+    '<ellipse cx="0" cy="4" rx="26" ry="5" fill="#0a5580" opacity="0.12"/>' +
+    '<g class="az-sandcastle-stage" data-stage="1">' +
+      '<path d="M-22,2 Q0,-7 22,2 Z" fill="#6b5442" stroke="#4a3a2c" stroke-width="1"/>' +
+    '</g>' +
+    '<g class="az-sandcastle-stage" data-stage="2">' +
+      '<path d="M-8,-1 V-17 Q-8,-25 0,-25 Q8,-25 8,-17 V-1 Z" fill="#a3acb6" stroke="#5f6b75" stroke-width="1.1"/>' +
+      '<text x="0" y="-13" text-anchor="middle" font-family="sans-serif" font-size="5.6" font-weight="700" fill="#5f6b75">RIP</text>' +
+      '<path d="M-5,-8 h10" stroke="#5f6b75" stroke-width="0.8" opacity="0.6"/>' +
+    '</g>' +
+    '<g class="az-sandcastle-stage" data-stage="3">' +
+      '<path d="M-17,1 V-17 M-21.5,-12 H-12.5" stroke="#7a5a3a" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<path d="M12,1 V-9 Q12,-13 16,-13 Q20,-13 20,-9 V1 Z" fill="#97a0aa" stroke="#5f6b75" stroke-width="1"/>' +
+      '<path d="M14.4,-7 h3.2" stroke="#5f6b75" stroke-width="0.8"/>' +
+    '</g>' +
+    '<g class="az-sandcastle-stage" data-stage="4">' +
+      '<path d="M5,2 Q5,-4 6,-7" fill="none" stroke="#e9e3cf" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<path d="M6,-7 l-2.6,-4 M6,-7 l-0.8,-5 M6,-7 l1.2,-4.8 M6,-7 l2.6,-3.8 M6,-7 l3.4,-0.6" ' +
+        'stroke="#e9e3cf" stroke-width="1.1" stroke-linecap="round"/>' +
+      '<path d="M1,2.4 q4,-3 9,0" fill="none" stroke="#4a3a2c" stroke-width="1.4" stroke-linecap="round"/>' +
+    '</g>' +
+    '<g class="az-sandcastle-stage" data-stage="5">' +
+      '<path d="M-6.5,-25 Q-4,-31 0,-30.6 L3,-33 L2.6,-29.6 Q5,-27.6 4.4,-25 Z" fill="#1d1d26"/>' +
+      '<path d="M-6.5,-25.4 L-10,-24 L-6,-27.6 Z" fill="#1d1d26"/>' +
+      '<path d="M3.6,-30.2 l2.8,0.8 l-2.6,0.8 Z" fill="#e0a52f"/>' +
+      '<circle cx="1.8" cy="-30.4" r="0.6" fill="#ffd24a"/>' +
+      '<path d="M-1,-25 v1.6 M1.4,-25 v1.6" stroke="#e0a52f" stroke-width="0.6"/>' +
+    '</g>';
+
   // Sankt Martin: Laternenboot, Gänse in V-Formation
   SEASON_EVENTS.martin.dolphin = { label: 'Laternenboot', float: true,
     markup: '<ellipse cx="0" cy="-6" rx="11" ry="11" fill="#ffd24a" filter="url(#az-bloom)" opacity="0.75"/>' +
@@ -5123,6 +5856,81 @@
     buildChest();
     buildSandcastle();
     if (view) { syncSun(minutesNow()); calculate(); }
+  }
+
+  /* ---- Deko aus dem Gruselkalender ----
+     Jedes geöffnete Türchen mit deco-Schlüssel (siehe SPOOK_DOORS) stellt
+     ein Stück in die Halloweenszene. Plätze wie bei adventDeco(). */
+  function spookCandles(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<ellipse cx="0" cy="1.5" rx="12" ry="2.6" fill="#0a5580" opacity="0.14"/>' +
+      [[-6, 10], [0, 15], [6, 8]].map(function (c, i) {
+        return '<rect x="' + (c[0] - 1.8) + '" y="' + (-c[1]) + '" width="3.6" height="' + c[1] + '" rx="0.8" fill="#f3ead2" stroke="#c9b98f" stroke-width="0.5"/>' +
+          '<circle class="az-event-glow" cx="' + c[0] + '" cy="' + (-c[1] - 3) + '" r="4" fill="#ffd24a" opacity="0.5" filter="url(#az-bloom)"/>' +
+          '<path class="az-event-twinkle" style="animation-delay:' + (i * 0.5) + 's" d="M' + c[0] + ',' + (-c[1] - 6) +
+            ' q2,3 0,5 q-2,-2 0,-5 Z" fill="#ffb347"/>';
+      }).join('') + '</g>';
+  }
+
+  function spookSkeleton(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ')" fill="none" stroke="#e9e3cf" stroke-width="1.6" stroke-linecap="round">' +
+      '<ellipse cx="0" cy="1.5" rx="12" ry="2.6" fill="#0a5580" stroke="none" opacity="0.14"/>' +
+      '<path d="M0,-6 V-17 M-5,-15 H5 M-4.5,-12 H4.5 M-4,-9 H4"/>' +
+      '<path d="M0,-16 L-7,-10 L-9,-4 M0,-16 L7,-11 L10,-14"/>' +
+      '<path d="M0,-6 L-8,-4 L-8,1 M0,-6 L8,-4 L8,1"/>' +
+      '<circle cx="0" cy="-21" r="4.6" fill="#f3ead2" stroke="#c9b98f" stroke-width="0.6"/>' +
+      '<circle cx="-1.7" cy="-21.6" r="1.1" fill="#2b1d3d" stroke="none"/>' +
+      '<circle cx="1.7" cy="-21.6" r="1.1" fill="#2b1d3d" stroke="none"/>' +
+      '<path d="M-1.6,-18.6 h3.2" stroke="#2b1d3d" stroke-width="0.6"/>' +
+      '</g>';
+  }
+
+  function spookGhostGrave(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<ellipse cx="0" cy="1.5" rx="13" ry="2.6" fill="#0a5580" opacity="0.14"/>' +
+      '<g class="az-event-dangle" style="--dur:2.2s;--drop:-4px">' +
+        '<path d="M-6,-12 Q-6,-24 1,-24 Q8,-24 8,-12 L8,-9 L5.5,-11 L3,-9 L0.5,-11 L-2,-9 L-4,-11 L-6,-9 Z" fill="#ffffff" opacity="0.9"/>' +
+        '<circle cx="-0.5" cy="-18" r="1" fill="#2b1d3d"/><circle cx="3.5" cy="-18" r="1" fill="#2b1d3d"/>' +
+      '</g>' +
+      '<path d="M-8,1 V-9 Q-8,-15 -2,-15 Q4,-15 4,-9 V1 Z" fill="#97a0aa" stroke="#5f6b75" stroke-width="1"/>' +
+      '<path d="M-5,-8 h6 M-5,-5 h6" stroke="#5f6b75" stroke-width="0.7"/>' +
+      '</g>';
+  }
+
+  function spookPumpkinPole(x, y) {
+    return '<g>' +
+      '<path d="M' + x + ',' + (y + 1) + ' V' + (y - 20) + ' M' + (x - 7) + ',' + (y - 13) + ' H' + (x + 7) + '" stroke="#6b4a2a" stroke-width="2" stroke-linecap="round"/>' +
+      pumpkin(x, y - 18, 0.95) + '</g>';
+  }
+
+  function spookMoon(x, y) {
+    return '<g transform="translate(' + x + ',' + y + ')">' +
+      '<circle r="22" fill="#fff3c4" opacity="0.35" filter="url(#az-bloom)"/>' +
+      '<circle r="15" fill="#fff6d6" stroke="#e8d79a" stroke-width="0.8"/>' +
+      '<circle cx="-5" cy="-3" r="3" fill="#e8d79a" opacity="0.6"/>' +
+      '<circle cx="4" cy="5" r="2.2" fill="#e8d79a" opacity="0.6"/>' +
+      '<circle cx="6" cy="-6" r="1.4" fill="#e8d79a" opacity="0.6"/>' +
+      '</g>';
+  }
+
+  function spookDeco() {
+    if (!SPOOK_DOORS) return '';   // Szene vor der Initialisierung des Kalenders
+    var has = {};
+    spookOpened().forEach(function (d) {
+      var key = SPOOK_DOORS[d - 1] && SPOOK_DOORS[d - 1].deco;
+      if (key) has[key] = true;
+    });
+    var tower = beachX(0.22), castle = beachX(0.78), y = view.waterY;
+    function piece(key, svg) {
+      if (!has[key]) return '';
+      return key === spookFresh ? '<g class="az-advent-fresh">' + svg + '</g>' : svg;
+    }
+    return piece('mond', spookMoon(beachX(0.9), skyBandY(0.12))) +
+      piece('laterne', spookPumpkinPole(tower - 36, y)) +
+      piece('skelett', spookSkeleton(tower + 64, y)) +
+      piece('riese', pumpkin(tower + 104, y, 1.9)) +
+      piece('kerzen', spookCandles(castle - 46, y)) +
+      piece('geist', spookGhostGrave(castle - 76, y));
   }
 
   function drawEvent() {
@@ -6509,7 +7317,10 @@
       d: '<path d="M5 8h11v5.4a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V8Z"/><path d="M16 9.6h1.8a2.2 2.2 0 0 1 0 4.4H16"/><path d="M6.5 4.2c1.1 1 1.1 2 0 3M17.5 4.2c-1.1 1-1.1 2 0 3"/>' },
     { id: 'spaetstarter', label: 'Spätstarter', hint: 'Arbeitsbeginn ab 8:45 Uhr',
       note: function (s) { return 'Beginn ' + toClock(s.startMin) + ' Uhr, auch ein späterer Start hat seinen Rhythmus'; },
-      d: '<circle cx="12" cy="14.6" r="4.2"/><path d="M12 20.4v-2.6M4.4 14.6H7M17 14.6h2.6M6.6 9l1.9 1.9M17.4 9l-1.9 1.9"/><path d="M3.4 20.4h17.2"/>' }
+      d: '<circle cx="12" cy="14.6" r="4.2"/><path d="M12 20.4v-2.6M4.4 14.6H7M17 14.6h2.6M6.6 9l1.9 1.9M17.4 9l-1.9 1.9"/><path d="M3.4 20.4h17.2"/>' },
+    { id: 'wasserratte', label: 'Wasserratte', hint: 'Vier Gläser Wasser an einem Tag',
+      note: function () { return Math.min(4, water.count) + ' von 4 Gläsern'; },
+      d: '<path d="M6.4 4.4h11.2l-1.5 14.1a2 2 0 0 1-2 1.8H9.9a2 2 0 0 1-2-1.8L6.4 4.4Z"/><path d="M7.3 10.4c1.6-.9 3.1.9 4.7 0s3.1-.9 4.7 0"/>' }
   ];
 
   var game = {
@@ -6627,6 +7438,7 @@
     if (!soundOn || game.quiet) return;
     if (kind === 'level') { playTone(660, 0, 0.16); playTone(880, 0.12, 0.24); }
     else if (kind === 'badge') { playTone(740, 0, 0.2); }
+    else if (kind === 'boo') { playTone(330, 0, 0.22); playTone(196, 0.16, 0.5); }
     else { playTone(520, 0, 0.14); }
   }
 
@@ -6926,6 +7738,140 @@
     renderHud();
   }
 
+  // ---- Wasser holen ----
+  // Einmal pro Stunde auslösbar, gibt eine Muschel. Zähler und Zeitpunkt
+  // liegen im localStorage, damit die Sperre ein Neuladen übersteht. Der
+  // Zähler beginnt jeden Tag bei null.
+
+  var WATER_COOLDOWN = 60 * 60 * 1000;
+  var WATER_KEY = 'az-drink';
+  var waterBtn = document.getElementById('az-drink');
+  var waterNum = document.getElementById('az-drink-count');
+
+  function waterDay() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+
+  function loadWater() {
+    var data = null;
+    try { data = JSON.parse(localStorage.getItem(WATER_KEY) || 'null'); } catch (e) {}
+    if (!data || data.day !== waterDay()) data = { day: waterDay(), count: 0, last: data ? data.last || 0 : 0 };
+    return data;
+  }
+
+  var water = loadWater();
+  var waterWasCooling = false;
+  var waterHappyTimer = 0;
+
+  // Das aktive Haustier, sofern eins da ist und nicht gerade schläft
+  function waterPet() {
+    var pet = findShopItem(SHOP_PETS, cosmetics.pet);
+    if (!pet || !pet.emoji || !petState.last || petMood() === 'sleep') return null;
+    return pet;
+  }
+
+  // Stunde um: Tropfen hüpft, das Tier meldet Durst
+  function remindWater() {
+    pulse(waterBtn);
+    var pet = waterPet();
+    if (!pet) return;
+    waterToast(petEmoji(pet) + ' ' + petName(pet) + ' ' + (pet.thirst || 'hat Durst'), 'Zeit für ein Glas Wasser');
+    petAnim('is-poked');
+    petFx('az-pet-spark', '💧', 3, { x: [-20, 20], y: [-30, -14] });
+  }
+
+  function renderWater() {
+    if (!waterBtn) return;
+    if (water.day !== waterDay()) water = loadWater();
+
+    var left = water.last + WATER_COOLDOWN - Date.now();
+    var ready = left <= 0;
+    var mins = Math.ceil(left / 60000);
+
+    waterNum.textContent = String(water.count);
+    waterBtn.classList.toggle('is-ready', ready);
+    waterBtn.classList.toggle('is-cooling', !ready);
+    if (ready && waterWasCooling) remindWater();
+    waterWasCooling = !ready;
+    waterBtn.style.setProperty('--az-drink-fill', ready ? '1' : String(clamp(1 - left / WATER_COOLDOWN, 0.08, 1)));
+
+    var glasses = water.count === 1 ? '1 Glas' : water.count + ' Gläser';
+    var label = ready
+      ? 'Wasser holen, +1 Muschel. Heute ' + glasses
+      : 'Heute ' + glasses + '. Nächstes Glas in ' + mins + ' min';
+    waterBtn.title = label;
+    waterBtn.setAttribute('aria-label', label);
+  }
+
+  // Meldung auch vor der ersten Berechnung zeigen, der Klick ist ja gewollt
+  function waterToast(title, note) {
+    var wasQuiet = game.quiet;
+    game.quiet = false;
+    toast(title, note);
+    game.quiet = wasQuiet;
+  }
+
+  function gluck() {
+    var r = waterBtn.getBoundingClientRect();
+    ['gluck', 'gluck', 'gluck'].forEach(function (word, i) {
+      var el = document.createElement('span');
+      el.className = 'az-gluck';
+      el.textContent = word;
+      el.setAttribute('aria-hidden', 'true');
+      el.style.left = (r.left + r.width / 2 + (i - 1) * 34) + 'px';
+      el.style.top = (r.top - 4 - (i % 2) * 8) + 'px';
+      el.style.animationDelay = (i * 220) + 'ms';
+      document.body.appendChild(el);
+      setTimeout(function () { el.remove(); }, 1500 + i * 220);
+    });
+    if (soundOn) { playTone(330, 0, 0.09); playTone(294, 0.22, 0.09); playTone(262, 0.44, 0.12); }
+  }
+
+  if (waterBtn) {
+    waterBtn.addEventListener('click', function () {
+      var left = water.last + WATER_COOLDOWN - Date.now();
+      if (left > 0) {
+        var mins = Math.ceil(left / 60000);
+        waterToast('Noch nicht durstig', 'Nächstes Glas in ' + mins + (mins === 1 ? ' Minute' : ' Minuten'));
+        if (!calm.matches) {
+          waterBtn.classList.remove('is-nope');
+          void waterBtn.offsetWidth;
+          waterBtn.classList.add('is-nope');
+        }
+        return;
+      }
+
+      water = loadWater();
+      water.count += 1;
+      water.last = Date.now();
+      try { localStorage.setItem(WATER_KEY, JSON.stringify(water)); } catch (e) {}
+
+      game.shells += 1;
+      var pet = waterPet();
+      var title = water.count === 1 ? 'Erstes Glas Wasser' : water.count + '. Glas Wasser';
+      waterToast(title + ', prost! 🥛', pet ? petEmoji(pet) + ' ' + petName(pet) + ' ' + (pet.drink || 'trinkt mit') + ', +1 Muschel' : '+1 Muschel');
+      gluck();
+      pulse(waterBtn);
+      waterBtn.classList.add('is-happy');
+      clearTimeout(waterHappyTimer);
+      waterHappyTimer = setTimeout(function () { waterBtn.classList.remove('is-happy'); }, 2200);
+      if (pet) {
+        flyShell(waterBtn, progressPetEl, function () {
+          petAnim('is-react-' + pet.react);
+          petFx('az-pet-spark', '💧', 5, { x: [-30, 30], y: [-28, 4] });
+        }, '💧');
+      }
+      if (water.count >= 4) unlock('wasserratte');
+      pulse(shellsEl);
+      renderHud();
+      renderWater();
+    });
+
+    renderWater();
+    setInterval(renderWater, 30000);
+  }
+
   // ---- Delfin fangen ----
 
   dolphinEl.addEventListener('pointerdown', function (event) {
@@ -7169,16 +8115,20 @@
     { id: 'pet-none', label: 'Ohne', cost: 0, color: 'rgba(255,255,255,0.5)', emoji: '' },
     { id: 'pet-dog', label: 'Hund', cost: 3, color: '#ffe3b8', emoji: '🐶', sound: 'Wuff wuff!',
       forms: ['🐺', '🐺', '🐶', '🐶'], trail: { glyph: '🐾', size: 14, gap: 26 },
-      acc: 'den Hund', react: 'wag', feed: 'wedelt und schlingt', find: 'bringt ein Stöckchen mit Muschel dran' },
+      acc: 'den Hund', react: 'wag', feed: 'wedelt und schlingt', find: 'bringt ein Stöckchen mit Muschel dran',
+      drink: 'schlabbert begeistert mit', thirst: 'hechelt und schaut zum Wassernapf' },
     { id: 'pet-cat', label: 'Katze', cost: 3, color: '#f6f2ff', emoji: '🐱', sound: 'Miau!',
       forms: ['🐱', '🐱', '🐯', '🦁'], trail: { glyph: '🐾', size: 11, gap: 34, stagger: true },
-      acc: 'die Katze', react: 'purr', feed: 'schnurrt zufrieden', find: 'legt dir eine Muschel vor die Füße' },
+      acc: 'die Katze', react: 'purr', feed: 'schnurrt zufrieden', find: 'legt dir eine Muschel vor die Füße',
+      drink: 'nippt vornehm mit', thirst: 'starrt vorwurfsvoll auf dein leeres Glas' },
     { id: 'pet-otter', label: 'Seeotter', cost: 4, color: '#baffef', emoji: '🦦', sound: 'Fiep fiep!',
       forms: ['🦦', '🦦', '🦦', '🦦'], trail: { bubbles: true, gap: 28 },
-      acc: 'den Seeotter', react: 'roll', feed: 'knackt die Muschel auf dem Bauch', find: 'taucht mit einer Muschel auf' },
+      acc: 'den Seeotter', react: 'roll', feed: 'knackt die Muschel auf dem Bauch', find: 'taucht mit einer Muschel auf',
+      drink: 'planscht vor Freude im Wasser', thirst: 'klopft mit der Muschel ans Glas' },
     { id: 'pet-unicorn', label: 'Einhorn', cost: 5, color: '#ffd6f6', emoji: '🦄', sound: 'Glitzerwiehern! ✨',
       forms: ['🐴', '🐴', '🦄', '🦄'], trail: { glyph: '✨', size: 13, gap: 26 },
-      acc: 'das Einhorn', react: 'hop', feed: 'glitzert vor Freude', find: 'zaubert eine Muschel herbei' }
+      acc: 'das Einhorn', react: 'hop', feed: 'glitzert vor Freude', find: 'zaubert eine Muschel herbei',
+      drink: 'trinkt Glitzerwasser mit', thirst: 'wünscht sich Regenbogenwasser' }
   ];
 
   /* Fütterungsstufen des Zeitleisten-Tiers: jede Muschel zählt, nichts
@@ -7348,9 +8298,11 @@
      Szene, Tier und Farben nach. */
   function refreshEvents() {
     paintAdventPill();
+    paintSpookPill();
     var next = seasonEvents();
     if (next.join() === currentEvents.join()) return;
     currentEvents = next;
+    paintSpookPill();
     applyEventDecor();
     if (view) drawEvent();
     syncEventTheme();
@@ -7360,8 +8312,59 @@
 
   // ---- Adventskalender mit Countdown bis Heiligabend ----
 
-  var ADVENT_GIFTS = ['⭐', '🍪', '🕯️', '❄️', '🍊', '🥾', '🦌', '🔔', '🧦', '☕', '🎁', '⛄',
-                      '🍫', '🌰', '🎶', '🧣', '🥨', '🍎', '✨', '🌟', '🛷', '🧤', '🎀', '🎄'];
+  /* Ein Eintrag pro Türchen (Index = Nummer - 1). deco: Stück, das ab dem
+     Öffnen in der Weihnachtsszene steht (siehe adventDeco()), fx: Effekt,
+     der beim Schließen des Kalenders abläuft (siehe playAdventFx()). */
+  var ADVENT_DOORS = [
+    { gift: '🕯️', title: 'Adventskranz', deco: 'kranz',
+      text: 'Den ersten Adventskranz hängte Johann Hinrich Wichern 1839 in Hamburg auf. Er trug 24 Kerzen. Am Strand steht ab heute deiner.' },
+    { gift: '🌠', title: 'Sternschnuppen', fx: 'star',
+      text: 'Im Dezember fallen die Geminiden. Um den 14. zeigen sie sich am häufigsten. Schau nach dem Schließen nach oben.' },
+    { gift: '❄️', title: 'Schneeflocken', fx: 'snow',
+      text: 'Keine Schneeflocke gleicht der anderen. Sechs Arme hat trotzdem jede. Gleich rieselt es am Strand.' },
+    { gift: '🎁', title: 'Erstes Paket', deco: 'geschenke',
+      text: 'Früher brachte der Nikolaus die Geschenke. Erst später wanderte die Bescherung auf Heiligabend. Neben dem Leuchtturm liegt schon das erste Paket.' },
+    { gift: '🦌', title: 'Rentiere', fx: 'sleigh',
+      text: 'Rentiere sehen ultraviolettes Licht. So finden sie im Schnee Flechten und Wege. Achte gleich auf den Himmel.' },
+    { gift: '🥾', title: 'Nikolaus', deco: 'schlitten', fx: 'sleigh',
+      text: 'Heute ist Nikolaustag. Am Strand parkt jetzt ein Schlitten, und oben dreht der Nikolaus seine Runde. Dazu gibt es drei Muscheln.' },
+    { gift: '⭐', title: 'Stern von Bethlehem', fx: 'star',
+      text: 'Astronomen vermuten hinter dem Stern von Bethlehem eine enge Begegnung von Jupiter und Saturn. Heute zieht ein Licht über den Himmel.' },
+    { gift: '💡', title: 'Lichterkette', deco: 'girlande',
+      text: 'Die erste elektrische Christbaumbeleuchtung brannte 1882 in New York. Sie hatte 80 Birnen. Deine Lichterkette hängt jetzt zwischen Leuchtturm und Baum.' },
+    { gift: '⛄', title: 'Neuschnee', fx: 'snow',
+      text: 'Frischer Schnee besteht zu über 90 Prozent aus Luft. Deshalb schluckt er Geräusche. Gleich wird es am Strand still und weiß.' },
+    { gift: '🏮', title: 'Laterne', deco: 'laterne',
+      text: 'Im Dezember bleibt es in Deutschland rund 16 Stunden am Tag dunkel. Eine Laterne am Strand hilft. Sie brennt ab jetzt bis Heiligabend.' },
+    { gift: '✉️', title: 'Wunschzettel', fx: 'sleigh',
+      text: 'Im Weihnachtspostamt Himmelpfort beantworten Helfer jedes Jahr hunderttausende Briefe an den Weihnachtsmann. Gleich fliegt Post über den Strand.' },
+    { gift: '🎀', title: 'Zweites Paket', deco: 'geschenke',
+      text: 'Halbzeit im Advent. Der Stapel am Leuchtturm wächst. Zeit für eine kurze Pause mit Plätzchen.' },
+    { gift: '👑', title: 'Luciafest', fx: 'star',
+      text: 'Am 13. Dezember feiert Schweden das Luciafest. Lichterkronen erhellen den dunkelsten Monat. Halte gleich Ausschau nach einem Licht am Himmel.' },
+    { gift: '🔴', title: 'Christbaumkugeln', deco: 'kugeln',
+      text: 'Die ersten gläsernen Kugeln bliesen Handwerker um 1847 in Lauscha in Thüringen. Sie ersetzten damit Äpfel am Baum. Deiner trägt jetzt mehr Kugeln.' },
+    { gift: '🍪', title: 'Plätzchen', fx: 'snow',
+      text: 'Wer im Advent backt, hat eine gute Ausrede für Krümel auf der Tastatur. Gleich rieselt Puderzucker. Oder Schnee.' },
+    { gift: '🏠', title: 'Lebkuchenhaus', deco: 'lebkuchen',
+      text: 'Die Idee zum Lebkuchenhaus stammt aus dem Märchen Hänsel und Gretel. Neben dem Schneemann steht jetzt eins.' },
+    { gift: '☕', title: 'Glühwein', fx: 'sleigh',
+      text: 'Glühwein hat laut EU-Recht zwischen 7 und 14,5 Prozent Alkohol. Nach Feierabend tut es auch ein Tee. Am Himmel ist gleich etwas los.' },
+    { gift: '📦', title: 'Drittes Paket', deco: 'geschenke',
+      text: 'Der Geschenkestapel ist komplett. Jetzt fehlen nur noch die Geschenke für die Familie. Sechs Tage bleiben.' },
+    { gift: '🥨', title: 'Weihnachtsmarkt', fx: 'star',
+      text: 'Den Dresdner Striezelmarkt gibt es seit 1434. Er zählt zu den ältesten Weihnachtsmärkten Deutschlands. Heute leuchtet der Himmel mit.' },
+    { gift: '🌟', title: 'Leuchtturmstern', deco: 'stern',
+      text: 'Der Stern auf der Spitze erinnert an den Stern von Bethlehem. Ab heute trägt der Leuchtturm einen.' },
+    { gift: '🌑', title: 'Wintersonnenwende', fx: 'snow',
+      text: 'Um den 21. Dezember steht die Sonne am tiefsten. Danach wird es jeden Tag ein paar Minuten länger hell.' },
+    { gift: '🛷', title: 'Endspurt', fx: 'sleigh',
+      text: 'Noch zwei Tage. Offene Aufgaben wandern jetzt ins neue Jahr. Das ist Tradition.' },
+    { gift: '✨', title: 'Vorfreude', fx: 'star',
+      text: 'Morgen ist Heiligabend. Für heute gilt ein ruhiger letzter Arbeitstag und ein pünktlicher Feierabend.' },
+    { gift: '🎄', title: 'Heiligabend', deco: 'glanz', fx: 'sleigh',
+      text: 'Frohe Weihnachten. Der Strand ist fertig geschmückt, der Baum leuchtet golden. Genieß die freien Tage.' }
+  ];
   // Feste, gemischte Reihenfolge der Türchen im Raster
   var ADVENT_ORDER = [7, 15, 2, 21, 11, 18, 4, 23, 9, 1, 14, 20, 5, 12, 24, 17, 3, 10, 22, 8, 16, 6, 19, 13];
 
@@ -7369,6 +8372,9 @@
   var adventModal = document.getElementById('az-advent-modal');
   var adventGrid  = document.getElementById('az-advent-grid');
   var adventSub   = document.getElementById('az-advent-sub');
+  var adventNote  = document.getElementById('az-advent-note');
+  var adventFx    = [];     // Effekte der eben geöffneten Türchen, laufen beim Schließen ab
+  var adventFresh = null;   // Deko-Stück, das beim Schließen kurz aufleuchtet
 
   function adventKey() { return 'az-advent-' + today().getFullYear(); }
 
@@ -7411,33 +8417,109 @@
       var open = opened.indexOf(d) !== -1;
       var locked = d > st.maxDoor;
       return '<button type="button" class="az-advent-door' + (open ? ' is-open' : '') +
-        (d === st.maxDoor ? ' is-today' : '') + '" data-door="' + d + '"' + (locked || open ? ' disabled' : '') +
-        ' aria-label="Türchen ' + d + (open ? ', geöffnet' : locked ? ', noch zu' : '') + '">' +
-        (open ? ADVENT_GIFTS[d - 1] : d) + '</button>';
+        (d === st.maxDoor ? ' is-today' : '') + '" data-door="' + d + '"' + (locked ? ' disabled' : '') +
+        (open ? ' aria-pressed="false"' : '') +
+        ' aria-label="Türchen ' + d + (open ? ', ' + ADVENT_DOORS[d - 1].title : locked ? ', noch zu' : '') + '">' +
+        '<span class="az-advent-inside" aria-hidden="true">' + ADVENT_DOORS[d - 1].gift + '</span>' +
+        '<span class="az-advent-leaf" aria-hidden="true">' + d + '</span></button>';
     }).join('');
+    // Beim Aufklappen zuletzt geöffnetes Türchen von heute zeigen, sonst nichts
+    if (opened.indexOf(st.maxDoor) !== -1) showAdventNote(st.maxDoor);
+    else adventNote.hidden = true;
   }
 
+  function showAdventNote(d) {
+    var door = ADVENT_DOORS[d - 1];
+    setText(document.getElementById('az-advent-note-gift'), door.gift);
+    setText(document.getElementById('az-advent-note-title'), d + '. Dezember · ' + door.title);
+    setText(document.getElementById('az-advent-note-text'), door.text);
+    adventNote.hidden = false;
+    var buttons = adventGrid.querySelectorAll('.az-advent-door.is-open');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute('aria-pressed', String(Number(buttons[i].dataset.door) === d));
+    }
+  }
+
+  function sparkDoor(btn) {
+    if (calm.matches) return;
+    for (var i = 0; i < 8; i++) {
+      var a = (Math.PI * 2 * i) / 8;
+      var s = document.createElement('span');
+      s.className = 'az-advent-spark';
+      s.textContent = '✦';
+      s.style.setProperty('--dx', (Math.cos(a) * 30).toFixed(0) + 'px');
+      s.style.setProperty('--dy', (Math.sin(a) * 30).toFixed(0) + 'px');
+      btn.appendChild(s);
+    }
+    setTimeout(function () {
+      var sparks = btn.querySelectorAll('.az-advent-spark');
+      for (var j = 0; j < sparks.length; j++) sparks[j].remove();
+    }, 900);
+  }
+
+  // Öffnet ein Türchen oder zeigt den Text eines schon geöffneten erneut
   function openDoor(d) {
     var st = adventState();
     var opened = adventOpened();
-    if (!st || d > st.maxDoor || opened.indexOf(d) !== -1) return;
+    if (!st || d > st.maxDoor) return;
+    if (opened.indexOf(d) !== -1) { showAdventNote(d); return; }
     opened.push(d);
     try { localStorage.setItem(adventKey(), JSON.stringify(opened)); } catch (e) {}
+    var door = ADVENT_DOORS[d - 1];
     var gain = d === 6 || d === 24 ? 3 : 1;
     game.shells += gain;
-    toast('Türchen ' + d + ' ' + ADVENT_GIFTS[d - 1], '+' + gain + (gain === 1 ? ' Muschel' : ' Muscheln'));
+    toast('Türchen ' + d + ' ' + door.gift, '+' + gain + (gain === 1 ? ' Muschel' : ' Muscheln'));
     pulse(shellsEl);
     playCue('catch');
     renderHud();
-    renderAdvent();
     paintAdventPill();
+
+    // Klappe am bestehenden Knopf aufdrehen statt neu zu rendern, sonst
+    // springt sie ohne Übergang auf
     var btn = adventGrid.querySelector('[data-door="' + d + '"]');
-    if (btn) btn.focus();
+    if (btn) {
+      btn.classList.add('is-open');
+      btn.classList.remove('is-today');
+      btn.setAttribute('aria-label', 'Türchen ' + d + ', ' + door.title);
+      sparkDoor(btn);
+      btn.focus();
+    }
+    showAdventNote(d);
+
+    if (door.fx) adventFx.push(door.fx);
+    if (door.deco) adventFresh = door.deco;
+  }
+
+  // Schneegestöber: dichte Flocken für ein paar Sekunden über der Szene
+  function snowBurst() {
+    if (calm.matches || document.hidden || !view) return;
+    var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.style.transition = 'opacity 1200ms ease';
+    g.innerHTML = fallers(70, function (x, y, i) {
+      return '<circle cx="' + x + '" cy="' + y + '" r="' + (1.4 + (i % 4) * 0.7) + '" fill="#ffffff" stroke="rgba(10,90,134,0.2)" stroke-width="0.5"/>';
+    });
+    eventSkyEl.appendChild(g);
+    setTimeout(function () { g.style.opacity = '0'; }, 5000);
+    setTimeout(function () { if (g.parentNode) g.parentNode.removeChild(g); }, 6400);
+  }
+
+  var ADVENT_FX = { star: spawnStar, sleigh: spawnGullFlock, snow: snowBurst };
+
+  function playAdventFx() {
+    if (adventFresh && currentEvents.indexOf('xmas') !== -1 && view) {
+      drawEvent();   // Deko erscheint und leuchtet kurz auf (az-advent-fresh)
+      adventFresh = null;
+    }
+    adventFx.forEach(function (fx, i) {
+      setTimeout(ADVENT_FX[fx], 400 + i * 1600);
+    });
+    adventFx = [];
   }
 
   function closeAdvent() {
     adventModal.hidden = true;
     adventPill.focus();
+    playAdventFx();
   }
 
   adventPill.addEventListener('click', function () {
@@ -7453,6 +8535,236 @@
   });
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && !adventModal.hidden) closeAdvent();
+  });
+
+  // ---- Gruselkalender mit Countdown bis Halloween ----
+
+  /* Gegenstück zum Adventskalender: ein Grabstein pro Tag vom 15.10.
+     (Türchen 1) bis 31.10. (Türchen 17). deco: Stück in der Halloweenszene
+     (siehe spookDeco()), fx: Effekt beim Schließen (siehe SPOOK_FX). */
+  var SPOOK_DOORS = [
+    { gift: '🎃', title: 'Laternenkürbis', deco: 'laterne',
+      text: 'In Irland schnitzten die Menschen früher Rüben statt Kürbisse. In Amerika gab es mehr Kürbisse, also wechselten die Auswanderer. Am Leuchtturm leuchtet ab heute deiner.' },
+    { gift: '🦇', title: 'Fledermäuse', fx: 'bats',
+      text: 'In Deutschland leben rund 25 Fledermausarten. Alle stehen unter Schutz. Nach dem Schließen fliegt ein Schwarm über den Strand.' },
+    { gift: '🌫️', title: 'Herbstnebel', fx: 'fog',
+      text: 'Nebel entsteht, wenn feuchte Luft über dem Boden abkühlt. Am Wasser bildet er sich besonders schnell. Gleich zieht er über den Strand.' },
+    { gift: '🕯️', title: 'Grablichter', deco: 'kerzen',
+      text: 'Halloween kommt von All Hallows\' Eve, dem Abend vor Allerheiligen. Am 1. November stellen viele Familien Lichter auf die Gräber. Auf dem Friedhof brennen jetzt drei Kerzen.' },
+    { gift: '⚡', title: 'Gewitter', fx: 'flash',
+      text: 'Ein Blitz ist rund 30.000 Grad heiß. Das ist etwa fünfmal heißer als die Oberfläche der Sonne. Für den Abstand teilst du die Sekunden bis zum Donner durch drei.' },
+    { gift: '🧹', title: 'Hexenflug', fx: 'witch',
+      text: 'Die ältesten Bilder von Hexen auf Besen stammen aus dem 15. Jahrhundert. Nach dem Schließen dreht eine Hexe ihre Runde.' },
+    { gift: '💀', title: 'Skelett', deco: 'skelett',
+      text: 'Ein Neugeborenes hat rund 300 Knochen. Viele wachsen zusammen, Erwachsene haben noch 206. Ein komplettes Skelett sitzt ab heute am Strand.' },
+    { gift: '🔥', title: 'Samhain', fx: 'bats',
+      text: 'Halloween geht auf das keltische Fest Samhain zurück. Es markierte das Ende der Ernte und den Beginn des Winters. Die Fledermäuse kommen zurück.' },
+    { gift: '✨', title: 'Irrlichter', fx: 'fog',
+      text: 'Irrlichter sind kleine Flammen über Mooren. Als Ursache gilt Sumpfgas, das sich selbst entzündet. Der Nebel steigt heute wieder auf.' },
+    { gift: '👻', title: 'Gespenst', deco: 'geist',
+      text: 'Das Wort Gespenst stammt vom althochdeutschen gispensti. Es bedeutete Verlockung oder Trugbild. Hinter einem Grabstein lugt jetzt eins hervor.' },
+    { gift: '🧪', title: 'Frankenstein', fx: 'flash',
+      text: 'Mary Shelley begann den Roman Frankenstein mit 18 Jahren am Genfer See. Im Buch erweckt Strom das Monster zum Leben. Gleich blitzt es.' },
+    { gift: '🍬', title: 'Süßes oder Saures', fx: 'witch',
+      text: 'Süßes oder Saures kam in den 1930er Jahren in Nordamerika auf. In Deutschland verbreitete sich der Brauch erst ab den 1990er Jahren. Dein Tier kennt ihn schon.' },
+    { gift: '🏆', title: 'Riesenkürbis', deco: 'riese',
+      text: 'Der schwerste Kürbis der Welt wog 2023 rund 1.247 Kilogramm. Er wuchs in Minnesota. Am Strand liegt ab heute ein kleinerer Verwandter.' },
+    { gift: '🦇', title: 'Echoortung', fx: 'bats',
+      text: 'Fledermäuse orientieren sich mit Echoortung. Ihre Rufe liegen meist über der Hörgrenze des Menschen. Der Schwarm fliegt trotzdem lautlos.' },
+    { gift: '🎬', title: 'The Fog', fx: 'fog',
+      text: 'Der Film The Fog von John Carpenter kam 1980 ins Kino. Darin bringt Nebel Geister an eine Küste. Hier bringt er nur kühle Luft.' },
+    { gift: '⛰️', title: 'Brocken', fx: 'witch',
+      text: 'Der Sage nach treffen sich die Hexen auf dem Brocken im Harz. Goethe baute die Szene in den Faust ein. Eine Hexe ist schon unterwegs.' },
+    { gift: '🌕', title: 'Halloween', deco: 'mond', fx: 'bats',
+      text: 'Happy Halloween. Der Vollmond steht über dem Strand und die Fledermäuse fliegen ein letztes Mal. Morgen räumt der Strand auf.' }
+  ];
+  // Feste, gemischte Reihenfolge der Grabsteine im Raster
+  var SPOOK_ORDER = [9, 3, 14, 1, 11, 6, 16, 4, 12, 7, 2, 15, 10, 5, 13, 8, 17];
+
+  var spookPill  = document.getElementById('az-spook-open');
+  var spookModal = document.getElementById('az-spook-modal');
+  var spookGrid  = document.getElementById('az-spook-grid');
+  var spookSub   = document.getElementById('az-spook-sub');
+  var spookNote  = document.getElementById('az-spook-note');
+  var spookFx    = [];     // Effekte der eben geöffneten Türchen, laufen beim Schließen ab
+  var spookFresh = null;   // Deko-Stück, das beim Schließen kurz aufwächst
+
+  function spookKey() { return 'az-spook-' + today().getFullYear(); }
+
+  function spookOpened() {
+    try { return JSON.parse(localStorage.getItem(spookKey()) || '[]'); } catch (e) { return []; }
+  }
+
+  function spookState() {
+    if (currentEvents.indexOf('halloween') === -1) return null;
+    var day = today().getDate();
+    return { daysLeft: 31 - day, maxDoor: day - 14 };
+  }
+
+  function paintSpookPill() {
+    var st = spookState();
+    spookPill.hidden = !st;
+    if (!st) return;
+    var todayOpen = spookOpened().indexOf(st.maxDoor) !== -1;
+    setText(spookPill, st.daysLeft === 0 ? '🎃 Halloween' :
+      '🎃 Noch ' + st.daysLeft + (st.daysLeft === 1 ? ' Tag' : ' Tage'));
+    spookPill.classList.toggle('has-door', !todayOpen);
+    spookPill.setAttribute('aria-label', 'Gruselkalender, ' + (st.daysLeft === 0 ? 'heute ist Halloween' :
+      'noch ' + st.daysLeft + ' Tage bis Halloween') + (todayOpen ? '' : ', heutiger Grabstein ist noch zu'));
+  }
+
+  function renderSpook() {
+    var st = spookState() || { daysLeft: 0, maxDoor: 0 };
+    var opened = spookOpened();
+    setText(spookSub, 'Jeden Tag ein Grabstein, verpasste lassen sich nachholen. Am 31. gibt es mehr.');
+    spookGrid.innerHTML = SPOOK_ORDER.map(function (d) {
+      var open = opened.indexOf(d) !== -1;
+      var locked = d > st.maxDoor;
+      return '<button type="button" class="az-advent-door' + (open ? ' is-open' : '') +
+        (d === st.maxDoor ? ' is-today' : '') + '" data-door="' + d + '"' + (locked ? ' disabled' : '') +
+        (open ? ' aria-pressed="false"' : '') +
+        ' aria-label="' + (d + 14) + '. Oktober' + (open ? ', ' + SPOOK_DOORS[d - 1].title : locked ? ', noch zu' : '') + '">' +
+        '<span class="az-advent-inside" aria-hidden="true">' + SPOOK_DOORS[d - 1].gift + '</span>' +
+        '<span class="az-advent-leaf" aria-hidden="true">' + (d + 14) + '</span></button>';
+    }).join('');
+    if (opened.indexOf(st.maxDoor) !== -1) showSpookNote(st.maxDoor);
+    else spookNote.hidden = true;
+  }
+
+  function showSpookNote(d) {
+    var door = SPOOK_DOORS[d - 1];
+    setText(document.getElementById('az-spook-note-gift'), door.gift);
+    setText(document.getElementById('az-spook-note-title'), (d + 14) + '. Oktober · ' + door.title);
+    setText(document.getElementById('az-spook-note-text'), door.text);
+    spookNote.hidden = false;
+    var buttons = spookGrid.querySelectorAll('.az-advent-door.is-open');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute('aria-pressed', String(Number(buttons[i].dataset.door) === d));
+    }
+  }
+
+  // Öffnet einen Grabstein oder zeigt den Text eines schon geöffneten erneut
+  function openSpookDoor(d) {
+    var st = spookState();
+    var opened = spookOpened();
+    if (!st || d > st.maxDoor) return;
+    if (opened.indexOf(d) !== -1) { showSpookNote(d); return; }
+    opened.push(d);
+    try { localStorage.setItem(spookKey(), JSON.stringify(opened)); } catch (e) {}
+    var door = SPOOK_DOORS[d - 1];
+    var gain = d === 17 ? 3 : 1;
+    game.shells += gain;
+    toast((d + 14) + '. Oktober ' + door.gift, '+' + gain + (gain === 1 ? ' Muschel' : ' Muscheln'));
+    pulse(shellsEl);
+    playCue('catch');
+    renderHud();
+    paintSpookPill();
+
+    var btn = spookGrid.querySelector('[data-door="' + d + '"]');
+    if (btn) {
+      btn.classList.add('is-open');
+      btn.classList.remove('is-today');
+      btn.setAttribute('aria-label', (d + 14) + '. Oktober, ' + door.title);
+      sparkDoor(btn);
+      btn.focus();
+    }
+    showSpookNote(d);
+
+    if (door.fx) spookFx.push(door.fx);
+    if (door.deco) spookFresh = door.deco;
+  }
+
+  // Fledermausschwarm: kreuzt einmal im Bogen den Himmel über dem Strand
+  function batSwarm() {
+    if (calm.matches || document.hidden || !view) return;
+    var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    var html = '';
+    for (var i = 0; i < 12; i++) {
+      var y = skyBandY(Math.random()) + rand(-30, 10);
+      html += '<g transform="translate(-30,' + y.toFixed(0) + ')"><g class="az-spook-swoop" style="--dx:' +
+        (view.width + 60) + 'px;--rise:' + rand(-60, -20).toFixed(0) + 'px;--dur:' + rand(3.2, 4.6).toFixed(1) +
+        's;animation-delay:' + (i * 0.12).toFixed(2) + 's">' +
+        '<g class="az-event-flap" style="animation-duration:' + rand(160, 240).toFixed(0) + 'ms">' +
+        '<path d="M0,-1 C-3,-5 -8,-5 -12,-2 C-9,-2 -8,0 -8,2 C-6,0 -4,0 -2,2 L0,1 L2,2 C4,0 6,0 8,2 ' +
+        'C8,0 9,-2 12,-2 C8,-5 3,-5 0,-1 Z" fill="#2b1d3d" transform="scale(' + rand(0.8, 1.3).toFixed(2) + ')"/></g></g></g>';
+    }
+    g.innerHTML = html;
+    eventSkyEl.appendChild(g);
+    setTimeout(function () { if (g.parentNode) g.parentNode.removeChild(g); }, 7000);
+  }
+
+  // Nebel: weiche Schwaden ziehen dicht über der Wasserlinie vorbei
+  function fogBurst() {
+    if (calm.matches || document.hidden || !view) return;
+    var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('filter', 'url(#az-cloud)');
+    g.style.transition = 'opacity 1800ms ease';
+    var html = '';
+    for (var i = 0; i < 9; i++) {
+      var x = (view.width * i) / 8 - 80;
+      html += '<g class="az-spook-fog" style="--dx:' + rand(60, 140).toFixed(0) + 'px;--dur:' + rand(6, 8).toFixed(1) + 's">' +
+        '<ellipse cx="' + x.toFixed(0) + '" cy="' + (view.waterY - rand(4, 30)).toFixed(0) + '" rx="' + rand(90, 150).toFixed(0) +
+        '" ry="' + rand(14, 24).toFixed(0) + '" fill="#e8e4f2" opacity="' + rand(0.45, 0.7).toFixed(2) + '"/></g>';
+    }
+    g.innerHTML = html;
+    eventSkyEl.appendChild(g);
+    setTimeout(function () { g.style.opacity = '0'; }, 5600);
+    setTimeout(function () { if (g.parentNode) g.parentNode.removeChild(g); }, 7600);
+  }
+
+  // Gewitter: Blitz über dem Wasser, dazu ein kurzes Aufhellen der Seite
+  function lightning() {
+    if (calm.matches || document.hidden || !view) return;
+    var x = rand(0.3, 0.7) * view.width, top = skyBandY(0), y = view.waterY;
+    var pts = [[x, top]];
+    for (var k = 1; k <= 6; k++) pts.push([x + rand(-26, 26), top + ((y - top) * k) / 6]);
+    var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'az-spook-bolt');
+    g.innerHTML = '<polyline points="' + pts.map(function (p) { return p[0].toFixed(0) + ',' + p[1].toFixed(0); }).join(' ') +
+      '" fill="none" stroke="#fff6c2" stroke-width="3" stroke-linejoin="bevel" filter="url(#az-bloom)"/>';
+    eventSkyEl.appendChild(g);
+    var flash = document.createElement('div');
+    flash.className = 'az-spook-flash';
+    document.body.appendChild(flash);
+    playCue('boo');
+    setTimeout(function () {
+      if (g.parentNode) g.parentNode.removeChild(g);
+      flash.remove();
+    }, 900);
+  }
+
+  var SPOOK_FX = { bats: batSwarm, fog: fogBurst, flash: lightning, witch: spawnGullFlock };
+
+  function playSpookFx() {
+    if (spookFresh && currentEvents.indexOf('halloween') !== -1 && view) {
+      drawEvent();   // Deko erscheint und wächst kurz auf (az-advent-fresh)
+      spookFresh = null;
+    }
+    spookFx.forEach(function (fx, i) {
+      setTimeout(SPOOK_FX[fx], 400 + i * 1600);
+    });
+    spookFx = [];
+  }
+
+  function closeSpook() {
+    spookModal.hidden = true;
+    spookPill.focus();
+    playSpookFx();
+  }
+
+  spookPill.addEventListener('click', function () {
+    renderSpook();
+    spookModal.hidden = false;
+    document.getElementById('az-spook-close').focus();
+  });
+  document.getElementById('az-spook-close').addEventListener('click', closeSpook);
+  spookModal.addEventListener('click', function (event) {
+    if (event.target === spookModal) { closeSpook(); return; }
+    var door = event.target.closest('[data-door]');
+    if (door) openSpookDoor(Number(door.dataset.door));
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !spookModal.hidden) closeSpook();
   });
 
   // Gruß einmal pro Tag und Anlass
@@ -7676,7 +8988,7 @@
   /* Eine Muschel fliegt im Bogen von einem Element zum anderen. Ohne
      Bewegung (prefers-reduced-motion) oder ohne Web Animations API
      landet sie sofort. */
-  function flyShell(fromEl, toEl, done) {
+  function flyShell(fromEl, toEl, done, glyph) {
     if (calm.matches || game.quiet || !document.body.animate) { done(); return; }
 
     var a = fromEl.getBoundingClientRect();
@@ -7687,7 +8999,7 @@
 
     var el = document.createElement('span');
     el.className = 'az-pet-flyer';
-    el.textContent = '🐚';
+    el.textContent = glyph || '🐚';
     el.setAttribute('aria-hidden', 'true');
     document.body.appendChild(el);
 
@@ -7938,18 +9250,53 @@
     }).join('');
   }
 
-  var seasonSection = document.getElementById('az-shop-season');
+  var seasonRow     = document.getElementById('az-season-row');
   var seasonToggle  = document.getElementById('az-season-toggle');
   var seasonLabel   = document.getElementById('az-season-label');
+  var seasonNext    = document.getElementById('az-season-next');
+
+  /* Nächster Anlass, der nach heute neu beginnt. Laufende Anlässe zählen
+     erst wieder, wenn sie im nächsten Jahr erneut starten. */
+  function nextSeasonEvent() {
+    var now = today();
+    var day = dayOf(now.getFullYear(), now.getMonth(), now.getDate());
+    var prev = activeEvents(day);
+    for (var d = 1; d <= 400; d++) {
+      var next = addDays(day, d);
+      var list = activeEvents(next);
+      for (var i = 0; i < list.length; i++) {
+        if (prev.indexOf(list[i]) === -1 && SEASON_EVENTS[list[i]].label) {
+          return { id: list[i], days: d, date: next };
+        }
+      }
+      prev = list;
+    }
+    return null;
+  }
+
+  function renderSeasonNext() {
+    var next = nextSeasonEvent();
+    seasonNext.hidden = !next;
+    if (!next) return;
+    setText(seasonNext, '🗓️ ' + SEASON_EVENTS[next.id].label + ' startet ' +
+      (next.days === 1 ? 'morgen' : 'in ' + next.days + ' Tagen') +
+      ' (' + next.date.getDate() + '.' + (next.date.getMonth() + 1) + '.)');
+  }
 
   // Schalter nur zeigen, wenn laut Kalender gerade ein Anlass läuft
   function renderSeasonToggle() {
+    renderSeasonNext();
     var byDate = activeEvents(today()).filter(function (id) { return SEASON_EVENTS[id].label; });
-    seasonSection.hidden = !byDate.length;
+    seasonRow.hidden = !byDate.length;
     if (!byDate.length) return;
     var names = byDate.map(function (id) { return SEASON_EVENTS[id].label; }).join(' und ');
     setText(seasonLabel, names + (seasonOff ? ' ist aus' : ' ist an'));
     seasonToggle.setAttribute('aria-checked', String(!seasonOff));
+  }
+
+  // Schnitz-Knopf nur, solange Halloween wirklich läuft (Saison-Theme an)
+  function renderCarveOpen() {
+    document.getElementById('az-carve-open').hidden = currentEvents.indexOf('halloween') === -1;
   }
 
   seasonToggle.addEventListener('click', function () {
@@ -7964,6 +9311,7 @@
 
   function renderShop() {
     renderSeasonToggle();
+    renderCarveOpen();
     renderShopGrid(shopThemesEl, SHOP_THEMES, shop.theme, 'theme');
     renderShopGrid(shopSkinsEl, SHOP_SKINS, shop.skin, 'skin');
     renderShopGrid(shopCrabColorsEl, SHOP_CRAB_COLORS, cosmetics.crabColor, 'crabColor');
@@ -8013,6 +9361,84 @@
 
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && !shopModal.hidden) closeShop();
+  });
+
+  // ---- Kürbis schnitzen (Halloween) ----
+  // Gesicht für die Kürbis-Sonne, Teile siehe PUMPKIN_PARTS. Das Gesicht
+  // bleibt im localStorage, damit es ein Neuladen übersteht.
+
+  var CARVE_COST    = 3;
+  var CARVE_GROUPS  = [['eyes', 'Augen'], ['nose', 'Nase'], ['mouth', 'Mund']];
+  var carveModal    = document.getElementById('az-carve-modal');
+  var carveOpenBtn  = document.getElementById('az-carve-open');
+  var carvePreview  = document.getElementById('az-carve-preview');
+  var carveRows     = document.getElementById('az-carve-rows');
+  var carveSaveBtn  = document.getElementById('az-carve-save');
+  var carveDraft    = null;   // Auswahl im Dialog, noch nicht geschnitzt
+
+  function sameCarve(a, b) {
+    return a.eyes === b.eyes && a.nose === b.nose && a.mouth === b.mouth;
+  }
+
+  function renderCarve() {
+    carvePreview.innerHTML = pumpkinFace(carveDraft, true);
+    carveRows.innerHTML = CARVE_GROUPS.map(function (g) {
+      return '<div class="az-carve-row" role="group" aria-label="' + g[1] + '">' +
+        '<span class="az-carve-label">' + g[1] + '</span>' +
+        PUMPKIN_PARTS[g[0]].map(function (part) {
+          var on = carveDraft[g[0]] === part.id;
+          return '<button type="button" class="az-chip' + (on ? ' is-active' : '') + '" data-carve-group="' + g[0] +
+            '" data-carve-id="' + part.id + '" aria-pressed="' + on + '">' + part.label + '</button>';
+        }).join('') + '</div>';
+    }).join('');
+    var unchanged = sameCarve(carveDraft, storedCarve());
+    carveSaveBtn.disabled = unchanged || game.shells < CARVE_COST;
+    setText(carveSaveBtn, unchanged ? 'Schon geschnitzt' :
+      game.shells < CARVE_COST ? 'Erst ' + CARVE_COST + ' Muscheln sammeln' : 'Schnitzen, ' + CARVE_COST + ' Muscheln');
+  }
+
+  function saveCarve() {
+    if (sameCarve(carveDraft, storedCarve()) || game.shells < CARVE_COST) return;
+    game.shells -= CARVE_COST;
+    try { localStorage.setItem(carveKey(), JSON.stringify(carveDraft)); } catch (e) {}
+    SEASON_EVENTS.halloween.sunFace = pumpkinFace(carveDraft);
+    buildSun();
+    setSunGlow(shown);
+    toast('Kürbis geschnitzt 🎃', '-' + CARVE_COST + ' Muscheln');
+    pulse(shellsEl);
+    playCue('catch');
+    renderHud();
+    renderCarve();
+  }
+
+  function openCarve() {
+    carveDraft = storedCarve();
+    renderCarve();
+    shopModal.hidden = true;
+    carveModal.hidden = false;
+    document.getElementById('az-carve-close').focus();
+  }
+
+  // Zurück in den Shop, aus dem der Dialog kam
+  function closeCarve() {
+    carveModal.hidden = true;
+    openShop();
+  }
+
+  carveOpenBtn.addEventListener('click', openCarve);
+  document.getElementById('az-carve-close').addEventListener('click', closeCarve);
+  carveSaveBtn.addEventListener('click', saveCarve);
+  carveModal.addEventListener('click', function (event) {
+    if (event.target === carveModal) { closeCarve(); return; }
+    var chip = event.target.closest('[data-carve-group]');
+    if (!chip) return;
+    carveDraft[chip.dataset.carveGroup] = chip.dataset.carveId;
+    renderCarve();
+    var again = carveRows.querySelector('[data-carve-group="' + chip.dataset.carveGroup + '"][data-carve-id="' + chip.dataset.carveId + '"]');
+    if (again) again.focus();
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !carveModal.hidden) closeCarve();
   });
 
   // ============================================================
@@ -9086,6 +10512,59 @@
     'Die Muschel schweigt dazu.'
   ];
 
+  var ORACLE_SPOOK_YES = [
+    'Die Geister nicken.',
+    'Ja, das steht im Nebel.',
+    'Der Mond sagt ja.',
+    'Ja, noch vor Mitternacht.',
+    'Die Fledermäuse sind dafür.'
+  ];
+
+  var ORACLE_SPOOK_NO = [
+    'Der Nebel sagt nein.',
+    'Die Geister schütteln den Kopf.',
+    'Nein. Die Kugel bleibt dunkel.',
+    'Heute nicht, die Raben warnen.',
+    'Auf keinen Fall, sagt die Hexe.'
+  ];
+
+  var ORACLE_SPOOK_MAYBE = [
+    'Frag nach Mitternacht noch einmal.',
+    'Der Nebel ist zu dicht.',
+    'Ein Geist sagt ja, zwei sagen nein.',
+    'Erst die Kerzen anzünden, dann fragen.',
+    'Die Kugel flackert unentschlossen.'
+  ];
+
+  /* Muschel oder Glaskugel: Texte und Antworten je Variante. Die
+     Glaskugel gilt, solange Halloween läuft (siehe oracleSkin()). */
+  var ORACLE_SKIN = {
+    shell: {
+      title: 'Muschel-Orakel', sub: 'Eine Frage, eine Muschel, eine knappe Antwort.',
+      note: 'Die Muschel entscheidet zufällig. Bei Fragen zu Pause, Feierabend und Überstunden schaut sie vorher auf die Uhr.',
+      ready: 'Frage stellen und Muschel öffnen', listen: 'Die Muschel horcht', says: 'Die Muschel sagt',
+      self: 'Die Muschel spricht nicht über sich.', overtime: 'Die Muschel rät ab.',
+      yes: ORACLE_YES, no: ORACLE_NO, maybe: ORACLE_MAYBE
+    },
+    ball: {
+      title: 'Hexen-Glaskugel', sub: 'Eine Frage, eine Muschel, ein Blick in den Nebel.',
+      note: 'Die Kugel entscheidet zufällig. Bei Fragen zu Pause, Feierabend und Überstunden schaut sie vorher auf die Uhr. Am 31. Oktober ab 18 Uhr spukt es.',
+      ready: 'Frage stellen und in die Kugel schauen', listen: 'Die Kugel trübt sich', says: 'Die Kugel zeigt',
+      self: 'Über sich selbst zeigt die Kugel nur Nebel.', overtime: 'Die Geister raten ab.',
+      yes: ORACLE_SPOOK_YES, no: ORACLE_SPOOK_NO, maybe: ORACLE_SPOOK_MAYBE
+    }
+  };
+
+  function oracleSkin() {
+    return ORACLE_SKIN[currentEvents.indexOf('halloween') !== -1 ? 'ball' : 'shell'];
+  }
+
+  // Halloween-Abend: ab 18 Uhr antwortet die Kugel nur noch mit einem Schreck
+  function oracleBooTime() {
+    var d = today();
+    return currentEvents.indexOf('halloween') !== -1 && d.getMonth() === 9 && d.getDate() === 31 && d.getHours() >= 18;
+  }
+
   var oracleAsking = false;
   var oracleLast = '';
   var oracleKept = '';
@@ -9102,13 +10581,13 @@
     var lawOpen = Math.max(0, s.lawNeed - s.pauseTotal);
 
     if (q.indexOf('muschel') !== -1 || q.indexOf('orakel') !== -1) {
-      return 'Die Muschel spricht nicht über sich.';
+      return oracleSkin().self;
     }
 
     if (q.indexOf('pause') !== -1) {
       if (lawOpen > 0) return 'Ja. Es fehlen noch ' + toDuration(lawOpen) + ' Pflichtpause.';
       if (s.pauseTotal === 0) return 'Ja, und zwar jetzt.';
-      return pick(ORACLE_YES);
+      return pick(oracleSkin().yes);
     }
 
     if (q.indexOf('kaffee') !== -1 || q.indexOf('tee') !== -1) {
@@ -9116,7 +10595,7 @@
     }
 
     if (q.indexOf('überstunden') !== -1 || q.indexOf('länger') !== -1 || q.indexOf('mehrarbeit') !== -1) {
-      return 'Die Muschel rät ab.';
+      return oracleSkin().overtime;
     }
 
     if (q.indexOf('feierabend') !== -1 || q.indexOf('heim') !== -1 ||
@@ -9138,9 +10617,10 @@
     }
 
     var roll = Math.random();
-    if (roll < 0.42) return pick(ORACLE_YES);
-    if (roll < 0.78) return pick(ORACLE_NO);
-    return pick(ORACLE_MAYBE);
+    var skin = oracleSkin();
+    if (roll < 0.42) return pick(skin.yes);
+    if (roll < 0.78) return pick(skin.no);
+    return pick(skin.maybe);
   }
 
   function setOracle(brow, text) {
@@ -9157,6 +10637,7 @@
 
     var bits = [];
     var html = '';
+    var spooky = oracleModal.classList.contains('is-spooky');
 
     for (var i = 0; i < 7; i++) {
       bits.push({
@@ -9165,7 +10646,10 @@
         lift: 40 + Math.random() * 34,
         delay: Math.random() * 0.4
       });
-      html += '<circle r="' + bits[i].r.toFixed(1) + '" fill="#ffffff" opacity="0"/>';
+      // In der Glaskugel steigen größere, violette Nebelschwaden auf
+      html += spooky
+        ? '<circle r="' + (bits[i].r * 2.2).toFixed(1) + '" fill="#e2ccff" opacity="0"/>'
+        : '<circle r="' + bits[i].r.toFixed(1) + '" fill="#ffffff" opacity="0"/>';
     }
 
     oracleBubble.innerHTML = html;
@@ -9191,7 +10675,7 @@
   function updateOracleButton() {
     oracleAskBtn.disabled = oracleAsking || game.shells < 1;
     oracleAskBtn.textContent = oracleAsking
-      ? 'Die Muschel horcht'
+      ? oracleSkin().listen
       : (game.shells > 0 ? 'Fragen, 1 Muschel' : 'Erst eine Muschel verdienen');
   }
 
@@ -9221,9 +10705,11 @@
     oracleAsking = true;
     oracleLast = question.toLowerCase();
     updateOracleButton();
-    setOracle('Die Muschel horcht', '…');
+    setOracle(oracleSkin().listen, '…');
+    oracleModal.classList.add('is-gazing');
 
-    var answer = oracleReply(question);
+    var boo = oracleBooTime();
+    var answer = boo ? 'Buh!' : oracleReply(question);
     var span = calm.matches ? 200 : 1300;
     var t0 = performance.now();
 
@@ -9245,13 +10731,40 @@
       oracleAsking = false;
       updateOracleButton();
       oracleKept = answer;
-      setOracle('Die Muschel sagt', answer);
+      setOracle(oracleSkin().says, answer);
+      oracleModal.classList.remove('is-gazing');
+      if (boo) oracleScare();
       unlock('oracle');
       renderHud();
     });
   }
 
+  // Schreck am Halloween-Abend: Karte wackelt wie bei Saures, dazu ein Ton
+  function oracleScare() {
+    playCue('boo');
+    if (calm.matches) return;
+    var card = oracleModal.querySelector('.az-modal-card');
+    card.classList.remove('is-trick');
+    void card.offsetWidth;   // Animation neu starten
+    card.classList.add('is-trick');
+    setTimeout(function () { card.classList.remove('is-trick'); }, 1700);
+  }
+
+  // Texte und Optik passend zur Variante setzen, Antwort bleibt stehen
+  function applyOracleSkin() {
+    var skin = oracleSkin();
+    var spooky = skin === ORACLE_SKIN.ball;
+    oracleModal.classList.toggle('is-spooky', spooky);
+    setText(document.getElementById('az-oracle-title'), skin.title);
+    setText(document.getElementById('az-oracle-sub'), skin.sub);
+    setText(document.getElementById('az-oracle-note'), skin.note);
+    if (oracleText.textContent === ORACLE_SKIN.shell.ready || oracleText.textContent === ORACLE_SKIN.ball.ready) {
+      setOracle('Bereit', skin.ready);
+    }
+  }
+
   function openOracle() {
+    applyOracleSkin();
     oracleModal.hidden = false;
     updateOracleButton();
     oracleInput.focus();
@@ -10259,6 +11772,7 @@
   renderHud();
   syncEventTheme();
   paintAdventPill();
+  paintSpookPill();
   game.quiet = false;
   setTimeout(greetEvent, 1200);
   setInterval(refreshEvents, 60 * 1000);
