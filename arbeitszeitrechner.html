@@ -3065,6 +3065,100 @@
     .az-wrap[data-event~="halloween"] .az-block::before { animation: none; }
   }
 
+  /* Halloween-Welt ohne Meer (siehe applyWorld()): violette Schrift,
+     fliederfarbenes Glas, Kürbis-Badges, Irrlichter statt Luftblasen und
+     ein Spukhaus, dessen Fenster die Lampen-Zustände des Leuchtturms
+     übernehmen. */
+  .az-wrap[data-world="spook"] {
+    --az-text: #3d2266;
+    --az-headline: #4b2a82;
+    --az-muted: #7a5aa8;
+  }
+  .az-wrap[data-world="spook"] .az-stage::after { background: #160a30; }
+  .az-wrap[data-world="spook"] .az-block {
+    background:
+      linear-gradient(180deg,
+        rgba(255, 255, 255, 0.68) 0%,
+        rgba(255, 250, 255, 0.44) 48%,
+        rgba(246, 232, 255, 0.22) 48.5%,
+        rgba(238, 222, 255, 0.36) 100%);
+    box-shadow:
+      0 12px 30px rgba(59, 38, 110, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -14px 24px -16px rgba(75, 42, 130, 0.3);
+  }
+  .az-wrap[data-world="spook"] .az-badge {
+    background: linear-gradient(180deg, #ffc27a 0%, #ff8a1d 52%, #c85a0e 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 2px 5px rgba(150, 70, 10, 0.35);
+  }
+  .az-wrap[data-world="spook"] .az-metric {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      0 6px 18px rgba(30, 16, 64, 0.28);
+  }
+  .az-wrap[data-world="spook"] .btn-add,
+  .az-wrap[data-world="spook"] .az-chip.is-active {
+    background: linear-gradient(180deg, #d4b0ff 0%, #9a6be0 48%, #7f4fcc 52%, #5e35a8 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 3px 10px rgba(94, 53, 168, 0.4);
+    text-shadow: 0 1px 1px rgba(50, 20, 100, 0.35);
+  }
+  .az-wrap[data-world="spook"] .az-level-ring::after {
+    background: linear-gradient(180deg, #d4b0ff 0%, #9a6be0 52%, #5e35a8 100%);
+  }
+  .az-wrap[data-world="spook"] .az-eyebrow,
+  .az-wrap[data-world="spook"] .az-lunch-eyebrow { color: #8a5ad6; }
+  .az-wrap[data-world="spook"] #az-lunch-grad stop:last-child { stop-color: #b77bff; }
+  .az-wrap[data-world="spook"] #az-percent { fill: #4b2a82; }
+  .az-wrap[data-world="spook"] .az-time.is-done { color: #7f4fcc; }
+  .az-wrap[data-world="spook"] .az-metric-value { text-shadow: 0 1px 3px rgba(30, 16, 64, 0.5); }
+  .az-wrap[data-world="spook"] #az-clouds { fill: #fbefff; }
+  .az-wrap[data-world="spook"] #az-shine { fill: #ffd27a; }
+  .az-wrap[data-world="spook"] #az-tidemark { display: none; }
+  .az-wrap[data-world="spook"] .az-bubble {
+    border: 0;
+    background: radial-gradient(circle,
+      #fff6b0 0%,
+      rgba(255, 179, 71, 0.75) 35%,
+      rgba(255, 179, 71, 0) 70%);
+  }
+  /* Keine Meerblau-Schatten auf der Wiese. Die Attribut-Selektoren
+     treffen alle Bodenschatten und Meilenstein-Kerne der Szene. */
+  .az-wrap[data-world="spook"] .az-stage [fill="#0a5580"] { fill: #2b1d3d; }
+  .az-wrap[data-world="spook"] #az-checks [fill="#0a5a86"] { fill: #4b2a82; }
+  /* Glaskugel und Otter stehen fest. Statt Wellen-Wippen leuchtet die
+     Kugel, der Otter atmet. */
+  .az-wrap[data-world="spook"] .az-oracle-bob { animation: none; }
+  .az-wrap[data-world="spook"] .az-otter-bob {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: az-breathe 4.2s ease-in-out infinite;
+  }
+  @keyframes az-breathe {
+    0%, 100% { transform: scale(1, 1); }
+    50%      { transform: scale(1.015, 1.035); }
+  }
+  /* Irrlichter schweben langsam und schlingern seitlich */
+  .az-wrap[data-world="spook"] .az-bubble { animation-name: az-wisp; animation-duration: 18s; }
+  @keyframes az-wisp {
+    0%   { transform: translate(0, 0); opacity: 0; }
+    15%  { opacity: 0.8; }
+    35%  { transform: translate(14px, -40px); }
+    65%  { transform: translate(-10px, -90px); opacity: 0.6; }
+    100% { transform: translate(8px, -130px); opacity: 0; }
+  }
+  .az-candy-icon { display: none; }
+  .az-wrap[data-world="spook"] .az-candy-icon { display: block; }
+  .az-wrap[data-world="spook"] .az-shell-icon { display: none; }
+  .az-wrap[data-world="spook"] .az-lighthouse-lamp { fill: #4d3577; opacity: 0.95; }
+  .az-wrap[data-world="spook"] #az-lighthouse.is-dusk:not(.is-lit) .az-lighthouse-lamp { fill: #ffb347; opacity: 0.85; }
+  .az-wrap[data-world="spook"] #az-lighthouse.is-dusk:not(.is-lit) .az-lighthouse-halo { opacity: 0.25; }
+  .az-wrap[data-world="spook"] #az-lighthouse.is-lit:not(.is-storm-warning):not(.is-flash) .az-lighthouse-lamp { fill: #ffd24a; opacity: 1; }
+  .az-wrap[data-world="spook"] #az-lighthouse.is-lit .az-lighthouse-beam { opacity: 1; }
+
   /* Anklickbare Fundstücke (Ostereier, Nikolausstiefel) */
   .az-event-pick { pointer-events: all; cursor: pointer; }
   .az-event-pick:hover { filter: brightness(1.08) drop-shadow(0 0 3px #ffffff); }
@@ -3758,6 +3852,25 @@
           <stop offset="1" stop-color="#065580"/>
         </linearGradient>
 
+        <!-- Halloween-Welt: Kürbiswiese statt Wasser, siehe drawMeadow() -->
+        <linearGradient id="az-meadow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#9be67a"/>
+          <stop offset="0.12" stop-color="#62c069"/>
+          <stop offset="0.5" stop-color="#4a9a72"/>
+          <stop offset="1" stop-color="#5a3a8e"/>
+        </linearGradient>
+
+        <radialGradient id="az-spook-glow" cx="0.5" cy="1" r="0.5">
+          <stop offset="0" stop-color="#ffb36b" stop-opacity="0.55"/>
+          <stop offset="1" stop-color="#ffb36b" stop-opacity="0"/>
+        </radialGradient>
+
+        <radialGradient id="az-spook-ball" cx="0.38" cy="0.32" r="0.75">
+          <stop offset="0" stop-color="#f6eaff"/>
+          <stop offset="0.45" stop-color="#c9a2f2"/>
+          <stop offset="1" stop-color="#7b4fc4"/>
+        </radialGradient>
+
         <radialGradient id="az-head" cx="0.5" cy="0.5" r="0.5">
           <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
           <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.32"/>
@@ -3993,7 +4106,14 @@
         </div>
 
         <span class="az-shells" id="az-shells">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="az-candy-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5.5 12 L1.8 8.6 L2.6 15.4 Z M18.5 12 L22.2 8.6 L21.4 15.4 Z" fill="#b77bff" stroke="#6b3fa8" stroke-width="1"/>
+            <circle cx="12" cy="12" r="6.6" fill="#ff8a1d" stroke="#b3530a" stroke-width="1.1"/>
+            <path d="M8 9.4 Q12 12 8.4 15.2 M12.4 5.6 Q15.4 9 12 12 Q9 15 12.4 18.4 M16 8.8 Q13.4 12 16 15.2"
+                  fill="none" stroke="#ffd9a8" stroke-width="1" opacity="0.85"/>
+            <circle cx="9.6" cy="9.2" r="1.5" fill="#ffffff" opacity="0.8"/>
+          </svg>
+          <svg class="az-shell-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 21 C4 16.5 2.5 9.5 5 6 C7 3.2 10 4 12 6 C14 4 17 3.2 19 6 C21.5 9.5 20 16.5 12 21 Z"
                   fill="#ffd98a" stroke="#d98f2b" stroke-width="1.1"/>
             <path d="M12 20.4 L12 6 M11.4 20.6 L6.6 8.4 M12.6 20.6 L17.4 8.4"
@@ -4375,7 +4495,7 @@
         <button type="button" class="btn-close" id="az-otter-close" aria-label="Muntermacher schließen">×</button>
       </div>
 
-      <p class="az-modal-sub">Treibt gemütlich auf dem Rücken und hat immer einen süßen Spruch parat. Kostet keine Muschel.</p>
+      <p class="az-modal-sub" id="az-otter-sub">Treibt gemütlich auf dem Rücken und hat immer einen süßen Spruch parat. Kostet keine Muschel.</p>
 
       <div class="az-otter-quote" id="az-otter-quote" aria-live="polite"></div>
 
@@ -4785,6 +4905,7 @@
   }
 
   function drawWater() {
+    if (landWorld()) { drawMeadow(); return; }
     // Beide Wellen reichen weit über den Rand hinaus. Dadurch bleibt beim
     // Driften links und rechts nie eine Lücke.
     var front = WAVE_SEGMENT.front * 2;
@@ -4812,6 +4933,7 @@
 
   // Türkiser Schimmer direkt über der Wasserlinie
   function drawHorizon() {
+    if (landWorld()) { drawHills(); return; }
     var h = 190;
     horizonEl.innerHTML =
       '<rect x="0" y="' + (view.waterY - h) + '" width="' + view.width + '" height="' + h + '" ' +
@@ -4831,11 +4953,77 @@
   // Hebt Wasser und Horizontschimmer mit dem Fortschritt an, gedeckelt auf
   // TIDE_MAX_LIFT. Läuft aus calculate() mit, kein eigener Zustand.
   function syncTideLevel(percent) {
-    var lift = clamp(percent, 0, 100) / 100 * TIDE_MAX_LIFT;
+    // Auf der Halloween-Wiese gibt es keine Flut
+    var lift = landWorld() ? 0 : clamp(percent, 0, 100) / 100 * TIDE_MAX_LIFT;
     var t = 'translateY(' + (-lift).toFixed(1) + 'px)';
     waterEl.style.transform = t;
     horizonEl.style.transform = t;
     tidemarkEl.classList.toggle('is-full', percent >= 100);
+  }
+
+  /* ---- Halloween-Welt ----
+     Halloween tauscht Meer und Strand gegen eine Kürbiswiese vor lila
+     Hügeln (SEASON_EVENTS.halloween.world). Die Bodenlinie bleibt auf
+     view.waterY, dadurch stehen Spukhaus, Friedhof, Otter und Glaskugel
+     an denselben Plätzen wie Leuchtturm, Sandburg und Muschel. */
+
+  function landWorld() {
+    return eventPart('world') === 'spook';
+  }
+
+  // Sanfte Buckel statt Wellen. Die Wiese steht still.
+  function meadowLine(y, rise, seg, fromX, toX) {
+    var d = 'M' + fromX + ',' + y;
+    for (var x = fromX, k = 0; x < toX; x += seg, k++) {
+      d += ' Q' + (x + seg / 2) + ',' + (y - rise * (k % 2 ? 0.6 : 1)) + ' ' + (x + seg) + ',' + y;
+    }
+    return d;
+  }
+
+  function drawMeadow() {
+    var w = view.width, seg = clamp(w / 6, 150, 280);
+    var line = meadowLine(view.waterY + 3, 10, seg, -seg, w + seg);
+    var body = line + ' L' + (w + seg) + ',' + view.height + ' L' + (-seg) + ',' + view.height + ' Z';
+    var tufts = '';
+    for (var i = 0; i < 28; i++) {
+      var x = (((i + 0.5) / 28) * w + Math.sin(i * 12.9) * 14).toFixed(0);
+      var y = view.waterY + 12 + (i % 3) * 9;
+      tufts += '<path d="M' + x + ',' + y + ' l-3,-6 M' + x + ',' + y + ' l0,-8 M' + x + ',' + y + ' l3,-6"/>';
+    }
+    waterEl.innerHTML =
+      '<path d="' + body + '" fill="url(#az-meadow)"/>' +
+      '<path d="' + line + '" fill="none" stroke="#c4f59a" stroke-width="3" opacity="0.9"/>' +
+      '<g fill="none" stroke="#2f6b46" stroke-width="1.4" stroke-linecap="round" opacity="0.55">' + tufts + '</g>';
+  }
+
+  // Zwei Hügelketten am Horizont, hinten ein kleines Schloss mit Licht
+  function drawHills() {
+    var w = view.width, y = view.waterY;
+    function at(f, dy) { return (w * f).toFixed(0) + ',' + (y + dy); }
+    var far = 'M0,' + (y + 10) + ' L' + at(0, -40) +
+      ' C' + at(0.15, -95) + ' ' + at(0.3, -30) + ' ' + at(0.45, -58) +
+      ' C' + at(0.6, -84) + ' ' + at(0.74, -22) + ' ' + at(0.88, -66) +
+      ' C' + at(0.95, -84) + ' ' + at(1, -60) + ' ' + at(1, -56) + ' L' + at(1, 10) + ' Z';
+    var near = 'M0,' + (y + 10) + ' L' + at(0, -18) +
+      ' C' + at(0.12, -52) + ' ' + at(0.25, -8) + ' ' + at(0.38, -28) +
+      ' C' + at(0.55, -52) + ' ' + at(0.7, -6) + ' ' + at(0.82, -34) +
+      ' C' + at(0.9, -50) + ' ' + at(1, -26) + ' ' + at(1, -24) + ' L' + at(1, 10) + ' Z';
+    var cx = Math.round(w * 0.86), cy = y - 58;
+    var castle = '<g transform="translate(' + cx + ',' + cy + ')" fill="#a688d8">' +
+      '<rect x="-14" y="-14" width="28" height="44"/>' +
+      '<rect x="-20" y="-24" width="8" height="54"/><path d="M-21,-24 L-16,-34 L-11,-24 Z"/>' +
+      '<rect x="12" y="-20" width="8" height="50"/><path d="M11,-20 L16,-29 L21,-20 Z"/>' +
+      '<rect x="-4" y="-22" width="8" height="10"/><path d="M-5,-22 L0,-30 L5,-22 Z"/>' +
+      '<g class="az-event-glow" fill="#ffd27a"><rect x="-17.5" y="-17" width="3" height="4" rx="1.5"/>' +
+        '<rect x="14.5" y="-14" width="3" height="4" rx="1.5"/><rect x="-1.5" y="-18" width="3" height="4" rx="1.5"/>' +
+        '<rect x="-8" y="-7" width="3" height="4" rx="1.5"/><rect x="5" y="-7" width="3" height="4" rx="1.5"/></g>' +
+      '</g>';
+    horizonEl.innerHTML =
+      '<rect x="0" y="' + (y - 190) + '" width="' + w + '" height="190" fill="url(#az-spook-glow)"/>' +
+      '<path d="' + far + '" fill="#dcc6f4"/>' + castle +
+      '<path d="' + near + '" fill="#b99ae4"/>' +
+      // Heller Glanzrand wie an der Wellenkante, passend zum Glas-Look
+      '<path d="' + near.replace(/ L[^L]*Z$/, '').replace(/^M[^L]*L/, 'M') + '" fill="none" stroke="#efe2ff" stroke-width="2" opacity="0.8"/>';
   }
 
   /* Saisondeko: ein paar treibende Blätter, Schneeflecken oder Blüten je
@@ -4863,10 +5051,11 @@
           'fill="#ff8fc4" opacity="0.6" transform="rotate(' + (i * 37) + ' ' + x.toFixed(0) + ' ' + y.toFixed(0) + ')"/>';
       });
     } else if (month >= 8 && month <= 10) {
-      // Herbst: treibende Blätter
+      // Herbst: treibende Blätter, auf der Halloween-Wiese liegen sie im Gras
+      var land = landWorld();
       spots.forEach(function (p, i) {
         var x = view.width * p;
-        var y = view.waterY - 2 - (i % 3) * 6;
+        var y = land ? view.waterY + 12 + (i % 3) * 7 : view.waterY - 2 - (i % 3) * 6;
         var color = i % 2 === 0 ? '#e0a52f' : '#c85a2b';
         out += '<path d="M' + x.toFixed(0) + ',' + y.toFixed(0) + ' q5,-6 10,0 q-5,6 -10,0 Z" ' +
           'fill="' + color + '" opacity="0.55"/>';
@@ -5030,6 +5219,7 @@
       '<ellipse cx="5.5" cy="-8" rx="7" ry="8" fill="#d9661a"/>' +
       '<ellipse cx="0" cy="-8" rx="7" ry="8.6" fill="#ff8a1d" stroke="#b3530a" stroke-width="0.8"/>' +
       '<path d="M0,-16 q1,-5 4,-6" fill="none" stroke="#4d7a2a" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<path d="M-9.5,-12 Q-8.6,-14.6 -6.4,-15.4" fill="none" stroke="#ffffff" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>' +
       '<g class="az-event-glow" fill="#ffe27a">' +
         '<path d="M-7,-9 l2.6,-4 l2.6,4 Z"/><path d="M1.8,-9 l2.6,-4 l2.6,4 Z"/>' +
         '<path d="M-7,-5.5 q7,6 14,0 l-2.4,1.2 l-1.6,-1.2 l-1.8,1.4 l-1.6,-1.4 l-1.8,1.4 l-1.6,-1.2 Z"/>' +
@@ -5254,6 +5444,49 @@
     return out;
   }
 
+  // Lichterkette an der Dachkante des Spukhauses
+  function houseLights(x, y) {
+    var colors = ['#ff8a1d', '#b77bff', '#7ed957', '#ffd24a'];
+    var out = '<g transform="translate(' + x + ',' + y + ')">' +
+      '<path d="M-24,-34 Q-5,-27 17,-37" fill="none" stroke="#2b1d3d" stroke-width="0.7"/>';
+    [-20, -14, -8, -2, 4, 10].forEach(function (dx, i) {
+      var t = (dx + 24) / 41;
+      var cy = (1 - t) * (1 - t) * -34 + 2 * (1 - t) * t * -27 + t * t * -37;
+      out += '<circle class="az-event-twinkle" style="animation-delay:' + (i * 0.3) + 's" cx="' + dx +
+        '" cy="' + (cy + 1.6).toFixed(1) + '" r="1.7" fill="' + colors[i % colors.length] + '"/>';
+    });
+    return out + '</g>';
+  }
+
+  // Spinne seilt sich vom Turmdach des Spukhauses ab
+  function houseSpider(x, y) {
+    var len = 8, drop = 5;
+    return '<g transform="translate(' + (x + 29) + ',' + (y - 50) + ')" style="--dur:3.8s;--drop:' + drop +
+        'px;--stretch:' + ((len + drop) / len).toFixed(3) + '">' +
+      '<rect class="az-event-thread" x="-0.25" y="0" width="0.5" height="' + len + '" fill="#3b2656" opacity="0.7"/>' +
+      '<g class="az-event-dangle"><g transform="translate(0,' + len + ')">' + spider() + '</g></g>' +
+      '</g>';
+  }
+
+  // Pilze und Bonbons auf der Wiese, fern von der Feierabend-Anzeige
+  function meadowBits() {
+    var y = view.waterY;
+    function mushroom(x, s) {
+      return '<g transform="translate(' + x + ',' + y + ') scale(' + s + ')">' +
+        '<path d="M-2,0 V-6 H2 V0 Z" fill="#fff3e0"/>' +
+        '<path d="M-7,-5 Q0,-15 7,-5 Z" fill="#e0262e"/>' +
+        '<circle cx="-3" cy="-8" r="1.2" fill="#ffffff"/><circle cx="2.4" cy="-9" r="1" fill="#ffffff"/>' +
+        '<path d="M-4.6,-7 Q-2,-11.4 2,-11.6" fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.55" stroke-linecap="round"/></g>';
+    }
+    function candy(x, color) {
+      return '<g transform="translate(' + x + ',' + (y - 3) + ') rotate(-14)">' +
+        '<path d="M-7,-3 L-4,0 L-7,3 Z M7,-3 L4,0 L7,3 Z" fill="' + color + '"/>' +
+        '<ellipse rx="4.4" ry="3" fill="' + color + '" stroke="#ffffff" stroke-width="0.8"/></g>';
+    }
+    return mushroom(beachX(0.13), 0.9) + mushroom(beachX(0.13) + 10, 0.6) +
+      mushroom(beachX(0.86), 0.8) + candy(beachX(0.31), '#ff8fc4') + candy(beachX(0.69), '#7ed957');
+  }
+
   function spider() {
     return '<path d="M-1.5,1.5 Q-4.5,-1.5 -6,1 M-1.5,2.5 Q-5,1 -6.5,3.5 M-1.5,3.2 Q-5,3.5 -6,6 M-1.2,3.8 Q-3.5,5.5 -4,8 ' +
         'M1.5,1.5 Q4.5,-1.5 6,1 M1.5,2.5 Q5,1 6.5,3.5 M1.5,3.2 Q5,3.5 6,6 M1.2,3.8 Q3.5,5.5 4,8" ' +
@@ -5390,16 +5623,15 @@
       scene: function () {
         var castle = beachX(0.78), tower = beachX(0.22);
         return pumpkin(castle + 36, view.waterY, 1) + pumpkin(castle + 55, view.waterY, 0.7) +
-          pumpkin(tower + 30, view.waterY, 0.85) +
-          lighthouseLights(tower, view.waterY, ['#ff8a1d', '#9a6bdb', '#7ed957', '#ffd24a'], '#2b1d3d') +
-          lighthouseSpider(tower, view.waterY) +
+          pumpkin(tower + 42, view.waterY, 0.85) + pumpkin(tower - 34, view.waterY, 0.6) +
+          houseLights(tower, view.waterY) + houseSpider(tower, view.waterY) + meadowBits() +
           [0.2, 0.55, 0.38].map(function (f, i) { return bat(skyBandY(f), i); }).join('') +
           fallers(14, leaf) + spookDeco();
       },
       theme: { '--az-cyan': '#ff8a1d', '--az-cyan-deep': '#b3530a', '--az-tint': 'rgba(255,226,200,0.3)',
                '--az-bright': '#ffd9a8', '--az-ring': 'rgba(255,138,29,0.45)',
                '--az-rainbow': 'linear-gradient(90deg, #ff8a1d, #ffb347, #9a6bdb, #6b3fa8, #7ed957, #ff8a1d, #b77bff)' },
-      greet: function () { return ['Happy Halloween 🎃', 'Spinnen am Leuchtturm, Gruseln am Strand. Tipp dein Tier an: Süßes oder Saures?']; },
+      greet: function () { return ['Happy Halloween 🎃', 'Das Meer macht Pause. Bis Halloween wohnst du am Kürbisfeld. Tipp dein Tier an: Süßes oder Saures?']; },
       // Sonne wird zum leuchtenden Kürbis. az-sun-core bleibt für setSunGlow().
       sunRays: '#ff9a3c',
       // Gesicht aus dem Kürbis-Schnitzen (siehe storedCarve(), saveCarve())
@@ -5714,7 +5946,7 @@
 
   // Halloween: Sandburg wird zum Friedhof, Stufen wie bei syncSandcastle()
   SEASON_EVENTS.halloween.castle =
-    '<ellipse cx="0" cy="4" rx="26" ry="5" fill="#0a5580" opacity="0.12"/>' +
+    '<ellipse cx="0" cy="4" rx="26" ry="5" fill="#2b1d3d" opacity="0.12"/>' +
     '<g class="az-sandcastle-stage" data-stage="1">' +
       '<path d="M-22,2 Q0,-7 22,2 Z" fill="#6b5442" stroke="#4a3a2c" stroke-width="1"/>' +
     '</g>' +
@@ -5741,6 +5973,96 @@
       '<circle cx="1.8" cy="-30.4" r="0.6" fill="#ffd24a"/>' +
       '<path d="M-1,-25 v1.6 M1.4,-25 v1.6" stroke="#e0a52f" stroke-width="0.6"/>' +
     '</g>';
+
+  /* Halloween-Welt ohne Meer (siehe landWorld()): Spukhaus statt
+     Leuchtturm, Glaskugel statt Muschel, Otter auf dem Heuballen.
+     Fangbare Tiere bleiben in dieser Zeit weg, ihre Spawner brechen bei
+     landWorld() ab. */
+  SEASON_EVENTS.halloween.world = 'spook';
+
+  // Fenster tragen die Lampen-Klassen des Leuchtturms, dadurch greifen
+  // paintLighthouse(), Dämmerung, Sturmwarnung und Aufblitzen weiter.
+  // Statt des Lichtkegels schwingt ein Hausgeist über dem Turm.
+  SEASON_EVENTS.halloween.lighthouse =
+    '<ellipse cx="3" cy="3" rx="32" ry="4.6" fill="#2b1d3d" opacity="0.18"/>' +
+    '<rect x="-14" y="-57" width="6" height="13" fill="#6a4c9c" stroke="#2b1d3d" stroke-width="1"/>' +
+    '<g fill="#f6eeff" opacity="0.75">' +
+      '<circle class="az-event-twinkle" cx="-11" cy="-62" r="2.6"/>' +
+      '<circle class="az-event-twinkle" style="animation-delay:0.5s" cx="-8" cy="-68" r="3.2"/>' +
+      '<circle class="az-event-twinkle" style="animation-delay:1s" cx="-12" cy="-74" r="2.4"/>' +
+    '</g>' +
+    '<path d="M-20,0 L-19,-36 L13,-38 L14,0 Z" fill="#9a7ad4" stroke="#2b1d3d" stroke-width="1.2" stroke-linejoin="round"/>' +
+    '<path d="M-26,-34 L-4,-61 L18,-37 Z" fill="#3b2656" stroke="#2b1d3d" stroke-width="1.2" stroke-linejoin="round"/>' +
+    '<path d="M-19,-41 L11,-43 M-12,-49 L4,-51" stroke="#5c3f8c" stroke-width="1.1" stroke-linecap="round"/>' +
+    '<path d="M12,0 V-50 H27 V0 Z" fill="#8466c0" stroke="#2b1d3d" stroke-width="1.2" stroke-linejoin="round"/>' +
+    '<path d="M9,-50 Q17,-60 20,-80 Q23,-64 30,-50 Z" fill="#3b2656" stroke="#2b1d3d" stroke-width="1.2" stroke-linejoin="round"/>' +
+    '<circle cx="20" cy="-81" r="1.8" fill="#ff8a1d"/>' +
+    '<ellipse class="az-lighthouse-halo" cx="19.5" cy="-37" rx="8" ry="8" fill="#ffd24a"/>' +
+    '<circle class="az-lighthouse-lamp" cx="19.5" cy="-37" r="4"/>' +
+    '<path d="M19.5,-41 V-33 M15.5,-37 H23.5" stroke="#2b1d3d" stroke-width="0.9"/>' +
+    '<rect class="az-lighthouse-lamp" x="15.5" y="-22" width="8" height="9" rx="4"/>' +
+    '<circle class="az-lighthouse-lamp" cx="-4" cy="-45.5" r="3"/>' +
+    '<rect class="az-lighthouse-lamp" x="-16" y="-30" width="8" height="9" rx="1.2"/>' +
+    '<rect class="az-lighthouse-lamp" x="-1" y="-31" width="8" height="9" rx="1.2"/>' +
+    '<path d="M-12,-30 V-21 M-16,-25.5 H-8 M3,-31 V-22 M-1,-26.5 H7" stroke="#2b1d3d" stroke-width="0.9"/>' +
+    '<path d="M-14,0 V-10 Q-9.5,-17 -5,-10 V0 Z" fill="#5a3c86" stroke="#2b1d3d" stroke-width="1.1"/>' +
+    '<circle cx="-7" cy="-5" r="0.9" fill="#ffd24a"/>' +
+    '<rect x="-16" y="-1" width="13" height="2.4" rx="1" fill="#6b4a2a"/>' +
+    '<g transform="translate(20,-82)"><g class="az-lighthouse-beam">' +
+      '<g transform="translate(0,-17) scale(0.8)">' +
+        '<path d="M-8,7 Q-8,-10 0,-10 Q8,-10 8,7 L5.4,5 L2.7,7.4 L0,5 L-2.7,7.4 L-5.4,5 Z" fill="#ffffff" stroke="#c9c2e8" stroke-width="0.9"/>' +
+        '<circle cx="-2.6" cy="-3" r="1.2" fill="#2b1d3d"/><circle cx="2.6" cy="-3" r="1.2" fill="#2b1d3d"/>' +
+        '<path d="M-1.8,0.4 q1.8,2 3.6,0" fill="none" stroke="#2b1d3d" stroke-width="0.9" stroke-linecap="round"/>' +
+        '<circle cx="-5" cy="-0.6" r="1.3" fill="#ffb3d1" opacity="0.8"/><circle cx="5" cy="-0.6" r="1.3" fill="#ffb3d1" opacity="0.8"/>' +
+      '</g>' +
+    '</g></g>';
+
+  // Glaskugel auf Holzsockel statt Muschel im flachen Wasser
+  SEASON_EVENTS.halloween.oracle =
+    '<ellipse class="az-oracle-glow" cx="0" cy="-4" rx="24" ry="20" fill="#d6b4ff" opacity="0.4"/>' +
+    '<ellipse cx="0" cy="14" rx="16" ry="3" fill="#2b1d3d" opacity="0.2"/>' +
+    '<path d="M-12,13 L-8,5 H8 L12,13 Z" fill="#8a5a33" stroke="#4a2c14" stroke-width="1"/>' +
+    '<path d="M-9,8.5 H9" stroke="#ffd24a" stroke-width="1"/>' +
+    '<circle cx="0" cy="-7" r="13.5" fill="url(#az-spook-ball)" stroke="#ffffff" stroke-width="1.4"/>' +
+    '<path d="M-6,-6 q3,-4 6,0 q3,4 6,0" fill="none" stroke="#ffffff" stroke-width="1.1" opacity="0.6" stroke-linecap="round"/>' +
+    '<circle cx="-5" cy="-12" r="3" fill="#ffffff" opacity="0.75"/>' +
+    '<circle class="az-event-twinkle" cx="5" cy="-13" r="1.1" fill="#ffffff"/>' +
+    '<circle class="az-event-twinkle" style="animation-delay:0.7s" cx="3" cy="-1" r="0.9" fill="#fff3b0"/>';
+  SEASON_EVENTS.halloween.oracleLabel = 'Hexen-Glaskugel öffnen';
+
+  // Otter döst auf einem Heuballen, mit kleinem Hexenhut
+  SEASON_EVENTS.halloween.otterUnder =
+    '<rect x="-34" y="7" width="58" height="15" rx="4" fill="#e9b94f" stroke="#a87a22" stroke-width="1.1"/>' +
+    '<path d="M-30,12 h10 M-14,16 h12 M4,11 h12 M-26,19 h9 M8,18 h10" stroke="#b8862a" stroke-width="1" stroke-linecap="round"/>' +
+    '<path d="M-16,7 v15 M8,7 v15" stroke="#c4462c" stroke-width="1.4"/>';
+  SEASON_EVENTS.halloween.otterOver =
+    '<ellipse cx="-20" cy="-12" rx="9.5" ry="2.2" fill="#3b2656"/>' +
+    '<path d="M-26,-12 L-17,-29 Q-15,-25 -13,-12 Z" fill="#4a2f6e"/>' +
+    '<rect x="-25" y="-15" width="11" height="2.4" fill="#ff8a1d"/>';
+  SEASON_EVENTS.halloween.otterLabel = 'Muntermacher-Otter auf dem Heuballen öffnen';
+
+  // Otter-Sprüche auf der Wiese. Ersetzen die Meeres-Sprüche, die von
+  // Wellen, Strand und Möwen erzählen (siehe currentQuotePool()).
+  SEASON_EVENTS.halloween.otterSub = 'Döst auf dem Heuballen und hat immer einen süßen Spruch parat. Kostet keine Muschel.';
+  SEASON_EVENTS.halloween.otterQuotes = [
+    { text: 'Post vom Hausgeist, {n}. Er findet, du machst das gut. 👻', fallback: 'Kürbischen' },
+    { text: 'Das Kürbisfeld erinnert dich ans Wassertrinken. 🎃🥛' },
+    { text: 'Kurz durchatmen. Selbst Gespenster machen Pause. 👻💤' },
+    { text: 'Süßes für dich, {n}. Saures gibt es heute keins. 🍬', fallback: 'Mäuschen' },
+    { text: 'Gruß aus dem Spukhaus. Die nächste Pause gehört dir. 🏚️' },
+    { text: 'Die Fledermäuse hängen noch ab. Du darfst das auch kurz. 🦇' },
+    { text: 'Ein Kürbis wächst langsam und wird trotzdem riesig. Dein Tag auch, {n}. 🎃', fallback: 'Herzchen' },
+    { text: 'Der Hexenkessel blubbert, du arbeitest. Beides in Ruhe. 🧪' },
+    { text: 'Keine Angst vor dem Nachmittag, {n}. Er ist ganz lieb. 🕸️', fallback: 'Schnuckelchen' },
+    { text: 'Die Glaskugel sagt einen guten Tag voraus. Ich glaube ihr. 🔮' },
+    { text: 'Der Heuballen ist bequem, dein Fortschritt auch. Weiter so, {n}. 🦦', fallback: 'kleiner Stern' }
+  ];
+  SEASON_EVENTS.halloween.otterPunctual = [
+    { text: 'Geschafft, {n}! Jetzt raus zum Kürbisfeld. 🦦🎃', fallback: 'du Schlaufuchs' },
+    { text: 'Sollzeit erreicht, {n}! Im Spukhaus gehen die Lichter an. 🏚️✨', fallback: 'Mäuschen' },
+    { text: 'Punktlandung, {n}! Der Hausgeist klatscht mit beiden Zipfeln. 👻👏', fallback: 'Herzchen' },
+    { text: 'Feierabend, {n}! Der Otter teilt seine Bonbons mit dir. 🦦🍬', fallback: 'Schatz' }
+  ];
 
   // Sankt Martin: Laternenboot, Gänse in V-Formation
   SEASON_EVENTS.martin.dolphin = { label: 'Laternenboot', float: true,
@@ -5849,6 +6171,7 @@
      und baut die Szenen-Teile neu, die ein Anlass ersetzt. */
   function applyEventDecor() {
     document.querySelector('.az-wrap').setAttribute('data-event', currentEvents.join(' '));
+    applyWorld();
     buildSun();
     buildCrab();
     buildDolphin();
@@ -5856,6 +6179,39 @@
     buildChest();
     buildSandcastle();
     if (view) { syncSun(minutesNow()); calculate(); }
+  }
+
+  /* Wechselt zwischen Meer und Halloween-Wiese (siehe landWorld()).
+     data-world an .az-wrap steuert die Farben im CSS. Otter und Muschel
+     stehen fest im Markup, ihr Inhalt wird hier getauscht. Danach baut
+     layout() die ganze Szene neu. */
+  var seaParts = null;
+
+  function applyWorld() {
+    var land = landWorld();
+    var oracle = document.getElementById('az-oracle-shell');
+    var otter = document.getElementById('az-otter');
+    var oracleBob = oracle.querySelector('.az-oracle-bob');
+    var otterBob = otter.querySelector('.az-otter-bob');
+    if (!seaParts) {
+      seaParts = { oracle: oracleBob.innerHTML, otter: otterBob.innerHTML,
+                   oracleLabel: oracle.getAttribute('aria-label'), otterLabel: otter.getAttribute('aria-label'),
+                   otterSub: document.getElementById('az-otter-sub').textContent };
+    }
+    var world = land ? 'spook' : 'sea';
+    if (wrap.getAttribute('data-world') === world) return;
+    wrap.setAttribute('data-world', world);
+
+    oracleBob.innerHTML = land ? eventPart('oracle') : seaParts.oracle;
+    otterBob.innerHTML = land ? eventPart('otterUnder') + seaParts.otter + eventPart('otterOver') : seaParts.otter;
+    oracle.setAttribute('aria-label', land ? eventPart('oracleLabel') : seaParts.oracleLabel);
+    otter.setAttribute('aria-label', land ? eventPart('otterLabel') : seaParts.otterLabel);
+
+    document.getElementById('az-otter-sub').textContent = land ? eventPart('otterSub') : seaParts.otterSub;
+
+    buildLighthouse();
+    syncTide(minutesNow());
+    if (view) { view = null; layout(); }
   }
 
   /* ---- Deko aus dem Gruselkalender ----
@@ -5981,6 +6337,15 @@
 
   function drawShine() {
     var y = view.waterY + (view.height - view.waterY) * 0.55;
+    if (landWorld()) {
+      // Auf der Wiese glimmen Glühwürmchen im Gras statt Funkeln im Wasser
+      shineEl.innerHTML = [0.04, 0.3, 0.53, 0.78, 0.95].map(function (f, i) {
+        var x = (view.width * f).toFixed(0), gy = (y + (i % 2 ? 16 : 2)).toFixed(0);
+        return '<circle cx="' + x + '" cy="' + gy + '" r="4.5" opacity="0.25"/>' +
+          '<circle class="az-event-twinkle" style="animation-delay:' + (i * 0.7) + 's" cx="' + x + '" cy="' + gy + '" r="1.6"/>';
+      }).join('');
+      return;
+    }
     shineEl.innerHTML =
       star(view.width * 0.04, y + 8, 11) +
       star(view.width * 0.3, y + 22, 6) +
@@ -6214,6 +6579,18 @@
     { at: 1440, top: '#0a1a35', mid: '#142a4a', bot: '#1c3a5e', veil: 0.55 }
   ];
 
+  // Halloween-Welt: tagsüber Flieder bis Pfirsich, nachts tiefes Violett
+  var SPOOK_PHASES = [
+    { at: 0,    top: '#1c1040', mid: '#2e1a5c', bot: '#4a2a78', veil: 0.4 },
+    { at: 300,  top: '#3a2a6e', mid: '#8a6bb8', bot: '#f5b98a', veil: 0.12 },
+    { at: 420,  top: '#b7a2f0', mid: '#e8cdf3', bot: '#ffe4cc', veil: 0 },
+    { at: 720,  top: '#c3aff6', mid: '#f1d8f4', bot: '#ffead4', veil: 0 },
+    { at: 1020, top: '#b39ae8', mid: '#f2c4dd', bot: '#ffd3a8', veil: 0 },
+    { at: 1140, top: '#5a3a8e', mid: '#e0849c', bot: '#ffc48c', veil: 0.08 },
+    { at: 1260, top: '#1c1040', mid: '#2e1a5c', bot: '#4a2a78', veil: 0.4 },
+    { at: 1440, top: '#1c1040', mid: '#2e1a5c', bot: '#4a2a78', veil: 0.4 }
+  ];
+
   function hexToRgb(hex) {
     var n = parseInt(hex.slice(1), 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -6230,12 +6607,13 @@
   var stageEl = document.querySelector('.az-stage');
 
   function syncTide(minutes) {
+    var phases = landWorld() ? SPOOK_PHASES : TIDE_PHASES;
     var m = ((minutes % 1440) + 1440) % 1440;
     var i = 0;
-    while (i < TIDE_PHASES.length - 1 && TIDE_PHASES[i + 1].at <= m) i++;
+    while (i < phases.length - 1 && phases[i + 1].at <= m) i++;
 
-    var a = TIDE_PHASES[i];
-    var b = TIDE_PHASES[Math.min(i + 1, TIDE_PHASES.length - 1)];
+    var a = phases[i];
+    var b = phases[Math.min(i + 1, phases.length - 1)];
     var span = b.at - a.at;
     var t = span > 0 ? clamp((m - a.at) / span, 0, 1) : 0;
 
@@ -6388,7 +6766,7 @@
   var jump = null;
 
   function launchDolphin() {
-    if (calm.matches || document.hidden || !view) return;
+    if (calm.matches || document.hidden || !view || landWorld()) return;
 
     var span = clamp(view.width * 0.18, 130, 240);
     var alt = eventPart('dolphin');
@@ -6516,7 +6894,7 @@
   var crawl = null;
 
   function launchCrab() {
-    if (calm.matches || document.hidden || !view) return;
+    if (calm.matches || document.hidden || !view || landWorld()) return;
 
     var span = clamp(view.width * 0.14, 90, 170);
     var dir = Math.random() < 0.5 ? 1 : -1;
@@ -6577,7 +6955,7 @@
   var bottleDrift = null;
 
   function launchBottle() {
-    if (calm.matches || document.hidden || !view) return;
+    if (calm.matches || document.hidden || !view || landWorld()) return;
 
     var span = clamp(view.width * 0.22, 140, 260);
     var dir = Math.random() < 0.5 ? 1 : -1;
@@ -6637,7 +7015,7 @@
   var treasureUsed = false;
 
   function launchTreasure() {
-    if (treasureUsed || calm.matches || document.hidden || !view) return;
+    if (treasureUsed || calm.matches || document.hidden || !view || landWorld()) return;
     if (!lastState || !lastState.targetMin) return;
     if (lastState.targetMin - lastState.worked <= 0) return;
 
@@ -6748,7 +7126,7 @@
   }
 
   function spawnFish() {
-    if (calm.matches || document.hidden || !view) return;
+    if (calm.matches || document.hidden || !view || landWorld()) return;
 
     var count = 4 + Math.floor(Math.random() * 3);
     var out = '';
@@ -6825,7 +7203,7 @@
   var gullFlock = null;
 
   function spawnGullFlock() {
-    if (calm.matches || document.hidden || !view) return;
+    if (calm.matches || document.hidden || !view || landWorld()) return;
 
     // Saison-Variante (Brezeln, Rentierschlitten, Gänse ...) siehe SEASON_EVENTS
     var alt = eventPart('gull');
@@ -6906,6 +7284,8 @@
   // Gewinn - das übernimmt bereits die Feierabend-Truhe.
 
   function buildLighthouse() {
+    var house = eventPart('lighthouse');
+    if (house) { lighthouseEl.innerHTML = house; return; }
     lighthouseEl.innerHTML =
       // Schatten und Felssockel, damit der Turm sichtbar auf dem Strand steht
       '<ellipse cx="0" cy="4" rx="18" ry="4.5" fill="#0a5580" opacity="0.14"/>' +
@@ -7252,6 +7632,9 @@
   ];
 
   /* Abzeichen. d enthält den Pfad des Symbols, 24 mal 24, nur Kontur. */
+  // Während der Halloween-Welt bleiben die Meerestiere weg (siehe landWorld())
+  var SEA_AWAY = 'Kommt nach Halloween zurück ans Meer';
+
   var AWARDS = [
     { id: 'early', label: 'Frühstarter', hint: 'Arbeitsbeginn vor 8 Uhr',
       note: function (s) { return 'Beginn ' + toClock(s.startMin) + ' Uhr, nötig vor 08:00 Uhr'; },
@@ -7282,22 +7665,22 @@
       },
       d: '<circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>' },
     { id: 'dolphin', label: 'Delfinfänger', hint: 'Delfin im Sprung angeklickt',
-      note: function () { return 'Der Delfin springt etwa alle zehn Sekunden'; },
+      note: function () { return landWorld() ? SEA_AWAY : 'Der Delfin springt etwa alle zehn Sekunden'; },
       d: '<path d="M3 14.6c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0"/><path d="M3 9.4c2-3.2 4-3.2 6 0s4 3.2 6 0 4-3.2 6 0" opacity="0.5"/>' },
     { id: 'crab', label: 'Krabbenfreund', hint: 'Krabbe erwischt',
-      note: function () { return 'Sie huscht gelegentlich am Ufer entlang'; },
+      note: function () { return landWorld() ? SEA_AWAY : 'Sie huscht gelegentlich am Ufer entlang'; },
       d: '<ellipse cx="12" cy="13" rx="6.4" ry="4.2"/><path d="M6.5 11c-2.4-2-4-1.4-4.4.4M17.5 11c2.4-2 4-1.4 4.4.4"/><path d="M9 16.4 7.6 20M11.3 16.9l-.8 3.4M12.7 16.9l.8 3.4M15 16.4l1.4 3.6"/>' },
     { id: 'bottle', label: 'Flaschensammler', hint: 'Flaschenpost gefangen',
-      note: function () { return 'Sie treibt langsam über die Wasseroberfläche'; },
+      note: function () { return landWorld() ? SEA_AWAY : 'Sie treibt langsam über die Wasseroberfläche'; },
       d: '<path d="M10.4 2.6h3.2v2.8a1 1 0 0 0 .4.8c1.4 1.1 2.4 2.7 2.4 4.6v7.8a2.4 2.4 0 0 1-2.4 2.4h-4a2.4 2.4 0 0 1-2.4-2.4V10.8c0-1.9 1-3.5 2.4-4.6a1 1 0 0 0 .4-.8V2.6Z"/><path d="M9.6 12.6h4.8"/>' },
     { id: 'gull', label: 'Möwenbeobachter', hint: 'Möwenschwarm entdeckt',
-      note: function () { return 'Fliegt gelegentlich in kleiner Gruppe vorbei'; },
+      note: function () { return landWorld() ? SEA_AWAY : 'Fliegt gelegentlich in kleiner Gruppe vorbei'; },
       d: '<path d="M3 14c2-4 4-4 6 0M9 14c2-4 4-4 6 0M15 14c2-4 4-4 6 0"/>' },
     { id: 'sun', label: 'Sonnenschieber', hint: 'Sonne über den Himmel gezogen',
       note: function () { return 'Sonne oben rechts greifen und ziehen'; },
       d: '<path d="M12 4v16M4 12h16M12 4l-2.6 2.8M12 4l2.6 2.8M12 20l-2.6-2.8M12 20l2.6-2.8M4 12l2.8-2.6M4 12l2.8 2.6M20 12l-2.8-2.6M20 12l-2.8 2.6"/>' },
     { id: 'oracle', label: 'Muschelflüsterer', hint: 'Das Muschel-Orakel befragt',
-      note: function () { return 'Die Muschel liegt links im flachen Wasser'; },
+      note: function () { return landWorld() ? 'Die Glaskugel steht links auf der Wiese' : 'Die Muschel liegt links im flachen Wasser'; },
       d: '<path d="M12 20.4C5.6 17 3.1 10.6 5.6 6.9 7.7 3.8 10.4 4.7 12 6.7c1.6-2 4.3-2.9 6.4.2 2.5 3.7 0 10.1-6.4 13.5Z"/><path d="M12 19.6V7.1"/>' },
     { id: 'wheel', label: 'Glücksritter', hint: 'Glücksrad gedreht',
       note: function () { return 'Eine Muschel reicht für einen Dreh'; },
@@ -8544,11 +8927,11 @@
      (siehe spookDeco()), fx: Effekt beim Schließen (siehe SPOOK_FX). */
   var SPOOK_DOORS = [
     { gift: '🎃', title: 'Laternenkürbis', deco: 'laterne',
-      text: 'In Irland schnitzten die Menschen früher Rüben statt Kürbisse. In Amerika gab es mehr Kürbisse, also wechselten die Auswanderer. Am Leuchtturm leuchtet ab heute deiner.' },
+      text: 'In Irland schnitzten die Menschen früher Rüben statt Kürbisse. In Amerika gab es mehr Kürbisse, also wechselten die Auswanderer. Vor dem Spukhaus leuchtet ab heute deiner.' },
     { gift: '🦇', title: 'Fledermäuse', fx: 'bats',
-      text: 'In Deutschland leben rund 25 Fledermausarten. Alle stehen unter Schutz. Nach dem Schließen fliegt ein Schwarm über den Strand.' },
+      text: 'In Deutschland leben rund 25 Fledermausarten. Alle stehen unter Schutz. Nach dem Schließen fliegt ein Schwarm über das Kürbisfeld.' },
     { gift: '🌫️', title: 'Herbstnebel', fx: 'fog',
-      text: 'Nebel entsteht, wenn feuchte Luft über dem Boden abkühlt. Am Wasser bildet er sich besonders schnell. Gleich zieht er über den Strand.' },
+      text: 'Nebel entsteht, wenn feuchte Luft über dem Boden abkühlt. In Senken bildet er sich besonders schnell. Gleich zieht er über das Kürbisfeld.' },
     { gift: '🕯️', title: 'Grablichter', deco: 'kerzen',
       text: 'Halloween kommt von All Hallows\' Eve, dem Abend vor Allerheiligen. Am 1. November stellen viele Familien Lichter auf die Gräber. Auf dem Friedhof brennen jetzt drei Kerzen.' },
     { gift: '⚡', title: 'Gewitter', fx: 'flash',
@@ -8556,7 +8939,7 @@
     { gift: '🧹', title: 'Hexenflug', fx: 'witch',
       text: 'Die ältesten Bilder von Hexen auf Besen stammen aus dem 15. Jahrhundert. Nach dem Schließen dreht eine Hexe ihre Runde.' },
     { gift: '💀', title: 'Skelett', deco: 'skelett',
-      text: 'Ein Neugeborenes hat rund 300 Knochen. Viele wachsen zusammen, Erwachsene haben noch 206. Ein komplettes Skelett sitzt ab heute am Strand.' },
+      text: 'Ein Neugeborenes hat rund 300 Knochen. Viele wachsen zusammen, Erwachsene haben noch 206. Ein komplettes Skelett sitzt ab heute neben dem Spukhaus.' },
     { gift: '🔥', title: 'Samhain', fx: 'bats',
       text: 'Halloween geht auf das keltische Fest Samhain zurück. Es markierte das Ende der Ernte und den Beginn des Winters. Die Fledermäuse kommen zurück.' },
     { gift: '✨', title: 'Irrlichter', fx: 'fog',
@@ -8568,7 +8951,7 @@
     { gift: '🍬', title: 'Süßes oder Saures', fx: 'witch',
       text: 'Süßes oder Saures kam in den 1930er Jahren in Nordamerika auf. In Deutschland verbreitete sich der Brauch erst ab den 1990er Jahren. Dein Tier kennt ihn schon.' },
     { gift: '🏆', title: 'Riesenkürbis', deco: 'riese',
-      text: 'Der schwerste Kürbis der Welt wog 2023 rund 1.247 Kilogramm. Er wuchs in Minnesota. Am Strand liegt ab heute ein kleinerer Verwandter.' },
+      text: 'Der schwerste Kürbis der Welt wog 2023 rund 1.247 Kilogramm. Er wuchs in Minnesota. Auf dem Feld liegt ab heute ein kleinerer Verwandter.' },
     { gift: '🦇', title: 'Echoortung', fx: 'bats',
       text: 'Fledermäuse orientieren sich mit Echoortung. Ihre Rufe liegen meist über der Hörgrenze des Menschen. Der Schwarm fliegt trotzdem lautlos.' },
     { gift: '🎬', title: 'The Fog', fx: 'fog',
@@ -8576,7 +8959,7 @@
     { gift: '⛰️', title: 'Brocken', fx: 'witch',
       text: 'Der Sage nach treffen sich die Hexen auf dem Brocken im Harz. Goethe baute die Szene in den Faust ein. Eine Hexe ist schon unterwegs.' },
     { gift: '🌕', title: 'Halloween', deco: 'mond', fx: 'bats',
-      text: 'Happy Halloween. Der Vollmond steht über dem Strand und die Fledermäuse fliegen ein letztes Mal. Morgen räumt der Strand auf.' }
+      text: 'Happy Halloween. Der Vollmond steht über dem Kürbisfeld und die Fledermäuse fliegen ein letztes Mal. Morgen kehrt das Meer zurück.' }
   ];
   // Feste, gemischte Reihenfolge der Grabsteine im Raster
   var SPOOK_ORDER = [9, 3, 14, 1, 11, 6, 16, 4, 12, 7, 2, 15, 10, 5, 13, 8, 17];
@@ -10911,6 +11294,7 @@
   }
 
   function currentQuotePool() {
+    if (landWorld()) return eventPart('otterQuotes');
     var late = lastState && lastState.targetMin > 0 && (lastState.worked / lastState.targetMin) >= 0.6;
     return late ? MOTIVATION_QUOTES_LATE : MOTIVATION_QUOTES_EARLY;
   }
@@ -11241,7 +11625,7 @@
      Überstunden erreicht wird (siehe sawBeforeAlarm/celebratedPunctual in
      paintOvertime). Bewusst kein Modal, um nicht zu unterbrechen. */
   function celebratePunctualFinish() {
-    var entry = pick(OTTER_PUNCTUAL_QUOTES);
+    var entry = pick((landWorld() && eventPart('otterPunctual')) || OTTER_PUNCTUAL_QUOTES);
     toast('🦦 ' + fillName(entry), '');
     spawnRainbow();
     showRecapCard();
@@ -11762,6 +12146,7 @@
   buildSandcastle();
   buildLighthouse();
   wrap.setAttribute('data-event', currentEvents.join(' '));
+  applyWorld();
   applyCrabColor(cosmetics.crabColor);
   renderAwards();
   renderCatches();
