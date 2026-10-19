@@ -1193,6 +1193,42 @@
     75%      { transform: translateX(3px); }
   }
 
+  /* Goat-Countdown: 🐐 grast auf der Halloween-Wiese, Klick zeigt die Restzeit */
+  #az-goat { pointer-events: all; cursor: pointer; }
+  #az-goat:focus-visible { outline: 2px solid #ffffff; outline-offset: 3px; border-radius: 12px; }
+  #az-goat .az-goat-icon {
+    opacity: 0.7;
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+  #az-goat:hover .az-goat-icon, #az-goat:focus-visible .az-goat-icon { opacity: 1; transform: scale(1.2) rotate(-6deg); }
+  #az-goat.is-back .az-goat-icon { opacity: 1; }
+  #az-goat.is-bleat .az-goat-icon { animation: az-drink-nope 360ms ease-in-out 2; }
+  @media (prefers-reduced-motion: reduce) {
+    #az-goat .az-goat-icon { transition: none; }
+    #az-goat:hover .az-goat-icon { transform: none; }
+    #az-goat.is-bleat .az-goat-icon { animation: none; }
+  }
+
+  /* PA2-Countdown: 📕 liegt am Ufer, Klick zeigt die Restzeit bis zur Abgabe */
+  #az-pa2 { pointer-events: all; cursor: pointer; }
+  #az-pa2:focus-visible { outline: 2px solid #ffffff; outline-offset: 3px; border-radius: 12px; }
+  #az-pa2 .az-pa2-icon {
+    opacity: 0.7;
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+  #az-pa2:hover .az-pa2-icon, #az-pa2:focus-visible .az-pa2-icon { opacity: 1; transform: scale(1.2) rotate(-6deg); }
+  #az-pa2.is-due .az-pa2-icon { opacity: 1; }
+  #az-pa2.is-flip .az-pa2-icon { animation: az-drink-nope 360ms ease-in-out 2; }
+  @media (prefers-reduced-motion: reduce) {
+    #az-pa2 .az-pa2-icon { transition: none; }
+    #az-pa2:hover .az-pa2-icon { transform: none; }
+    #az-pa2.is-flip .az-pa2-icon { animation: none; }
+  }
+
   /* "gluck gluck gluck": steigt einzeln versetzt über dem Button auf */
   .az-gluck {
     position: fixed;
@@ -4042,6 +4078,20 @@
                 fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.55"/>
           <circle cx="-7" cy="-6" r="2.2" fill="#ffffff" opacity="0.75"/>
         </g>
+      </g>
+
+      <!-- Goat-Countdown, grast nur auf der Halloween-Wiese -->
+      <g id="az-goat" transform="translate(-200,-200)" role="button" tabindex="0"
+         aria-label="the goat is back" display="none">
+        <title>the goat is back</title>
+        <text class="az-goat-icon" x="0" y="0" text-anchor="middle" font-size="18">🐐</text>
+      </g>
+
+      <!-- PA2-Countdown bis zur Abgabe am 23.11.2026 -->
+      <g id="az-pa2" transform="translate(-200,-200)" role="button" tabindex="0"
+         aria-label="PA2 abgeben">
+        <title>PA2 abgeben</title>
+        <text class="az-pa2-icon" x="0" y="0" text-anchor="middle" font-size="18">📕</text>
       </g>
 
       <!-- Muntermacher-Otter, treibt auf dem Rücken im flachen Wasser -->
@@ -8257,6 +8307,92 @@
     setInterval(renderWater, 30000);
   }
 
+  // ---- Goat-Countdown ----
+  // Zählt bis zum 23.10.2026. Nutzt today(), damit ?haze-date greift.
+
+  var GOAT_DATE = new Date(2026, 9, 23);
+  var goatEl = document.getElementById('az-goat');
+
+  function goatLeft() {
+    var left = GOAT_DATE - today();
+    if (left <= 0) return '';
+    var mins = Math.ceil(left / 60000);
+    var days = Math.floor(mins / 1440);
+    var hours = Math.floor((mins % 1440) / 60);
+    if (days > 0) return days + (days === 1 ? ' Tag ' : ' Tage ') + hours + ' h';
+    return hours + ' h ' + (mins % 60) + ' min';
+  }
+
+  function renderGoat() {
+    var left = goatLeft();
+    goatEl.classList.toggle('is-back', !left);
+    goatEl.setAttribute('aria-label', 'the goat is back' + (left ? ', noch ' + left : ''));
+  }
+
+  if (goatEl) {
+    var bleat = function () {
+      var left = goatLeft();
+      waterToast('🐐 the goat is back', left ? 'Noch ' + left : 'Sie ist da!');
+      if (!calm.matches) {
+        goatEl.classList.remove('is-bleat');
+        goatEl.getBoundingClientRect();
+        goatEl.classList.add('is-bleat');
+      }
+      if (soundOn) { playTone(440, 0, 0.07); playTone(415, 0.08, 0.07); playTone(440, 0.16, 0.12); }
+    };
+    goatEl.addEventListener('click', bleat);
+    goatEl.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      bleat();
+    });
+    renderGoat();
+    setInterval(renderGoat, 30000);
+  }
+
+  // ---- PA2-Countdown ----
+  // Zählt bis zum 23.11.2026. Nutzt today(), damit ?haze-date greift.
+
+  var PA2_DATE = new Date(2026, 10, 23);
+  var pa2El = document.getElementById('az-pa2');
+
+  function pa2Left() {
+    var left = PA2_DATE - today();
+    if (left <= 0) return '';
+    var mins = Math.ceil(left / 60000);
+    var days = Math.floor(mins / 1440);
+    var hours = Math.floor((mins % 1440) / 60);
+    if (days > 0) return days + (days === 1 ? ' Tag ' : ' Tage ') + hours + ' h';
+    return hours + ' h ' + (mins % 60) + ' min';
+  }
+
+  function renderPa2() {
+    var left = pa2Left();
+    pa2El.classList.toggle('is-due', !left);
+    pa2El.setAttribute('aria-label', 'PA2 abgeben' + (left ? ', noch ' + left : ''));
+  }
+
+  if (pa2El) {
+    var flip = function () {
+      var left = pa2Left();
+      waterToast('📕 PA2 abgeben', left ? 'Noch ' + left : 'Heute ist Abgabe!');
+      if (!calm.matches) {
+        pa2El.classList.remove('is-flip');
+        pa2El.getBoundingClientRect();
+        pa2El.classList.add('is-flip');
+      }
+      if (soundOn) { playTone(523, 0, 0.07); playTone(587, 0.08, 0.07); playTone(659, 0.16, 0.12); }
+    };
+    pa2El.addEventListener('click', flip);
+    pa2El.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      flip();
+    });
+    renderPa2();
+    setInterval(renderPa2, 30000);
+  }
+
   // ---- Delfin fangen ----
 
   dolphinEl.addEventListener('pointerdown', function (event) {
@@ -12131,6 +12267,15 @@
       'translate(' + beachX(0.22) + ',' + Math.round(view.waterY) + ')');
     sandcastleEl.setAttribute('transform',
       'translate(' + beachX(0.78) + ',' + Math.round(view.waterY) + ')');
+
+    // Ziege grast zwischen Bonbon (0.69) und Friedhof (0.78)
+    goatEl.setAttribute('transform',
+      'translate(' + beachX(0.735) + ',' + Math.round(view.waterY + 4) + ')');
+    goatEl.setAttribute('display', landWorld() ? 'inline' : 'none');
+
+    // PA2-Buch liegt spiegelbildlich zur Ziege zwischen Turm (0.22) und Bonbon (0.31)
+    pa2El.setAttribute('transform',
+      'translate(' + beachX(0.265) + ',' + Math.round(view.waterY + 4) + ')');
 
     syncSun(minutesNow());
   }
