@@ -751,6 +751,7 @@
   .az-progress-pet.is-bob.is-react-purr { animation: az-pet-purr 900ms ease-in-out; }
   .az-progress-pet.is-bob.is-react-roll { animation: az-pet-roll 900ms cubic-bezier(0.45, 0, 0.55, 1); }
   .az-progress-pet.is-bob.is-react-hop { animation: az-pet-hop 700ms ease-out 2; }
+  .az-progress-pet.is-bob.is-react-stomp { animation: az-pet-stomp 800ms ease; }
   .az-progress-pet.is-bob.is-react-snub { animation: az-pet-snub 1400ms ease; }
 
   @keyframes az-pet-chomp {
@@ -777,6 +778,14 @@
     0%, 100% { transform: translate(-50%, -50%); }
     40%      { transform: translate(-50%, -95%) rotate(-6deg); }
     70%      { transform: translate(-50%, -45%) scale(1.06, 0.94); }
+  }
+  /* Bär: aufrichten, dann zweimal schwer aufstampfen */
+  @keyframes az-pet-stomp {
+    0%, 100% { transform: translate(-50%, -50%); }
+    25%      { transform: translate(-50%, -70%) scale(1.1); }
+    45%      { transform: translate(-50%, -45%) scale(1.16, 0.84); }
+    60%      { transform: translate(-50%, -58%) scale(1.04); }
+    78%      { transform: translate(-50%, -45%) scale(1.14, 0.86); }
   }
   @keyframes az-pet-snub {
     0%, 100% { transform: translate(-50%, -50%) scaleX(1); }
@@ -1191,24 +1200,6 @@
     0%, 100% { transform: translateX(0); }
     25%      { transform: translateX(-3px); }
     75%      { transform: translateX(3px); }
-  }
-
-  /* Goat-Countdown: 🐐 grast auf der Halloween-Wiese, Klick zeigt die Restzeit */
-  #az-goat { pointer-events: all; cursor: pointer; }
-  #az-goat:focus-visible { outline: 2px solid #ffffff; outline-offset: 3px; border-radius: 12px; }
-  #az-goat .az-goat-icon {
-    opacity: 0.7;
-    transform-box: fill-box;
-    transform-origin: 50% 100%;
-    transition: opacity 200ms ease, transform 200ms ease;
-  }
-  #az-goat:hover .az-goat-icon, #az-goat:focus-visible .az-goat-icon { opacity: 1; transform: scale(1.2) rotate(-6deg); }
-  #az-goat.is-back .az-goat-icon { opacity: 1; }
-  #az-goat.is-bleat .az-goat-icon { animation: az-drink-nope 360ms ease-in-out 2; }
-  @media (prefers-reduced-motion: reduce) {
-    #az-goat .az-goat-icon { transition: none; }
-    #az-goat:hover .az-goat-icon { transform: none; }
-    #az-goat.is-bleat .az-goat-icon { animation: none; }
   }
 
   /* PA2-Countdown: 📕 liegt am Ufer, Klick zeigt die Restzeit bis zur Abgabe */
@@ -3578,6 +3569,135 @@
 
   .az-sandcastle-stage.is-built { opacity: 1; transform: scale(1); }
 
+  /* Turm auf der Sandburg: je ein Stockwerk pro Muschel. Mit Turm
+     übernimmt dessen Fähnchen die Spitze, das Stufen-Fähnchen weicht. */
+  #az-sandcastle { pointer-events: all; cursor: pointer; }
+  #az-sandcastle:focus, #az-bergfest:focus { outline: none; }
+  #az-sandcastle:focus-visible { outline: 2px solid #ffffff; outline-offset: 3px; }
+  #az-sandcastle.has-tower .az-sandcastle-stage[data-stage="5"] { display: none; }
+  .az-wrap[data-world="spook"] #az-sandcastle { pointer-events: none; cursor: default; }
+
+  .az-tower-floor {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: az-tower-drop 380ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
+  }
+
+  .az-tower-floor.is-old { animation: none; }
+
+  @keyframes az-tower-drop {
+    from { opacity: 0; transform: translateY(-14px) scaleY(1.25); }
+    to   { opacity: 1; transform: translateY(0) scaleY(1); }
+  }
+
+  #az-sandcastle.is-wobbly .az-sandcastle-tower {
+    transform-origin: 0px 2px;
+    animation: az-tower-wobble 420ms ease-in-out;
+  }
+
+  @keyframes az-tower-wobble {
+    25% { transform: rotate(-3deg); }
+    75% { transform: rotate(2.4deg); }
+  }
+
+  .az-sandcastle-tower.is-crumbling .az-tower-floor {
+    animation: az-tower-crumble 900ms ease-in forwards;
+  }
+
+  @keyframes az-tower-crumble {
+    to { opacity: 0; transform: translate(var(--az-crumble-x, 0px), 34px) rotate(var(--az-crumble-r, 0deg)); }
+  }
+
+  #az-sandcastle.is-broke { animation: az-drink-nope 420ms ease; }
+
+  /* Steine flippen: Klick ins Wasser lädt, Loslassen wirft */
+  .az-water-body { pointer-events: all; cursor: crosshair; touch-action: none; }
+  #az-skip { pointer-events: none; }
+
+  /* Wunsch-Sternschnuppe nach Feierabend */
+  #az-wishstar { pointer-events: all; cursor: pointer; }
+  #az-wishstar[opacity="0"] { pointer-events: none; }
+
+  /* Bergfest-Murmeltier */
+  #az-bergfest { pointer-events: all; cursor: pointer; }
+  #az-bergfest[opacity="0"] { pointer-events: none; }
+  #az-bergfest:focus-visible { outline: 2px solid #ffffff; outline-offset: 3px; }
+
+  .az-bergfest-flag {
+    transform-box: fill-box;
+    transform-origin: 100% 50%;
+    animation: az-bergfest-flap 1.6s ease-in-out infinite;
+  }
+
+  @keyframes az-bergfest-flap {
+    0%, 100% { transform: skewY(0deg) scaleX(1); }
+    50%      { transform: skewY(-6deg) scaleX(0.92); }
+  }
+
+  .az-bergfest-paw {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+
+  #az-bergfest.is-waving .az-bergfest-paw { animation: az-bergfest-wave 520ms ease-in-out 3; }
+
+  @keyframes az-bergfest-wave {
+    0%, 100% { transform: rotate(0deg); }
+    50%      { transform: rotate(-38deg); }
+  }
+
+  .az-bergfest-hop { transform-box: fill-box; transform-origin: 50% 100%; }
+  #az-bergfest.is-hopping .az-bergfest-hop { animation: az-bergfest-hop 520ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+
+  @keyframes az-bergfest-hop {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    20%      { transform: translateY(0) scale(1.12, 0.86); }
+    55%      { transform: translateY(-12px) scale(0.94, 1.08); }
+  }
+
+  .az-bergfest-heart {
+    animation: az-bergfest-heart 1.6s ease-out forwards;
+  }
+
+  @keyframes az-bergfest-heart {
+    from { opacity: 1; transform: translate(0, 0) scale(0.6); }
+    to   { opacity: 0; transform: translate(var(--az-heart-x, 0px), -46px) scale(1.15); }
+  }
+
+  .az-bergfest-blink { animation: az-bergfest-blink 4.2s infinite; transform-box: fill-box; transform-origin: center; }
+
+  @keyframes az-bergfest-blink {
+    0%, 94%, 100% { transform: scaleY(1); }
+    97%           { transform: scaleY(0.1); }
+  }
+
+  /* Otter winkt nach längerer Abwesenheit */
+  .az-otter-wave {
+    animation: az-otter-wave 2.6s ease-in-out forwards;
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+
+  @keyframes az-otter-wave {
+    0%   { opacity: 0; transform: translateY(6px) rotate(0deg); }
+    12%  { opacity: 1; transform: translateY(0) rotate(-18deg); }
+    24%  { transform: rotate(18deg); }
+    36%  { transform: rotate(-18deg); }
+    48%  { transform: rotate(18deg); }
+    60%  { transform: rotate(-12deg); }
+    80%  { opacity: 1; transform: rotate(0deg); }
+    100% { opacity: 0; transform: translateY(-8px); }
+  }
+
+  #az-otter.is-greeting .az-otter-bob { animation: az-bergfest-hop 560ms cubic-bezier(0.3, 1.6, 0.5, 1) 2; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .az-tower-floor, .az-bergfest-flag, .az-bergfest-blink,
+    #az-bergfest.is-waving .az-bergfest-paw, #az-bergfest.is-hopping .az-bergfest-hop,
+    #az-otter.is-greeting .az-otter-bob, #az-sandcastle.is-wobbly .az-sandcastle-tower { animation: none; }
+    .az-otter-wave { animation-duration: 0.01s; }
+  }
+
   /* Leuchtturm: dauerhaft sichtbar, mit vier Lichtzuständen, die sich
      überlagern können. is-dusk ist das schwächste, rein atmosphärische
      Glimmen ab dem Abend (syncLighthouseDusk), unabhängig vom Arbeits-
@@ -3959,6 +4079,10 @@
       <!-- Wetterereignisse: Sternschnuppe und Regenbogen liegen im Himmel,
            daher vor dem Wasser -->
       <g id="az-star" opacity="0" aria-hidden="true"></g>
+
+      <!-- Wunsch-Sternschnuppe: erscheint erst nach erreichter Sollzeit,
+           fliegt langsamer als az-star und lässt sich fangen -->
+      <g id="az-wishstar" opacity="0"></g>
       <g id="az-rainbow" opacity="0" aria-hidden="true"></g>
 
       <!-- Möwe: fliegt einmalig vorbei, sobald die Pflichtpause erfüllt
@@ -3987,6 +4111,11 @@
       <!-- Meilensteine auf dem Bogen -->
       <g id="az-checks" aria-hidden="true"></g>
 
+      <!-- Bergfest: mittwochs ab 50 Prozent klettert ein Murmeltier auf
+           den Regenbogen und hisst seine Fahne -->
+      <g id="az-bergfest" opacity="0" role="button" tabindex="-1"
+         aria-label="Bergfest-Murmeltier"></g>
+
       <!-- Delfin liegt hinter dem Wasser, dadurch verschwindet er beim
            Eintauchen ohne extra Maske -->
       <g id="az-dolphin" opacity="0"></g>
@@ -3994,6 +4123,9 @@
       <g id="az-water"></g>
       <g id="az-splash" opacity="0"></g>
       <g id="az-shine" fill="#ffffff" opacity="0.55"></g>
+
+      <!-- Steine flippen: Ladering, Stein und Wellenringe -->
+      <g id="az-skip" aria-hidden="true"></g>
 
       <!-- Saisondeko: Blätter, Schnee oder Blüten je nach Kalendermonat,
            einmalig beim Start berechnet -->
@@ -4018,8 +4150,10 @@
       <g id="az-chest" opacity="0"></g>
 
       <!-- Sandburg: dauerhaft sichtbar, wächst in fünf Stufen mit den
-           bestehenden MILESTONES mit, rein dekorativ -->
-      <g id="az-sandcastle" aria-hidden="true"></g>
+           bestehenden MILESTONES mit. Per Klick baut man für je eine
+           Muschel einen Turm obendrauf -->
+      <g id="az-sandcastle" role="button" tabindex="0"
+         aria-label="Sandburg-Turm bauen, eine Muschel pro Stockwerk"></g>
 
       <!-- Leuchtturm: dauerhaft sichtbar, Lichtkegel schaltet sich frei,
            sobald die Sollzeit erreicht ist, rein dekorativ -->
@@ -4078,13 +4212,6 @@
                 fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.55"/>
           <circle cx="-7" cy="-6" r="2.2" fill="#ffffff" opacity="0.75"/>
         </g>
-      </g>
-
-      <!-- Goat-Countdown, grast nur auf der Halloween-Wiese -->
-      <g id="az-goat" transform="translate(-200,-200)" role="button" tabindex="0"
-         aria-label="the goat is back" display="none">
-        <title>the goat is back</title>
-        <text class="az-goat-icon" x="0" y="0" text-anchor="middle" font-size="18">🐐</text>
       </g>
 
       <!-- PA2-Countdown bis zur Abgabe am 23.11.2026 -->
@@ -4972,7 +5099,7 @@
 
     waterEl.innerHTML =
       '<g class="az-wave" style="--az-shift:' + (-front) + 'px; animation-duration:' + WAVE_SPEED.front + 's">' +
-        '<path d="' + body + '" fill="url(#az-deep)"/>' +
+        '<path class="az-water-body" d="' + body + '" fill="url(#az-deep)"/>' +
         '<path d="' + surface + '" fill="none" stroke="#bdf3ff" stroke-width="6" opacity="0.4"/>' +
         '<path d="' + surface + '" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.95"/>' +
       '</g>' +
@@ -7303,10 +7430,12 @@
 
   // ---- Sandburg ----
   // Dauerhaft sichtbar, fünf Stufen (data-stage 1-5), Sichtbarkeit steuert
-  // syncSandcastle() über MILESTONES. Rein dekorativ, kein Klick-Ziel.
+  // syncSandcastle() über MILESTONES. Den Turm obendrauf baut man per
+  // Klick für Muscheln, siehe renderTower() und buildFloor().
 
   function buildSandcastle() {
     var castle = eventPart('castle');
+    sandcastleEl.classList.remove('has-tower');
     if (castle) { sandcastleEl.innerHTML = castle; return; }
     sandcastleEl.innerHTML =
       '<ellipse cx="0" cy="4" rx="26" ry="5" fill="#0a5580" opacity="0.12"/>' +
@@ -7328,6 +7457,7 @@
         '<line x1="0" y1="-14" x2="0" y2="-30" stroke="#7a5a3a" stroke-width="1.6"/>' +
         '<path d="M0,-30 L11,-26 L0,-22 Z" fill="#ff5a4d"/>' +
       '</g>';
+    renderTower(-1);
   }
 
   // ---- Leuchtturm ----
@@ -7755,7 +7885,19 @@
       d: '<circle cx="12" cy="14.6" r="4.2"/><path d="M12 20.4v-2.6M4.4 14.6H7M17 14.6h2.6M6.6 9l1.9 1.9M17.4 9l-1.9 1.9"/><path d="M3.4 20.4h17.2"/>' },
     { id: 'wasserratte', label: 'Wasserratte', hint: 'Vier Gläser Wasser an einem Tag',
       note: function () { return Math.min(4, water.count) + ' von 4 Gläsern'; },
-      d: '<path d="M6.4 4.4h11.2l-1.5 14.1a2 2 0 0 1-2 1.8H9.9a2 2 0 0 1-2-1.8L6.4 4.4Z"/><path d="M7.3 10.4c1.6-.9 3.1.9 4.7 0s3.1-.9 4.7 0"/>' }
+      d: '<path d="M6.4 4.4h11.2l-1.5 14.1a2 2 0 0 1-2 1.8H9.9a2 2 0 0 1-2-1.8L6.4 4.4Z"/><path d="M7.3 10.4c1.6-.9 3.1.9 4.7 0s3.1-.9 4.7 0"/>' },
+    { id: 'steinflipper', label: 'Steinflipper', hint: 'Fünf Hüpfer mit einem Stein',
+      note: function () { return 'Ins Wasser drücken, kurz vor voll loslassen. Tagesrekord ' + skipBest() + ' Hüpfer'; },
+      d: '<ellipse cx="5" cy="17" rx="2.6" ry="1.6"/><path d="M7.6 16c1.6-4 3.4-4 5 0M12.6 16c1.2-2.8 2.6-2.8 3.8 0M16.4 16c.9-1.8 1.8-1.8 2.7 0"/><path d="M3 20.4h18"/>' },
+    { id: 'baumeister', label: 'Baumeister', hint: 'Sechs Stockwerke auf der Sandburg',
+      note: function () { return 'Sandburg antippen, ein Stockwerk kostet eine Muschel. Rekord ' + towerBest() + ' Stockwerke'; },
+      d: '<path d="M8 20.4V9h8v11.4M5 20.4h14"/><path d="M8 9V6.4h1.6V8h1.6V6.4h1.6V8h1.6V6.4H16V9"/><path d="M12 6.4V3l3.4 1.2L12 5.4"/>' },
+    { id: 'wunsch', label: 'Wunschfänger', hint: 'Sternschnuppe nach Feierabend gefangen',
+      note: function (s) { return s.percent >= 100 ? 'Sie zieht gelegentlich über den Himmel' : 'Erscheint erst nach erreichter Sollzeit'; },
+      d: '<path d="M15 4l1.4 2.9 3.2.5-2.3 2.2.5 3.2L15 11.3l-2.8 1.5.5-3.2-2.3-2.2 3.2-.5L15 4Z"/><path d="M10 13.5 4 19.5M12.5 15.5 8.5 19.5M8 11.5l-3 3"/>' },
+    { id: 'bergfest', label: 'Bergfest', hint: 'Mittwochs die Hälfte der Sollzeit erreicht',
+      note: function () { return isBergfestDay() ? 'Heute ist Mittwoch, bei 50 Prozent geht es los' : 'Nur mittwochs zu haben'; },
+      d: '<path d="M2.6 19.6 9 9.4l3.2 4.6 2.6-3.6 6.6 9.2Z"/><path d="M9 9.4V3.6l4 1.5-4 1.5"/>' }
   ];
 
   var game = {
@@ -8169,6 +8311,8 @@
     if (s.percent >= 100) unlock('target');
     if (s.percent >= 100 && s.overMin < 15) unlock('gelassen');
     if (s.worked >= s.targetMin && s.worked <= s.targetMin + 5) unlock('exact');
+    syncBergfest(s);
+    if (s.percent >= 100) armComet();
 
     renderHud();
   }
@@ -8305,49 +8449,6 @@
 
     renderWater();
     setInterval(renderWater, 30000);
-  }
-
-  // ---- Goat-Countdown ----
-  // Zählt bis zum 23.10.2026. Nutzt today(), damit ?haze-date greift.
-
-  var GOAT_DATE = new Date(2026, 9, 23);
-  var goatEl = document.getElementById('az-goat');
-
-  function goatLeft() {
-    var left = GOAT_DATE - today();
-    if (left <= 0) return '';
-    var mins = Math.ceil(left / 60000);
-    var days = Math.floor(mins / 1440);
-    var hours = Math.floor((mins % 1440) / 60);
-    if (days > 0) return days + (days === 1 ? ' Tag ' : ' Tage ') + hours + ' h';
-    return hours + ' h ' + (mins % 60) + ' min';
-  }
-
-  function renderGoat() {
-    var left = goatLeft();
-    goatEl.classList.toggle('is-back', !left);
-    goatEl.setAttribute('aria-label', 'the goat is back' + (left ? ', noch ' + left : ''));
-  }
-
-  if (goatEl) {
-    var bleat = function () {
-      var left = goatLeft();
-      waterToast('🐐 the goat is back', left ? 'Noch ' + left : 'Sie ist da!');
-      if (!calm.matches) {
-        goatEl.classList.remove('is-bleat');
-        goatEl.getBoundingClientRect();
-        goatEl.classList.add('is-bleat');
-      }
-      if (soundOn) { playTone(440, 0, 0.07); playTone(415, 0.08, 0.07); playTone(440, 0.16, 0.12); }
-    };
-    goatEl.addEventListener('click', bleat);
-    goatEl.addEventListener('keydown', function (event) {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      bleat();
-    });
-    renderGoat();
-    setInterval(renderGoat, 30000);
   }
 
   // ---- PA2-Countdown ----
@@ -8639,13 +8740,21 @@
       acc: 'den Hund', react: 'wag', feed: 'wedelt und schlingt', find: 'bringt ein Stöckchen mit Muschel dran',
       drink: 'schlabbert begeistert mit', thirst: 'hechelt und schaut zum Wassernapf' },
     { id: 'pet-cat', label: 'Katze', cost: 3, color: '#f6f2ff', emoji: '🐱', sound: 'Miau!',
-      forms: ['🐱', '🐱', '🐯', '🦁'], trail: { glyph: '🐾', size: 11, gap: 34, stagger: true },
+      forms: ['🐱', '🦊', '🐯', '🦁'], trail: { glyph: '🐾', size: 11, gap: 34, stagger: true },
       acc: 'die Katze', react: 'purr', feed: 'schnurrt zufrieden', find: 'legt dir eine Muschel vor die Füße',
       drink: 'nippt vornehm mit', thirst: 'starrt vorwurfsvoll auf dein leeres Glas' },
     { id: 'pet-otter', label: 'Seeotter', cost: 4, color: '#baffef', emoji: '🦦', sound: 'Fiep fiep!',
       forms: ['🦦', '🦦', '🦦', '🦦'], trail: { bubbles: true, gap: 28 },
       acc: 'den Seeotter', react: 'roll', feed: 'knackt die Muschel auf dem Bauch', find: 'taucht mit einer Muschel auf',
       drink: 'planscht vor Freude im Wasser', thirst: 'klopft mit der Muschel ans Glas' },
+    { id: 'pet-bear', label: 'Bär', cost: 4, color: '#e8d2b8', emoji: '🐻', sound: 'Brumm!',
+      forms: ['🧸', '🐻', '🐼', '🐻‍❄️'], trail: { glyph: '🐾', size: 15, gap: 30 },
+      acc: 'den Bären', react: 'stomp', feed: 'schmatzt die Muschel wie Honig', find: 'fischt eine Muschel aus dem Eiswasser',
+      drink: 'schlürft gemütlich mit', thirst: 'brummt Richtung Wasserglas' },
+    { id: 'pet-penguin', label: 'Pinguin', cost: 4, color: '#dff3ff', emoji: '🐧', sound: 'Kwaak!',
+      forms: ['🐣', '🐔', '🐦', '🐧'], trail: { glyph: '❄️', size: 11, gap: 30 },
+      acc: 'den Pinguin', react: 'wag', feed: 'watschelt glücklich', find: 'rutscht mit einer Muschel auf dem Bauch heran',
+      drink: 'trinkt eiskalt mit', thirst: 'tippt mit dem Schnabel ans Glas' },
     { id: 'pet-unicorn', label: 'Einhorn', cost: 5, color: '#ffd6f6', emoji: '🦄', sound: 'Glitzerwiehern! ✨',
       forms: ['🐴', '🐴', '🦄', '🦄'], trail: { glyph: '✨', size: 13, gap: 26 },
       acc: 'das Einhorn', react: 'hop', feed: 'glitzert vor Freude', find: 'zaubert eine Muschel herbei',
@@ -9328,7 +9437,7 @@
   var PET_FIND_MS  = 60 * 60 * 1000;  // ausgewachsenes Tier findet stündlich eine Muschel
   var PET_IDLE_MS  = 20 * 60 * 1000;  // ohne Eingabe wird das Tier gelangweilt
   var PET_WAKE_MS  = 2 * 60 * 1000;   // so lange bleibt es nach dem Wecken in der Pause wach
-  var PET_REACTS   = ['is-chomp', 'is-react-wag', 'is-react-purr', 'is-react-roll', 'is-react-hop', 'is-react-snub'];
+  var PET_REACTS   = ['is-chomp', 'is-react-wag', 'is-react-purr', 'is-react-roll', 'is-react-hop', 'is-react-stomp', 'is-react-snub'];
 
   var petState = {
     last: null,        // letzter Stand aus calculate(), für Launen ohne Neuberechnung
@@ -12218,6 +12327,706 @@
     });
   });
 
+  // ============================================================
+  //  Kleine Strandspiele: Steine flippen, Sandburg-Turm,
+  //  Wunsch-Sternschnuppe, Bergfest und Gruß nach dem Tab-Wechsel
+  // ============================================================
+
+  function dayKey(prefix) {
+    var d = today();
+    return prefix + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+
+  function storedNumber(key) {
+    try { return Number(localStorage.getItem(key)) || 0; } catch (e) { return 0; }
+  }
+  function storeNumber(key, value) {
+    try { localStorage.setItem(key, String(value)); } catch (e) {}
+  }
+
+  // Kurzer Ton nur bei eingeschaltetem Sound, wie playCue()
+  function chirp(freq, delay, duration) {
+    if (soundOn && !game.quiet) playTone(freq, delay, duration);
+  }
+
+  // Wasserlinie inklusive Flut, siehe syncTideLevel()
+  function tideLift() {
+    return landWorld() ? 0 : clamp(shown, 0, 100) / 100 * TIDE_MAX_LIFT;
+  }
+
+  // ---- Steine flippen ----
+  // Gedrückt halten lädt den Wurf. Der Ring pendelt zwischen leer und
+  // voll, Loslassen wirft. Im goldenen Feld kurz vor voll gibt es die
+  // meisten Hüpfer, ganz voll plumpst der Stein. Tagesrekord liegt im
+  // localStorage, eine Muschel gibt es für jeden neuen Rekord ab sechs.
+
+  var skipEl = document.getElementById('az-skip');
+  var SKIP_PERIOD = 1400;           // leer, voll und zurück
+  var SKIP_SWEET = [0.82, 0.95];    // goldenes Feld auf dem Ring
+  var SKIP_MAX = 9;
+  var SKIP_R = 15;
+  var SKIP_C = 2 * Math.PI * SKIP_R;
+  var skipCharge = null;
+  var skipBusy = false;
+
+  function skipBest() { return storedNumber(dayKey('az-skip-')); }
+
+  function skipPower(now) {
+    var t = ((now - skipCharge.t0) % SKIP_PERIOD) / SKIP_PERIOD;
+    return t < 0.5 ? t * 2 : 2 - t * 2;
+  }
+
+  function hopsFor(power) {
+    if (power > SKIP_SWEET[1]) return 0;
+    return clamp(Math.round(Math.pow(power / 0.88, 3) * SKIP_MAX), 1, SKIP_MAX);
+  }
+
+  function paintCharge(now) {
+    if (!skipCharge) return;
+    var p = skipPower(now);
+    skipCharge.p = p;
+    var fill = skipEl.querySelector('.az-skip-fill');
+    fill.setAttribute('stroke-dasharray', (p * SKIP_C).toFixed(1) + ' ' + SKIP_C.toFixed(1));
+    fill.setAttribute('stroke', p > SKIP_SWEET[1] ? '#ff5a4d' : p >= SKIP_SWEET[0] ? '#ffd045' : '#ffffff');
+    requestAnimationFrame(paintCharge);
+  }
+
+  waterEl.addEventListener('pointerdown', function (event) {
+    if (!event.target.closest('.az-water-body') || landWorld() || skipCharge || skipBusy || !view) return;
+    event.preventDefault();
+
+    var x = toSceneX(event.clientX);
+    var y = Math.max(toSceneY(event.clientY), view.waterY - tideLift() + 10);
+    skipCharge = { t0: performance.now(), x: x, y: y, id: event.pointerId, p: 0 };
+
+    var sweetLen = (SKIP_SWEET[1] - SKIP_SWEET[0]) * SKIP_C;
+    skipEl.innerHTML =
+      '<g transform="translate(' + x.toFixed(1) + ',' + (y - 34).toFixed(1) + ')">' +
+        '<g transform="rotate(-90)">' +
+          '<circle r="' + SKIP_R + '" fill="rgba(10,60,100,0.28)" stroke="rgba(255,255,255,0.45)" stroke-width="4"/>' +
+          '<circle r="' + SKIP_R + '" fill="none" stroke="#ffd045" stroke-width="4" opacity="0.5" ' +
+            'stroke-dasharray="' + sweetLen.toFixed(1) + ' ' + SKIP_C.toFixed(1) + '" ' +
+            'stroke-dashoffset="' + (-SKIP_SWEET[0] * SKIP_C).toFixed(1) + '"/>' +
+          '<circle class="az-skip-fill" r="' + SKIP_R + '" fill="none" stroke="#ffffff" stroke-width="2.6" ' +
+            'stroke-linecap="round" stroke-dasharray="0 ' + SKIP_C.toFixed(1) + '"/>' +
+        '</g>' +
+        '<ellipse rx="4.4" ry="2.8" fill="#7d8b96" stroke="#ffffff" stroke-width="0.9"/>' +
+      '</g>';
+    requestAnimationFrame(paintCharge);
+  });
+
+  window.addEventListener('pointerup', function (event) {
+    if (skipCharge && event.pointerId === skipCharge.id) throwStone();
+  });
+
+  window.addEventListener('pointercancel', function (event) {
+    if (!skipCharge || event.pointerId !== skipCharge.id) return;
+    skipCharge = null;
+    skipEl.innerHTML = '';
+  });
+
+  function throwStone() {
+    var c = skipCharge;
+    skipCharge = null;
+    var hops = hopsFor(c.p);
+
+    if (calm.matches) {
+      skipEl.innerHTML = '';
+      finishSkip(hops);
+      return;
+    }
+
+    // Wurf zur Seite mit mehr Platz, Sprünge werden kürzer
+    var dir = c.x < view.width / 2 ? 1 : -1;
+    var room = (dir > 0 ? view.width - c.x : c.x) - 30;
+    var gaps = [];
+    var gap = 30 + hops * 5;
+    var sum = 0;
+    for (var i = 0; i < hops; i++) { gaps.push(gap); sum += gap; gap *= 0.8; }
+    var scale = sum > room ? Math.max(0.2, room / sum) : 1;
+
+    var segs = [{ x0: c.x, y0: c.y - 34, x1: c.x + dir * 10, y1: c.y, h: 0, dur: 200 }];
+    var px = c.x + dir * 10;
+    gaps.forEach(function (g) {
+      var d = g * scale;
+      segs.push({ x0: px, y0: c.y, x1: px + dir * d, y1: c.y, h: d * 0.32, dur: 110 + d * 3.2 });
+      px += dir * d;
+    });
+
+    skipBusy = true;
+    skipEl.innerHTML = '<ellipse class="az-skip-stone" rx="4.4" ry="2.8" fill="#7d8b96" stroke="#ffffff" stroke-width="0.9"/>';
+    var stone = skipEl.firstChild;
+    var bits = [];   // Wellenringe und Hüpfer-Zahl, laufen im selben Takt
+
+    function ripple(x, y, big) {
+      var el = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+      el.setAttribute('cx', x.toFixed(1));
+      el.setAttribute('cy', (y + 2).toFixed(1));
+      el.setAttribute('fill', 'none');
+      el.setAttribute('stroke', '#ffffff');
+      el.setAttribute('stroke-width', big ? '1.8' : '1.3');
+      skipEl.insertBefore(el, stone);
+      var size = big ? 22 : 13;
+      bits.push({ t0: performance.now(), dur: big ? 1000 : 700, el: el, paint: function (p) {
+        el.setAttribute('rx', (2 + size * p).toFixed(1));
+        el.setAttribute('ry', ((2 + size * p) * 0.3).toFixed(1));
+        el.setAttribute('opacity', (0.9 * (1 - p)).toFixed(2));
+      } });
+    }
+
+    function label(x, y) {
+      var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      el.setAttribute('x', x.toFixed(1));
+      el.setAttribute('text-anchor', 'middle');
+      el.setAttribute('font-family', 'system-ui, sans-serif');
+      el.setAttribute('font-size', '13');
+      el.setAttribute('font-weight', '800');
+      el.setAttribute('fill', '#ffffff');
+      el.setAttribute('stroke', '#0a5a86');
+      el.setAttribute('stroke-width', '3');
+      el.setAttribute('paint-order', 'stroke');
+      el.textContent = hops ? hops + '×' : 'Plumps';
+      skipEl.appendChild(el);
+      bits.push({ t0: performance.now(), dur: 1500, el: el, paint: function (p) {
+        el.setAttribute('y', (y - 14 - p * 22).toFixed(1));
+        el.setAttribute('opacity', (p < 0.7 ? 1 : (1 - p) / 0.3).toFixed(2));
+      } });
+    }
+
+    var idx = 0;
+    var sinkAt = 0;
+    segs[0].t0 = performance.now();
+
+    requestAnimationFrame(function step(now) {
+      var seg = segs[idx];
+      if (seg) {
+        var p = Math.min(1, (now - seg.t0) / seg.dur);
+        var x = seg.x0 + (seg.x1 - seg.x0) * p;
+        var y = seg.y0 + (seg.y1 - seg.y0) * p - Math.sin(Math.PI * p) * seg.h;
+        stone.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')');
+
+        if (p >= 1) {
+          idx++;
+          var last = idx >= segs.length;
+          ripple(seg.x1, seg.y1, last);
+          if (last) {
+            chirp(150, 0, 0.3);
+            sinkAt = now;
+            label(seg.x1, seg.y1);
+          } else {
+            chirp(420 + idx * 60, 0, 0.08);
+            segs[idx].t0 = now;
+          }
+        }
+      } else if (stone.parentNode) {
+        var s = Math.min(1, (now - sinkAt) / 260);
+        stone.setAttribute('opacity', (1 - s).toFixed(2));
+        if (s >= 1) stone.remove();
+      }
+
+      bits = bits.filter(function (b) {
+        var q = Math.min(1, (now - b.t0) / b.dur);
+        b.paint(q);
+        if (q >= 1) { b.el.remove(); return false; }
+        return true;
+      });
+
+      if (seg || bits.length || stone.parentNode) {
+        requestAnimationFrame(step);
+      } else {
+        skipBusy = false;
+        finishSkip(hops);
+      }
+    });
+  }
+
+  function finishSkip(hops) {
+    if (hops === 0) {
+      toast('Plumps', 'Zu viel Schwung. Im goldenen Feld loslassen.');
+      return;
+    }
+
+    if (hops >= 5) unlock('steinflipper');
+
+    var best = skipBest();
+    if (hops <= best) return;
+    storeNumber(dayKey('az-skip-'), hops);
+
+    if (hops >= 6) {
+      game.shells += 1;
+      toast('Tagesrekord, ' + hops + ' Hüpfer', '+1 Muschel');
+      pulse(shellsEl);
+      playCue('catch');
+      renderHud();
+    } else if (hops >= 3) {
+      toast('Tagesrekord, ' + hops + ' Hüpfer', 'Ab sechs Hüpfern gibt es eine Muschel');
+    }
+  }
+
+  // ---- Sandburg-Turm ----
+  // Jeder Klick baut für eine Muschel ein Stockwerk. Ab vier Stockwerken
+  // holt eine Welle den Turm mit wachsender Wahrscheinlichkeit, bei Flut
+  // etwas öfter. Jeder neue Rekord ab vier Stockwerken bringt zwei
+  // Muscheln zurück. Der Turm gilt für die Sitzung, der Rekord bleibt.
+
+  var TOWER_MAX = 12;
+  var TOWER_FLOOR = 7;
+  var TOWER_KEY = 'az-tower-best';
+  var tower = { floors: 0, busy: false };
+
+  function towerBest() { return storedNumber(TOWER_KEY); }
+
+  function renderTower(fresh) {
+    var old = sandcastleEl.querySelector('.az-sandcastle-tower');
+    if (old) old.remove();
+    var show = tower.floors > 0 && !eventPart('castle');
+    sandcastleEl.classList.toggle('has-tower', show);
+    if (!show) return;
+
+    var html = '<g class="az-sandcastle-tower">';
+    for (var i = 0; i < tower.floors; i++) {
+      var w = 15 - i * 0.6;
+      var top = 2 - (i + 1) * TOWER_FLOOR;
+      html += '<g class="az-tower-floor' + (i === fresh ? '' : ' is-old') + '" ' +
+        'style="--az-crumble-x:' + Math.round(rand(-18, 18)) + 'px;--az-crumble-r:' + Math.round(rand(-70, 70)) + 'deg">' +
+        '<rect x="' + (-w / 2).toFixed(1) + '" y="' + top + '" width="' + w.toFixed(1) + '" height="' + (TOWER_FLOOR + 0.4) + '" rx="1.2" ' +
+          'fill="' + (i % 2 ? '#e7c48a' : '#dcb677') + '" stroke="#c99a5c" stroke-width="0.9"/>' +
+        (i % 3 === 1 ? '<rect x="-1.4" y="' + (top + 1.8) + '" width="2.8" height="3.6" rx="1.4" fill="#8a6038" opacity="0.7"/>' : '') +
+        '</g>';
+    }
+
+    var peak = 2 - tower.floors * TOWER_FLOOR;
+    var half = (15 - (tower.floors - 1) * 0.6) / 2;
+    html += '<g class="az-tower-floor' + (fresh >= 0 ? '' : ' is-old') + '">' +
+      '<path d="M' + (-half).toFixed(1) + ',' + peak + ' v-3 h2.8 v3 M-1.4,' + peak + ' v-3 h2.8 v3 M' + (half - 2.8).toFixed(1) + ',' + peak + ' v-3 h2.8 v3" ' +
+        'fill="#dcb677" stroke="#c99a5c" stroke-width="0.8"/>' +
+      '<line x1="0" y1="' + (peak - 3) + '" x2="0" y2="' + (peak - 16) + '" stroke="#7a5a3a" stroke-width="1.4"/>' +
+      '<path d="M0,' + (peak - 16) + ' L10,' + (peak - 12.5) + ' L0,' + (peak - 9) + ' Z" fill="#ff5a4d"/>' +
+      '</g></g>';
+
+    sandcastleEl.insertAdjacentHTML('beforeend', html);
+  }
+
+  function restartClass(el, name) {
+    el.classList.remove(name);
+    el.getBoundingClientRect();
+    el.classList.add(name);
+  }
+
+  function buildFloor() {
+    if (tower.busy || eventPart('castle') || landWorld()) return;
+
+    if (tower.floors >= TOWER_MAX) {
+      toast('Der Turm ist fertig', 'Höher hält nasser Sand nicht');
+      return;
+    }
+    if (game.shells < 1) {
+      restartClass(sandcastleEl, 'is-broke');
+      toast('Keine Muschel übrig', 'Ein Stockwerk kostet eine Muschel');
+      return;
+    }
+
+    var best = towerBest();
+    game.shells -= 1;
+    tower.floors += 1;
+    var n = tower.floors;
+    renderTower(n - 1);
+    chirp(300 + n * 45, 0, 0.12);
+    if (n >= 4) restartClass(sandcastleEl, 'is-wobbly');
+
+    if (n === 1 && best === 0) {
+      toast('Turm begonnen', 'Ab vier Stockwerken wackelt es. Jeder neue Rekord bringt zwei Muscheln.');
+    }
+
+    var risk = n < 4 ? 0 : Math.min(0.5, (n - 3) * 0.07 + clamp(shown, 0, 100) / 100 * 0.08);
+    if (Math.random() < risk) {
+      tower.busy = true;
+      setTimeout(crumbleTower, 450);
+      renderHud();
+      return;
+    }
+
+    if (n > best) {
+      storeNumber(TOWER_KEY, n);
+      if (n >= 4) {
+        game.shells += 2;
+        toast('Turmrekord, ' + n + ' Stockwerke', '+2 Muscheln');
+        pulse(shellsEl);
+        playCue('catch');
+      }
+    }
+    if (n >= 6) unlock('baumeister');
+    renderHud();
+  }
+
+  function crumbleTower() {
+    var group = sandcastleEl.querySelector('.az-sandcastle-tower');
+    toast('Eine Welle hat den Turm geholt', tower.floors + ' Stockwerke weg. Der Rekord bleibt bei ' + towerBest() + '.');
+    chirp(200, 0, 0.3);
+    chirp(130, 0.16, 0.45);
+    if (group && !calm.matches) group.classList.add('is-crumbling');
+
+    setTimeout(function () {
+      tower.floors = 0;
+      tower.busy = false;
+      renderTower(-1);
+    }, calm.matches ? 0 : 900);
+  }
+
+  sandcastleEl.addEventListener('click', buildFloor);
+  sandcastleEl.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    buildFloor();
+  });
+
+  // ---- Wunsch-Sternschnuppe ----
+  // Erst nach erreichter Sollzeit. Golden statt weiß, damit sie auch am
+  // Tageshimmel auffällt, und langsamer als az-star, damit man sie
+  // erwischt. Ein Fang gibt eine Muschel und einen Wunsch.
+
+  var cometEl = document.getElementById('az-wishstar');
+  var comet = null;
+  var cometArmed = false;
+
+  var COMET_LINES = [
+    'Wunsch notiert. Geh nach Hause.',
+    'Wunsch erfüllt. Du darfst jetzt Feierabend machen.',
+    'Der Wunsch lautet Sofa. Gute Wahl.',
+    'Wunsch angekommen. Der Laptop wünscht sich auch Ruhe.',
+    'Wunsch gespeichert. Er gilt nur außerhalb des Büros.',
+    'Die Sternschnuppe sagt Tschüss. Du am besten auch.',
+    'Wunsch erhalten. Der Otter packt schon deine Tasche.'
+  ];
+
+  cometEl.innerHTML =
+    '<defs><linearGradient id="az-comet-tail" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0" stop-color="#ffe27a" stop-opacity="0.95"/>' +
+      '<stop offset="1" stop-color="#ffffff" stop-opacity="0"/>' +
+    '</linearGradient></defs>' +
+    '<circle r="26" fill="transparent"/>' +
+    '<path d="M2,-1 L96,-16" stroke="url(#az-comet-tail)" stroke-width="4.4" stroke-linecap="round"/>' +
+    '<path d="M2,2.4 L70,-6" stroke="url(#az-comet-tail)" stroke-width="2" stroke-linecap="round" opacity="0.7"/>' +
+    '<circle r="11" fill="#ffe27a" opacity="0.4"/>' +
+    '<path d="M0,-7.5 L2.2,-2.4 7.4,-2 3.4,1.4 4.6,6.6 0,3.8 -4.6,6.6 -3.4,1.4 -7.4,-2 -2.2,-2.4 Z" ' +
+      'fill="#fff6c8" stroke="#ffc533" stroke-width="1" stroke-linejoin="round"/>';
+
+  function launchComet() {
+    if (comet || document.hidden || !view || lastState.percent < 100) return;
+
+    // Flache Bahn durch den freien Himmel zwischen Kacheln und Wasser
+    var x0 = view.width * (0.6 + Math.random() * 0.3);
+    var y0 = skyBandY(Math.random() * 0.4);
+    var dx = -Math.min(560, view.width * 0.55);
+    var dy = Math.min(-dx * 0.16, Math.max(0, view.waterY - 34 - y0));
+    comet = { t0: performance.now(), dur: calm.matches ? 6000 : 4200, x0: x0, y0: y0, dx: dx, dy: dy };
+
+    cometEl.setAttribute('transform', 'translate(' + x0.toFixed(1) + ',' + y0.toFixed(1) + ')');
+    cometEl.setAttribute('opacity', calm.matches ? '1' : '0');
+    requestAnimationFrame(flyComet);
+  }
+
+  function flyComet(now) {
+    if (!comet) return;
+    var p = Math.min(1, (now - comet.t0) / comet.dur);
+
+    if (p >= 1) {
+      comet = null;
+      cometEl.setAttribute('opacity', '0');
+      return;
+    }
+
+    if (!calm.matches) {
+      comet.x = comet.x0 + comet.dx * p;
+      comet.y = comet.y0 + comet.dy * p;
+      var op = p < 0.12 ? p / 0.12 : p > 0.8 ? (1 - p) / 0.2 : 1;
+      cometEl.setAttribute('opacity', op.toFixed(2));
+      cometEl.setAttribute('transform', 'translate(' + comet.x.toFixed(1) + ',' + comet.y.toFixed(1) + ')');
+    } else {
+      comet.x = comet.x0;
+      comet.y = comet.y0;
+    }
+    requestAnimationFrame(flyComet);
+  }
+
+  cometEl.addEventListener('pointerdown', function (event) {
+    if (!comet) return;
+    event.preventDefault();
+
+    var caught = comet;
+    comet = null;
+    cometEl.setAttribute('opacity', '0');
+    game.shells += 1;
+    burstAt(caught.x || caught.x0, caught.y || caught.y0);
+
+    toast(COMET_LINES[Math.floor(Math.random() * COMET_LINES.length)], '+1 Muschel');
+    pulse(shellsEl);
+    playCue('level');
+    unlock('wunsch');
+    renderHud();
+  });
+
+  // Erste Sternschnuppe kurz nach Erreichen der Sollzeit, danach seltener
+  function armComet() {
+    if (cometArmed) return;
+    cometArmed = true;
+    setTimeout(launchComet, 8000);
+  }
+
+  (function nextComet() {
+    setTimeout(function () {
+      launchComet();
+      nextComet();
+    }, 45000 + Math.random() * 45000);
+  })();
+
+  // ---- Bergfest ----
+  // Mittwochs ab 50 Prozent der Sollzeit klettert ein Murmeltier mit
+  // Partyhut den äußeren Regenbogen hinauf, hisst knapp links vom
+  // Scheitel seine Fahne und bleibt dort bis Mitternacht sitzen.
+  // Antippen lässt es hüpfen und pfeifen. today() hält ?haze-date ein.
+
+  var bergfestEl = document.getElementById('az-bergfest');
+  var bergfest = { state: 'idle' };   // idle, climbing oder summit
+  var BERGFEST_SPOT = 0.44;           // Anteil des Bands, links vom Ballon
+  var BERGFEST_CLIMB = 7500;
+
+  var BERGFEST_LINES = [
+    ['Pfiff!', 'Murmeltiere pfeifen, wenn sie sich freuen.'],
+    ['Gipfelglück', 'Von hier oben sieht das Wochenende schon ganz nah aus.'],
+    ['Halbzeit', 'Noch zwei Tage. Das Murmeltier glaubt an dich.'],
+    ['Bergab geht es leichter', 'Ab jetzt rollt die Woche von allein.'],
+    ['Gipfelbrotzeit', 'Das Murmeltier teilt seinen Löwenzahn mit dir. 🌼'],
+    ['Hüpf!', 'Das ist der offizielle Bergfest-Tanz.'],
+    ['Kuschelpause', 'Das Murmeltier kuschelt sich an die Fahne.']
+  ];
+
+  function isBergfestDay() { return today().getDay() === 3; }
+
+  function marmotMarkup() {
+    return '' +
+      '<g class="az-bergfest-pole" display="none">' +
+        '<line x1="-13" y1="1" x2="-13" y2="-31" stroke="#7a5a3a" stroke-width="1.4" stroke-linecap="round"/>' +
+        '<g class="az-bergfest-flag">' +
+          '<path d="M-13,-31 L-29,-27 L-13,-22.4 Z" fill="#ff7aa2" stroke="#ffffff" stroke-width="0.8" stroke-linejoin="round"/>' +
+          '<text x="-18.6" y="-24.6" text-anchor="middle" font-family="system-ui, sans-serif" font-size="5.6" font-weight="800" fill="#ffffff">½</text>' +
+        '</g>' +
+      '</g>' +
+      '<g class="az-bergfest-hop">' +
+        '<circle r="20" cy="-14" fill="transparent"/>' +
+        '<path d="M-7,-3 q-7,-1 -6.4,-8.4" fill="none" stroke="#8a5a34" stroke-width="3.4" stroke-linecap="round"/>' +
+        '<rect x="-10.6" y="-15" width="5.4" height="8.4" rx="1.8" fill="#ff8a65" stroke="#ffffff" stroke-width="0.8"/>' +
+        '<ellipse cx="0" cy="-8" rx="8" ry="9" fill="#b07a4c" stroke="#ffffff" stroke-width="1"/>' +
+        '<ellipse cx="1.6" cy="-6.4" rx="4.6" ry="6" fill="#f3d9b5"/>' +
+        '<ellipse cx="-3" cy="0" rx="2.9" ry="1.5" fill="#8a5a34"/>' +
+        '<ellipse cx="4" cy="0" rx="2.9" ry="1.5" fill="#8a5a34"/>' +
+        '<path class="az-bergfest-paw" d="M5.6,-10 q4.4,-1.6 5.4,-6.4" fill="none" stroke="#8a5a34" stroke-width="2.8" stroke-linecap="round"/>' +
+        '<circle cx="-2.4" cy="-23.4" r="1.9" fill="#8a5a34" stroke="#ffffff" stroke-width="0.6"/>' +
+        '<circle cx="6.2" cy="-23.6" r="1.9" fill="#8a5a34" stroke="#ffffff" stroke-width="0.6"/>' +
+        '<circle cx="2" cy="-18.6" r="6.3" fill="#b07a4c" stroke="#ffffff" stroke-width="1"/>' +
+        '<ellipse cx="4.8" cy="-16.6" rx="3.1" ry="2.3" fill="#f3d9b5"/>' +
+        '<circle cx="6.1" cy="-17.6" r="0.95" fill="#3a2414"/>' +
+        '<rect x="4.2" y="-14.9" width="1.8" height="1.7" rx="0.4" fill="#ffffff"/>' +
+        '<g class="az-bergfest-blink">' +
+          '<circle cx="0.4" cy="-20" r="1.1" fill="#2a1a10"/>' +
+          '<circle cx="4.8" cy="-20.3" r="1.1" fill="#2a1a10"/>' +
+          '<circle cx="0.8" cy="-20.4" r="0.35" fill="#ffffff"/>' +
+          '<circle cx="5.2" cy="-20.7" r="0.35" fill="#ffffff"/>' +
+        '</g>' +
+        '<circle cx="-1.4" cy="-17" r="1.4" fill="#ff9aa8" opacity="0.75"/>' +
+        '<circle cx="7.6" cy="-15.8" r="1.1" fill="#ff9aa8" opacity="0.75"/>' +
+        '<path d="M-1.4,-23.6 L2.4,-33.4 L6.2,-24.2 Z" fill="#ffd045" stroke="#ffffff" stroke-width="0.7" stroke-linejoin="round"/>' +
+        '<path d="M0.2,-27.6 L4.6,-28.2" stroke="#ff7aa2" stroke-width="1.2" stroke-linecap="round"/>' +
+        '<circle cx="2.4" cy="-33.6" r="1.4" fill="#ff7aa2"/>' +
+      '</g>';
+  }
+
+  function bergfestAt(f) {
+    var band = bands[0];
+    var len = band.getTotalLength();
+    var a = band.getPointAtLength(len * f);
+    var b = band.getPointAtLength(len * Math.min(1, f + 0.01));
+    return { x: a.x, y: a.y - 2.6, deg: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI };
+  }
+
+  // Auf flachen Fenstern liegt der Scheitel dicht unter den Kacheln.
+  // Dann rückt der Gipfelplatz am Band nach links, bis das Murmeltier
+  // samt Fahne frei steht.
+  function bergfestSpot() {
+    for (var f = BERGFEST_SPOT; f > 0.12; f -= 0.01) {
+      if (bergfestAt(f).y - 40 >= view.formBottom + 4) return f;
+    }
+    return 0.12;
+  }
+
+  function placeBergfest() {
+    if (bergfest.state !== 'summit' || !view) return;
+    var at = bergfestAt(bergfestSpot());
+    bergfestEl.setAttribute('transform', 'translate(' + at.x.toFixed(1) + ',' + at.y.toFixed(1) + ')');
+  }
+
+  function bergfestHearts(count) {
+    if (calm.matches) return;
+    for (var i = 0; i < count; i++) {
+      (function (i) {
+        setTimeout(function () {
+          var x = rand(-8, 10);
+          var y = -26 - rand(0, 6);
+          var el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          el.setAttribute('class', 'az-bergfest-heart');
+          el.setAttribute('d', 'M' + x + ',' + (y + 4) + ' c-5,-3 -4,-7 -1.6,-7 c1.2,0 1.6,0.8 1.6,1.6 ' +
+                               'c0,-0.8 0.4,-1.6 1.6,-1.6 c2.4,0 3.4,4 -1.6,7 Z');
+          el.setAttribute('fill', ['#ff7aa2', '#ffb3c8', '#ff5a8a'][i % 3]);
+          el.style.setProperty('--az-heart-x', Math.round(rand(-16, 16)) + 'px');
+          bergfestEl.appendChild(el);
+          setTimeout(function () { el.remove(); }, 1700);
+        }, i * 160);
+      })(i);
+    }
+  }
+
+  function bergfestWhistle() {
+    chirp(1320, 0, 0.12);
+    chirp(1760, 0.14, 0.2);
+  }
+
+  function startBergfest() {
+    if (bergfest.state !== 'idle' || !view || !bandLength) return;
+
+    bergfestEl.innerHTML = marmotMarkup();
+    // Den Aufstieg sieht man einmal pro Mittwoch, auch nach einem Neuladen
+    var seen = storedFlag(dayKey('az-bergfest-'));
+    if (calm.matches || (game.quiet && seen)) { summitBergfest(true); return; }
+
+    bergfest.state = 'climbing';
+    setTimeout(climbBergfest, game.quiet ? 1500 : 0);
+  }
+
+  function climbBergfest() {
+    if (bergfest.state !== 'climbing') return;
+    bergfestEl.setAttribute('opacity', '1');
+    toast('Mittwoch, 50 Prozent', 'Da klettert jemand auf den Regenbogen');
+
+    var spot = bergfestSpot();
+    var t0 = performance.now();
+    requestAnimationFrame(function step(now) {
+      if (bergfest.state !== 'climbing') return;
+      var p = Math.min(1, (now - t0) / BERGFEST_CLIMB);
+      var e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      var at = bergfestAt(0.02 + (spot - 0.02) * e);
+      var hop = -Math.abs(Math.sin(p * Math.PI * 16)) * 3.5 * (1 - p);
+      var lean = clamp(at.deg, -40, 40) * 0.6 * (1 - p);
+      bergfestEl.setAttribute('transform',
+        'translate(' + at.x.toFixed(1) + ',' + (at.y + hop).toFixed(1) + ') rotate(' + lean.toFixed(1) + ')');
+      if (p < 1) requestAnimationFrame(step);
+      else summitBergfest(false);
+    });
+  }
+
+  function summitBergfest(silent) {
+    bergfest.state = 'summit';
+    bergfestEl.setAttribute('opacity', '1');
+    bergfestEl.setAttribute('tabindex', '0');
+    placeBergfest();
+
+    var pole = bergfestEl.querySelector('.az-bergfest-pole');
+    pole.removeAttribute('display');
+
+    if (!silent) {
+      pole.classList.add('az-tower-floor');
+      storeFlag(dayKey('az-bergfest-'));
+      var at = bergfestAt(bergfestSpot());
+      burstAt(at.x, at.y - 24);
+      bergfestHearts(6);
+      restartClass(bergfestEl, 'is-waving');
+      bergfestWhistle();
+      toast('Bergfest! Die halbe Woche ist geschafft', 'Ab jetzt geht es bergab. Im besten Sinn.');
+    }
+    unlock('bergfest');
+  }
+
+  function resetBergfest() {
+    bergfest.state = 'idle';
+    bergfestEl.setAttribute('opacity', '0');
+    bergfestEl.setAttribute('tabindex', '-1');
+    bergfestEl.innerHTML = '';
+  }
+
+  function syncBergfest(s) {
+    if (!isBergfestDay()) { if (bergfest.state !== 'idle') resetBergfest(); return; }
+    if (s.percent >= 50) startBergfest();
+  }
+
+  function pokeBergfest() {
+    if (bergfest.state !== 'summit') return;
+    restartClass(bergfestEl, calm.matches ? 'is-waving' : 'is-hopping');
+    bergfestHearts(3);
+    bergfestWhistle();
+    var line = BERGFEST_LINES[Math.floor(Math.random() * BERGFEST_LINES.length)];
+    toast(line[0], line[1]);
+  }
+
+  bergfestEl.addEventListener('pointerdown', function (event) {
+    if (bergfest.state !== 'summit') return;
+    event.preventDefault();
+    pokeBergfest();
+  });
+  bergfestEl.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    pokeBergfest();
+  });
+
+  // ---- Gruß nach dem Tab-Wechsel ----
+  // Wer mindestens fünf Minuten in einem anderen Tab war, bekommt bei
+  // der Rückkehr ein Winken vom Otter und die Dauer der Abwesenheit.
+
+  var AWAY_MIN = 5;
+  var awayAt = 0;
+
+  function awayText(mins) {
+    if (mins < 60) return mins + ' Minuten';
+    var h = Math.floor(mins / 60);
+    var m = mins % 60;
+    return (h === 1 ? 'Eine Stunde' : h + ' Stunden') + (m ? ' und ' + m + ' Minuten' : '');
+  }
+
+  function greetReturn(mins) {
+    var gone = awayText(mins);
+    var name = otterName.trim();
+    var title = 'Da bist du ja wieder' + (name ? ', ' + name : '');
+    var note;
+
+    if (mins < 15) note = 'Nur ' + gone + ' weg. Kaffee geholt?';
+    else if (mins < 60) note = gone + ' weg. Der Otter hat solange aufgepasst.';
+    else if (mins < 180) { title = 'Willkommen zurück' + (name ? ', ' + name : ''); note = gone + ' weg. Das Meer hat dich vermisst.'; }
+    else { title = 'Huch, du lebst ja noch'; note = gone + ' weg. Der Otter wollte schon eine Flaschenpost schicken.'; }
+
+    if (lastState.percent >= 100) note += ' Die Sollzeit ist übrigens erreicht.';
+    toast('🦦 ' + title, note);
+
+    restartClass(otterShell, 'is-greeting');
+    setTimeout(function () { otterShell.classList.remove('is-greeting'); }, 1300);
+
+    var hand = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    hand.setAttribute('class', 'az-otter-wave');
+    hand.setAttribute('x', '-6');
+    hand.setAttribute('y', '-22');
+    hand.setAttribute('font-size', '15');
+    hand.setAttribute('text-anchor', 'middle');
+    hand.textContent = '👋';
+    otterShell.appendChild(hand);
+    setTimeout(function () { hand.remove(); }, 2700);
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { awayAt = Date.now(); return; }
+    if (!awayAt) return;
+    var mins = Math.floor((Date.now() - awayAt) / 60000);
+    awayAt = 0;
+    if (mins >= AWAY_MIN) setTimeout(function () { greetReturn(mins); }, 500);
+  });
+
   // ---- Layout ----
 
   function layout() {
@@ -12268,15 +13077,11 @@
     sandcastleEl.setAttribute('transform',
       'translate(' + beachX(0.78) + ',' + Math.round(view.waterY) + ')');
 
-    // Ziege grast zwischen Bonbon (0.69) und Friedhof (0.78)
-    goatEl.setAttribute('transform',
-      'translate(' + beachX(0.735) + ',' + Math.round(view.waterY + 4) + ')');
-    goatEl.setAttribute('display', landWorld() ? 'inline' : 'none');
-
-    // PA2-Buch liegt spiegelbildlich zur Ziege zwischen Turm (0.22) und Bonbon (0.31)
+    // PA2-Buch liegt zwischen Turm (0.22) und Bonbon (0.31)
     pa2El.setAttribute('transform',
       'translate(' + beachX(0.265) + ',' + Math.round(view.waterY + 4) + ')');
 
+    placeBergfest();
     syncSun(minutesNow());
   }
 
