@@ -1726,6 +1726,33 @@
 
   .btn-ghost:hover { filter: brightness(1.06); }
 
+  /* Nachtmodus-Schalter: kleiner Mond-Knopf, Checkbox unsichtbar darin */
+  .az-night-switch {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    user-select: none;
+  }
+  .az-night-switch:hover { opacity: 1; }
+  .az-night-switch svg { width: 16px; height: 16px; }
+  .az-night-switch input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .az-night-switch:has(input:checked) { opacity: 1; }
+  .az-night-switch:has(input:checked) svg path { fill: currentColor; }
+  .az-night-switch:has(input:focus-visible) {
+    box-shadow: 0 0 0 4px var(--az-ring);
+  }
+
   .btn-ghost:focus-visible {
     outline: none;
     box-shadow: 0 0 0 4px var(--az-ring);
@@ -2131,6 +2158,51 @@
     color: var(--az-muted);
   }
   .az-season-row[hidden] + .az-season-next { margin-top: 0; }
+
+  /* Vergangene Anlässe manuell wieder einschalten */
+  .az-season-picks { margin-top: 10px; }
+  .az-season-picks[hidden] { display: none; }
+  .az-season-picks-title {
+    margin: 0 2px 6px;
+    font-size: 12px;
+    color: var(--az-muted);
+  }
+  .az-season-picks-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  /* Kleine Chips, Checkbox unsichtbar darüber wie beim Nachtmodus */
+  .az-season-pick {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    font-size: 11.5px;
+    color: var(--az-muted);
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.75;
+    border: 1px solid rgba(78, 135, 166, 0.25);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.5);
+    transition: opacity 140ms ease, background 140ms ease;
+  }
+  .az-season-pick:hover { opacity: 1; }
+  .az-season-pick input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .az-season-pick:has(input:checked) {
+    opacity: 1;
+    color: #ffffff;
+    border-color: transparent;
+    background: var(--az-cyan);
+  }
+  .az-season-pick:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--az-ring); }
   .az-season-toggle {
     flex: none;
     position: relative;
@@ -4359,6 +4431,13 @@
           </svg>
         </button>
 
+        <label class="btn-ghost az-night-switch" title="Nachtmodus">
+          <input type="checkbox" id="az-night-mode" aria-label="Nachtmodus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19.5 14.6A7.8 7.8 0 0 1 9.4 4.5a7.8 7.8 0 1 0 10.1 10.1Z"/>
+          </svg>
+        </label>
+
         <button type="button" class="btn-ghost btn-sassomat" id="az-sassomat-open"
                 aria-label="Mausig-Atzig-Fotzig-o-mat" title="Mausig-Atzig-Fotzig-o-mat">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -4861,6 +4940,10 @@
           <button type="button" class="az-season-toggle" id="az-season-toggle" role="switch" aria-labelledby="az-season-label"></button>
         </div>
         <p class="az-season-next" id="az-season-next"></p>
+        <div class="az-season-picks" id="az-season-picks" hidden>
+          <p class="az-season-picks-title">Vergangenen Anlass wieder einschalten</p>
+          <div class="az-season-picks-list" id="az-season-picks-list"></div>
+        </div>
         <button type="button" class="btn-ghost az-carve-open" id="az-carve-open" hidden>🎃 Kürbis schnitzen</button>
       </div>
 
@@ -5252,6 +5335,17 @@
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(new URLSearchParams(location.search).get('haze-date') || '');
     return m ? [+m[1], +m[2] - 1, +m[3]] : null;
   })();
+
+  /* Nachtmodus: friert Himmel, Sterne, Sonne und Leuchtturm auf
+     Mitternacht ein. Farb- und Saison-Themes laufen unabhängig davon
+     weiter. Die Wahl bleibt über ein Neuladen hinweg erhalten. */
+  var NIGHT_MODE_KEY = 'az-night-mode';
+  var NIGHT_MODE_MIN = 0;
+  var nightMode = storedFlag(NIGHT_MODE_KEY);
+
+  function ambientMinutes(minutes) {
+    return nightMode ? NIGHT_MODE_MIN : minutes;
+  }
 
   function today() {
     var now = new Date();
@@ -6304,7 +6398,33 @@
      Neuladen hinweg erhalten, anders als die Käufe im Shop. */
   var seasonOff = storedFlag('az-season-off');
 
+  /* Manuell gewählter Anlass. Damit kommen Themes wie Halloween auch
+     nach ihrem Zeitraum zurück. Es gibt immer nur einen. Ist einer
+     gewählt, ersetzt er die Anlässe aus dem Kalender. Leer heißt
+     Standard, dann gilt wieder nur das Datum. Die Wahl bleibt über ein
+     Neuladen hinweg erhalten. */
+  var EVENT_ORDER = ['newyear', 'nikolaus', 'xmas', 'martin', 'oktoberfest', 'halloween', 'easter', 'fasching'];
+  var SEASON_PICK_KEY = 'az-season-pick';
+  var seasonPick = (function () {
+    var id = '';
+    try { id = localStorage.getItem(SEASON_PICK_KEY) || ''; } catch (e) {}
+    return EVENT_ORDER.indexOf(id) !== -1 ? id : '';
+  })();
+
+  function storeSeasonPick() {
+    try {
+      if (seasonPick) localStorage.setItem(SEASON_PICK_KEY, seasonPick);
+      else localStorage.removeItem(SEASON_PICK_KEY);
+    } catch (e) {}
+  }
+
+  // Läuft der Anlass gerade laut Kalender (und ist das Saison-Theme an)?
+  function eventByDate(id) {
+    return !seasonOff && activeEvents(today()).indexOf(id) !== -1;
+  }
+
   function seasonEvents() {
+    if (seasonPick) return [seasonPick];
     return seasonOff ? [] : activeEvents(today());
   }
 
@@ -6733,6 +6853,7 @@
   }
 
   function syncSun(minutes) {
+    minutes = ambientMinutes(minutes);
     sunHome = sunAnchor(minutes);
     if (grab || returning) return;
     sunPos.x = sunHome.x;
@@ -6784,6 +6905,7 @@
   var stageEl = document.querySelector('.az-stage');
 
   function syncTide(minutes) {
+    minutes = ambientMinutes(minutes);
     var phases = landWorld() ? SPOOK_PHASES : TIDE_PHASES;
     var m = ((minutes % 1440) + 1440) % 1440;
     var i = 0;
@@ -6813,6 +6935,7 @@
   ];
 
   function syncStarfield(minutes) {
+    minutes = ambientMinutes(minutes);
     var m = ((minutes % 1440) + 1440) % 1440;
     var i = 0;
     while (i < STAR_PHASES.length - 1 && STAR_PHASES[i + 1].at <= m) i++;
@@ -7266,12 +7389,12 @@
   var NIGHT_END_MIN = 9 * 60;         // 09:00
 
   function isNightNow() {
-    var m = minutesNow();
+    var m = ambientMinutes(minutesNow());
     return m >= NIGHT_START_MIN || m < NIGHT_END_MIN;
   }
 
   function isDayNow() {
-    var m = minutesNow();
+    var m = ambientMinutes(minutesNow());
     return m >= NIGHT_END_MIN && m < NIGHT_START_MIN;
   }
 
@@ -7535,6 +7658,7 @@
      Sternenfelds (STAR_PHASES: ab 19:00 bis 8:00 durchgehend Nacht). */
   function syncLighthouseDusk(minutes) {
     if (!lighthouseEl) return;
+    minutes = ambientMinutes(minutes);
     var m = ((minutes % 1440) + 1440) % 1440;
     lighthouseEl.classList.toggle('is-dusk', m >= 1140 || m < 480);
   }
@@ -7690,6 +7814,9 @@
 
     var remainingLabel = remaining > 0 ? 'Noch offen' : 'Über Soll';
     var remainingValue = remaining > 0 ? toDuration(remaining) : toDuration(worked - targetMin);
+    var remainingCopy = remaining > 0
+      ? 'Ich muss noch ' + remainingValue + ' arbeiten heute.'
+      : remainingLabel + ': ' + remainingValue;
     var COPY_ICON_REMAINING = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
 
     document.getElementById('metrics').innerHTML =
@@ -7704,7 +7831,7 @@
       '<div class="az-metric az-metric-remaining">' +
         '<div class="az-metric-label">' + remainingLabel + '</div>' +
         '<div class="az-metric-value">' + remainingValue + '</div>' +
-        '<button type="button" class="btn-copy-remaining" data-copy="' + remainingLabel + ': ' + remainingValue + '" title="' + remainingLabel + ' kopieren" aria-label="' + remainingLabel + ' kopieren">' + COPY_ICON_REMAINING + '</button>' +
+        '<button type="button" class="btn-copy-remaining" data-copy="' + remainingCopy + '" title="' + remainingLabel + ' kopieren" aria-label="' + remainingLabel + ' kopieren">' + COPY_ICON_REMAINING + '</button>' +
       '</div>';
 
     var eyebrow = document.getElementById('eyebrow');
@@ -8932,6 +9059,7 @@
     var next = seasonEvents();
     if (next.join() === currentEvents.join()) return;
     currentEvents = next;
+    paintAdventPill();
     paintSpookPill();
     applyEventDecor();
     if (view) drawEvent();
@@ -9013,7 +9141,9 @@
   }
 
   function adventState() {
-    if (seasonOff) return null;
+    if (currentEvents.indexOf('xmas') === -1) return null;
+    // Manuell gewählt: alle Türchen offen, Pille zeigt Heiligabend
+    if (!eventByDate('xmas')) return { daysLeft: 0, maxDoor: 24 };
     var now = today();
     var y = now.getFullYear();
     var date = dayOf(y, now.getMonth(), now.getDate());
@@ -9227,6 +9357,8 @@
 
   function spookState() {
     if (currentEvents.indexOf('halloween') === -1) return null;
+    // Manuell eingeschaltet: alle Grabsteine offen, Pille zeigt Halloween
+    if (!eventByDate('halloween')) return { daysLeft: 0, maxDoor: 17 };
     var day = today().getDate();
     return { daysLeft: 31 - day, maxDoor: day - 14 };
   }
@@ -9939,8 +10071,63 @@
     renderShop();
   });
 
+  var nightModeInput = document.getElementById('az-night-mode');
+  nightModeInput.checked = nightMode;
+  nightModeInput.addEventListener('change', function () {
+    nightMode = nightModeInput.checked;
+    try {
+      if (nightMode) localStorage.setItem(NIGHT_MODE_KEY, '1');
+      else localStorage.removeItem(NIGHT_MODE_KEY);
+    } catch (e) {}
+    var now = minutesNow();
+    if (view) syncSun(now);
+    syncTide(now);
+    syncStarfield(now);
+    syncLighthouseDusk(now);
+  });
+
+  /* Anlässe, die dieses Jahr schon begonnen haben, plus der manuell
+     gewählte. Weihnachten und Silvester ragen zwar ins
+     neue Jahr, beginnen aber erst im Dezember. Was gerade laut Kalender
+     läuft, regelt der Schalter darüber. */
+  var seasonPicksEl = document.getElementById('az-season-picks');
+  var seasonPicksList = document.getElementById('az-season-picks-list');
+
+  function pastSeasonEvents() {
+    var now = today();
+    var seen = new Set(seasonPick ? [seasonPick] : []);
+    var prev = activeEvents(dayOf(now.getFullYear(), 0, 1));
+    for (var d = dayOf(now.getFullYear(), 0, 2); d < dayOf(now.getFullYear(), now.getMonth(), now.getDate()); d = addDays(d, 1)) {
+      var list = activeEvents(d);
+      list.forEach(function (id) { if (prev.indexOf(id) === -1) seen.add(id); });
+      prev = list;
+    }
+    return EVENT_ORDER.filter(function (id) {
+      return seen.has(id) && SEASON_EVENTS[id].label && !eventByDate(id);
+    });
+  }
+
+  function renderSeasonPicks() {
+    var ids = pastSeasonEvents();
+    seasonPicksEl.hidden = !ids.length;
+    // Radio-Gruppe: genau ein Chip aktiv, "Standard" folgt dem Kalender
+    seasonPicksList.innerHTML = [''].concat(ids).map(function (id) {
+      return '<label class="az-season-pick"><input type="radio" name="az-season-pick" data-season-pick="' + id + '"' +
+        (seasonPick === id ? ' checked' : '') + '> ' + (id ? SEASON_EVENTS[id].label : 'Standard') + '</label>';
+    }).join('');
+  }
+
+  seasonPicksList.addEventListener('change', function (e) {
+    if (!e.target.hasAttribute('data-season-pick')) return;
+    seasonPick = e.target.getAttribute('data-season-pick');
+    storeSeasonPick();
+    refreshEvents();
+    renderShop();
+  });
+
   function renderShop() {
     renderSeasonToggle();
+    renderSeasonPicks();
     renderCarveOpen();
     renderShopGrid(shopThemesEl, SHOP_THEMES, shop.theme, 'theme');
     renderShopGrid(shopSkinsEl, SHOP_SKINS, shop.skin, 'skin');
